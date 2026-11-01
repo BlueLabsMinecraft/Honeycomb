@@ -1,6 +1,8 @@
 package dev.bluelabs.honeycomb.display.nametag;
 
 import dev.bluelabs.honeycomb.config.ConfigValues;
+import dev.bluelabs.honeycomb.display.MatchContext;
+import dev.bluelabs.honeycomb.display.ProfileConditions;
 import dev.bluelabs.honeycomb.config.ValidationReport;
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -23,13 +25,16 @@ public final class NametagGroup {
     private final String prefixTemplate;
     private final String suffixTemplate;
     private final String permission;
+    private final ProfileConditions conditions;
 
-    private NametagGroup(String name, int priority, String prefixTemplate, String suffixTemplate, String permission) {
+    private NametagGroup(String name, int priority, String prefixTemplate, String suffixTemplate,
+                         String permission, ProfileConditions conditions) {
         this.name = name;
         this.priority = priority;
         this.prefixTemplate = prefixTemplate;
         this.suffixTemplate = suffixTemplate;
         this.permission = permission;
+        this.conditions = conditions == null ? ProfileConditions.none() : conditions;
     }
 
     /**
@@ -43,7 +48,8 @@ public final class NametagGroup {
      * @return the group
      */
     public static NametagGroup apiGroup(String name, int priority, String prefix, String suffix, String permission) {
-        return new NametagGroup(name, priority, prefix == null ? "" : prefix, suffix == null ? "" : suffix, permission);
+        return new NametagGroup(name, priority, prefix == null ? "" : prefix,
+                suffix == null ? "" : suffix, permission, ProfileConditions.none());
     }
 
     /**
@@ -72,6 +78,14 @@ public final class NametagGroup {
      */
     public String suffixTemplate() {
         return suffixTemplate;
+    }
+
+    /**
+     * @param context the world, group and placeholder view of the player
+     * @return true when this group applies in that context
+     */
+    public boolean matches(MatchContext context) {
+        return conditions.matches(context);
     }
 
     /**
@@ -109,7 +123,8 @@ public final class NametagGroup {
                     group.getInt("priority", 0),
                     ConfigValues.text(group, "prefix", ""),
                     ConfigValues.text(group, "suffix", ""),
-                    ConfigValues.text(group, "permission", "honeycomb.group." + key.toLowerCase(Locale.ROOT))
+                    ConfigValues.text(group, "permission", "honeycomb.group." + key.toLowerCase(Locale.ROOT)),
+                    ProfileConditions.parse(group, "nametags.yml", report)
             ));
         }
         if (groups.isEmpty()) {

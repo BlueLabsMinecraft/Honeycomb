@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0 - 2026-11-01
+
+- Folia support. The plugin detects the threaded region server and schedules every
+  display on the scheduler that owns the player, so the same jar runs on Paper,
+  Spigot, Bukkit and Folia.
+- Nametags take conditions. A group can be limited to a world, a permission, a
+  placeholder value or a region, which brings per world nametags to the last
+  display that was missing them.
+- Every display now reads conditions: tablist, sidebar, bossbars, below name and
+  nametags. A nether layout or a staff layout works the same way on all five.
+
 ## 0.8.0 - 2026-11-01
 
 - Conditions can compare placeholders, not only match worlds, groups and

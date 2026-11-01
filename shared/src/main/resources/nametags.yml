@@ -49,3 +49,26 @@ nametags:
     #   priority: 20
     #   permission: "group.vip"
     #   prefix: "<green>[VIP]</green> "
+
+  # Per world nametags. A group may carry the same conditions block the other
+  # displays use, so the nether can show a different prefix without a second
+  # plugin. Conditions are tested against the player being decorated.
+  nether:
+    priority: 60
+    prefix: "<gradient:#FF7043:#8D2D0B>[NETHER]</gradient> "
+    suffix: ""
+    permission: honeycomb.group.nether
+    conditions:
+      worlds:
+        - world_nether
+        - nether
+
+  # A group that only exists for players with a balance over 100k.
+  rich:
+    priority: 30
+    prefix: "<gold>[BALLER]</gold> "
+    suffix: ""
+    permission: honeycomb.group.rich
+    conditions:
+      placeholders:
+        - "%vault_eco_balance% >= 100000"

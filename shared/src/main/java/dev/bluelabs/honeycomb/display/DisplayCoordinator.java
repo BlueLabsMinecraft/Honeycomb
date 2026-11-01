@@ -5,7 +5,10 @@ import dev.bluelabs.honeycomb.placeholder.PlaceholderService;
 import dev.bluelabs.honeycomb.scheduler.TaskRegistry;
 import dev.bluelabs.honeycomb.scheduler.TickClock;
 import org.bukkit.Bukkit;
+import dev.bluelabs.honeycomb.scheduler.Scheduling;
 import org.bukkit.entity.Player;
+
+import java.util.function.Consumer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -88,16 +91,27 @@ public final class DisplayCoordinator {
     }
 
     /**
+     * Runs work for every online player on the scheduler that owns that player,
+     * which is what makes the same code safe on Folia.
+     *
+     * @param action work to run per player
+     */
+    private void forEachOnline(Consumer<Player> action) {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            Scheduling.forPlayer(tasks.plugin(), player, () -> action.accept(player));
+        }
+    }
+
+    /**
      * Re-applies all systems to every online player.
      */
     public void refreshAll() {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            for (DisplaySystem system : systems) {
-                if (system.isEnabled()) {
-                    system.refresh(player);
+        forEachOnline(player -> {                for (DisplaySystem system : systems) {
+                    if (system.isEnabled()) {
+                        system.refresh(player);
+                    }
                 }
-            }
-        }
+        });
     }
 
     /**
@@ -127,23 +141,22 @@ public final class DisplayCoordinator {
     private void runTick() {
         long started = System.nanoTime();
         clock.advance();
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            for (DisplaySystem system : systems) {
-                if (!system.isEnabled()) {
-                    continue;
-                }
-                try {
-                    system.tick(player);
-                } catch (RuntimeException exception) {
-                    // One broken display must never stop the others updating.
-                    Bukkit.getLogger().warning("[Honeycomb] " + system.name()
-                            + " failed while updating " + player.getName() + ": " + exception);
-                    if (metrics != null) {
-                        metrics.recordError();
+        forEachOnline(player -> {                for (DisplaySystem system : systems) {
+                    if (!system.isEnabled()) {
+                        continue;
+                    }
+                    try {
+                        system.tick(player);
+                    } catch (RuntimeException exception) {
+                        // One broken display must never stop the others updating.
+                        Bukkit.getLogger().warning("[Honeycomb] " + system.name()
+                                + " failed while updating " + player.getName() + ": " + exception);
+                        if (metrics != null) {
+                            metrics.recordError();
+                        }
                     }
                 }
-            }
-        }
+        });
         if (metrics != null) {
             metrics.recordPass(System.nanoTime() - started);
         }

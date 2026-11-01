@@ -6,7 +6,7 @@
 
 **Every display on your Paper server, drawn by one plugin.**
 
-[![Release](https://img.shields.io/badge/release-0.8.0-FFB01F?style=flat-square)](https://github.com/bluegaming08/honeycomb/releases)
+[![Release](https://img.shields.io/badge/release-0.9.0-FFB01F?style=flat-square)](https://github.com/bluegaming08/honeycomb/releases)
 [![License](https://img.shields.io/badge/license-MIT-4ade80?style=flat-square)](LICENSE)
 [![Java](https://img.shields.io/badge/java-21%20%7C%2025-2563EB?style=flat-square)](https://adoptium.net)
 [![Paper](https://img.shields.io/badge/paper-1.21.9%20%E2%80%93%2026.3-38BDF8?style=flat-square)](https://papermc.io)
@@ -41,17 +41,23 @@ or of any other display plugin, and it needs no dependencies to run.
 | **Presets** | Nine looks that mirror common server styles, load, edit, save your own |
 | **Update log** | Entries written by staff, read by players with `/updatelog` |
 | **Conditions** | World, group, permission and placeholder comparisons pick the layout, like TAB |
+| **Per world** | Every display can be limited or replaced per world, nametags and below name included |
 | **Staff layouts** | Separate tablist and sidebar for staff, behind a permission |
+| **Folia** | Region aware scheduling, so the same jar runs on Folia without a second build |
 
 ## Install
 
 Two jars come from one source tree, because the Minecraft generations it supports do
 not share a Java runtime:
 
-| Jar | Minecraft | Java |
-|---|---|---|
-| `Honeycomb-0.8.0-java21.jar` | Paper, Spigot, Bukkit 1.21.9 to 1.21.11 | 21 |
-| `Honeycomb-0.8.0-java25.jar` | Paper, Spigot, Bukkit 26.1 to 26.3 | 25 |
+| Jar | Server | Versions | Java |
+|---|---|---|---|
+| `Honeycomb-0.9.0-java21.jar` | Paper, Spigot, Bukkit, Folia, Purpur, Pufferfish | 1.21.9 to 1.21.11 | 21 |
+| `Honeycomb-0.9.0-java25.jar` | Paper, Spigot, Bukkit, Folia, Purpur, Pufferfish | 26.1 to 26.3 | 25 |
+
+The same jar handles Folia: each display is scheduled on the thread that owns the
+player, which is what the region scheduler requires. On Spigot and Bukkit every
+display works, and the dialog panel needs Paper.
 
 1. Drop the jar that matches your server into `plugins/`.
 2. Start the server once. Honeycomb writes its files and reports anything it adjusted.
@@ -101,7 +107,9 @@ scoreboards:
         - "%vault_eco_balance% >= 100000"
 ```
 
-The comparison operators are `==`, `!=`, `>=`, `<=`, `>` , `<` and `contains`. Numeric
+Conditions apply to all five displays, including nametags and below name, so a nether
+nametag or a staff only board is the same block of YAML. The comparison operators are
+`==`, `!=`, `>=`, `<=`, `>` , `<` and `contains`. Numeric
 operators compare as numbers, so `100000`, `100,000` and `$100,000` all match. Read
 [docs/CONDITIONS.md](docs/CONDITIONS.md) for the full rule set.
 
@@ -173,7 +181,7 @@ honeycomb/
 
 ## Project status
 
-0.8.0 is the current release. The plugin is in active development: the display engines
+0.9.0 is the current release. The plugin is in active development: the display engines
 and the panel are stable, and the API is published in [docs/API.md](docs/API.md).
 
 ## Contributing

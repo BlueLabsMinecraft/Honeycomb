@@ -2,7 +2,6 @@ package dev.bluelabs.honeycomb.scheduler;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,8 +21,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class TaskRegistry {
 
     private final Plugin plugin;
-    private final Map<String, BukkitTask> repeatingTasks = new LinkedHashMap<>();
-    private final Map<String, BukkitTask> pendingTasks = new LinkedHashMap<>();
+    private final Map<String, Object> repeatingTasks = new LinkedHashMap<>();
+    private final Map<String, Object> pendingTasks = new LinkedHashMap<>();
     private final AtomicLong sequence = new AtomicLong();
 
     /**
@@ -31,6 +30,13 @@ public final class TaskRegistry {
      */
     public TaskRegistry(Plugin plugin) {
         this.plugin = plugin;
+    }
+
+    /**
+     * @return the plugin that owns these tasks
+     */
+    public Plugin plugin() {
+        return plugin;
     }
 
     /**
@@ -44,7 +50,7 @@ public final class TaskRegistry {
      */
     public void repeating(String name, long delay, long period, Runnable runnable) {
         cancel(name);
-        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, runnable, delay, period);
+        Object task = Scheduling.repeat(plugin, delay, period, runnable);
         repeatingTasks.put(name, task);
     }
 
@@ -58,10 +64,10 @@ public final class TaskRegistry {
      */
     public String later(String name, long delay, Runnable runnable) {
         String key = name + "#" + sequence.incrementAndGet();
-        BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        Object task = Scheduling.later(plugin, delay, () -> {
             pendingTasks.remove(key);
             runnable.run();
-        }, Math.max(1L, delay));
+        });
         pendingTasks.put(key, task);
         return key;
     }
@@ -85,7 +91,11 @@ public final class TaskRegistry {
      * @param runnable work to run
      */
     public void async(String name, Runnable runnable) {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, runnable);
+        if (Scheduling.folia()) {
+            Bukkit.getAsyncScheduler().runNow(plugin, task -> runnable.run());
+        } else {
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, runnable);
+        }
     }
 
     /**
@@ -94,9 +104,9 @@ public final class TaskRegistry {
      * @param name task name
      */
     public void cancel(String name) {
-        BukkitTask task = repeatingTasks.remove(name);
+        Object task = repeatingTasks.remove(name);
         if (task != null) {
-            task.cancel();
+            Scheduling.cancel(task);
         }
     }
 
@@ -106,9 +116,9 @@ public final class TaskRegistry {
      * @param key task key
      */
     public void cancelPending(String key) {
-        BukkitTask task = pendingTasks.remove(key);
+        Object task = pendingTasks.remove(key);
         if (task != null) {
-            task.cancel();
+            Scheduling.cancel(task);
         }
     }
 
@@ -116,11 +126,11 @@ public final class TaskRegistry {
      * Cancels every tracked task. Safe to call more than once.
      */
     public void cancelAll() {
-        for (BukkitTask task : repeatingTasks.values()) {
-            task.cancel();
+        for (Object task : repeatingTasks.values()) {
+            Scheduling.cancel(task);
         }
-        for (BukkitTask task : pendingTasks.values()) {
-            task.cancel();
+        for (Object task : pendingTasks.values()) {
+            Scheduling.cancel(task);
         }
         repeatingTasks.clear();
         pendingTasks.clear();

@@ -2,6 +2,7 @@ name: Honeycomb
 version: '${projectVersion}'
 main: dev.bluelabs.honeycomb.HoneycombPlugin
 api-version: '1.21'
+folia-supported: true
 authors: [Blue Labs]
 description: Tablist, scoreboard, nametag, bossbar and below-name displays for Paper, in one plugin.
 website: https://discord.gg/DmEPAb3NFU

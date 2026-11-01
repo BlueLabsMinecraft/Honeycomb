@@ -5,6 +5,7 @@ import dev.bluelabs.honeycomb.config.ConfigType;
 import dev.bluelabs.honeycomb.config.Settings;
 import dev.bluelabs.honeycomb.config.ValidationReport;
 import dev.bluelabs.honeycomb.display.DisplaySystem;
+import dev.bluelabs.honeycomb.display.MatchContext;
 import dev.bluelabs.honeycomb.display.WorldProfiles;
 import dev.bluelabs.honeycomb.integration.GroupProvider;
 import dev.bluelabs.honeycomb.integration.PlayerStateProvider;
@@ -233,7 +234,15 @@ public final class NametagService implements DisplaySystem {
         if (existing != null && last != null && now - last < serviceInterval) {
             return existing;
         }
-        NametagGroup group = NametagGroup.select(allGroups(), groups.group(target), target::hasPermission);
+        MatchContext match = MatchContext.of(target, groups.group(target))
+                .withPlaceholders(text -> pipeline.placeholders().expand(text, PlaceholderContext.of(target)));
+        List<NametagGroup> allowed = new ArrayList<>();
+        for (NametagGroup candidate : allGroups()) {
+            if (candidate.matches(match)) {
+                allowed.add(candidate);
+            }
+        }
+        NametagGroup group = NametagGroup.select(allowed, groups.group(target), target::hasPermission);
         if (group == null) {
             return existing;
         }
