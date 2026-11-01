@@ -22,8 +22,6 @@ Purpur and Pufferfish.
 
 </div>
 
-<img src="docs/preview.png" alt="Honeycomb sidebar, tablist and panel" width="100%" />
-
 Honeycomb owns the parts of the screen players look at all day: the tablist, the
 sidebar, the name above each head, bossbars and the line below a nametag. Each one is
 a separate engine with its own YAML file, its own update interval and its own
@@ -36,7 +34,6 @@ Looking for a TAB alternative, or a tablist plugin that does not need a config w
 Honeycomb draws the tablist, sidebar, nametags, bossbars and the below name line, and
 lets you edit all of it from an in game panel. Per world layouts use one conditions
 block on every display. MIT licensed, no paid tier.
-
 
 ## Coming from TAB
 
