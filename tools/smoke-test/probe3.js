@@ -1,0 +1,12 @@
+const mineflayer = require('mineflayer');
+const mk = n => mineflayer.createBot({ host:'127.0.0.1', port:25565, username:n, version:'1.21.4', auth:'offline' });
+const a = mk('Tester'), b = mk('Guest');
+const teams = [];
+b.on('error', e => { console.log('ERR ' + e.message); process.exit(1); });
+b._client.on('packet', (d, m) => { if (m.name === 'teams') teams.push({ team: d.team, mode: d.mode, prefix: d.prefix ? JSON.stringify(d.prefix).slice(0,140) : null, suffix: d.suffix ? JSON.stringify(d.suffix).slice(0,60) : null, players: d.players, visibility: d.nameTagVisibility }); });
+let ready = 0;
+const onSpawn = async () => { if (++ready < 2) return; await a.waitForTicks(200);
+  console.log('RESULT ' + JSON.stringify({ teamCount: teams.length, teams: teams.slice(-4) }));
+  a.quit(); b.quit(); setTimeout(()=>process.exit(0), 400); };
+a.once('spawn', onSpawn); b.once('spawn', onSpawn);
+setTimeout(()=>{ console.log('TIMEOUT'); process.exit(2); }, 90000);

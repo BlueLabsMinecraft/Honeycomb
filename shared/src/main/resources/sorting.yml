@@ -1,0 +1,33 @@
+# ---------------------------------------------------------------------------
+#  Honeycomb - tablist sorting
+#
+#  Players are ordered by group, then by name. Ordering uses Paper's player list
+#  order, so nametag teams stay free for decoration.
+#
+#  Groups are matched by the player's LuckPerms group or by the permissions node
+#  honeycomb.group.<name> when LuckPerms is not installed.
+# ---------------------------------------------------------------------------
+
+sorting:
+  enabled: true
+
+  # Ticks between sorts. Sorting is cheap but does not need to run often.
+  update-interval: 100
+
+  # Highest first.
+  groups:
+    - owner
+    - admin
+    - moderator
+    - helper
+    - default
+
+  alphabetical-within-group: true
+
+  # Pull anyone with honeycomb.staff above everyone else regardless of group.
+  staff-first: false
+
+  # Optional explicit weights; higher sorts first and overrides list position.
+  weights: {}
+  #  owner: 1000
+  #  admin: 800

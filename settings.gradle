@@ -1,0 +1,17 @@
+/*
+ * Honeycomb build settings.
+ *
+ * The plugin is built as two artifacts from one shared source tree because the
+ * Minecraft generations it supports do not share a Java runtime requirement:
+ *
+ *   honeycomb-legacy  ->  Minecraft 1.21.9 - 1.21.11  (Java 21, paper-api 1.21.9)
+ *   honeycomb-modern  ->  Minecraft 26.1   - 26.3     (Java 25, paper-api 26.1.2)
+ *
+ * Each module compiles against the *lowest* API of its range so the resulting
+ * jar stays forward compatible for the whole range.
+ */
+
+rootProject.name = 'honeycomb'
+
+include 'honeycomb-legacy'
+include 'honeycomb-modern'

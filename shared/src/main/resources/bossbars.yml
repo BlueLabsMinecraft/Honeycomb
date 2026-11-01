@@ -1,0 +1,39 @@
+# ---------------------------------------------------------------------------
+#  Honeycomb - bossbars
+#
+#  Every child section is a bossbar. All bars whose conditions match are shown at
+#  once, highest priority first. Honeycomb only ever hides bars it created, so
+#  other plugins' bars are untouched.
+#
+#  progress accepts:
+#    0.0 - 1.0            a static fraction
+#    0 - 100              a percentage
+#    "%player_health%"    a placeholder that resolves to either of the above
+#  duration (seconds) removes the bar automatically; add countdown: true to drain
+#  it over that time.
+# ---------------------------------------------------------------------------
+
+bossbars:
+  enabled: true
+  update-interval: 20
+
+  welcome:
+    enabled: true
+    priority: 10
+    title: "<gradient:#FADE29:#D56B2B><bold>Welcome, %player_name%!</bold></gradient> <gray>Use <white>/honeycomb help</white>"
+    color: YELLOW
+    style: SOLID
+    progress: 1.0
+    conditions:
+      worlds:
+        - world
+
+  restart:
+    enabled: false
+    priority: 90
+    title: "<red><bold>Server restart in 5 minutes"
+    color: RED
+    style: NOTCHED_10
+    progress: 1.0
+    duration: 300
+    countdown: true

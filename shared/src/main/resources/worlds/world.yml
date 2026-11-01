@@ -1,0 +1,26 @@
+# ---------------------------------------------------------------------------
+#  Per-world overrides
+#
+#  A file is named after the world it applies to: world.yml, world_nether.yml,
+#  skyblock.yml. Only the keys you write are overridden; everything else keeps
+#  the value from the main configuration files.
+#
+#  profile:  name of the layout to use in this world (tablist, scoreboard,
+#            belowname). Use "default" for the main layout.
+#  enabled:  false turns that display off in this world only.
+# ---------------------------------------------------------------------------
+
+tablist:
+  profile: default
+
+scoreboard:
+  profile: default
+
+belowname:
+  enabled: false
+
+nametags:
+  enabled: true
+
+bossbars:
+  enabled: true

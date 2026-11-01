@@ -1,0 +1,51 @@
+# ---------------------------------------------------------------------------
+#  Honeycomb - nametags
+#
+#  Groups decorate the name above a player's head. A player joins a group either
+#  by the permissions node honeycomb.group.<name> (works on any permissions
+#  plugin) or by their LuckPerms group name. The highest priority matching group
+#  wins, so a server without LuckPerms still gets ranks.
+#
+#  Prefixes and suffixes are MiniMessage and support placeholders.
+# ---------------------------------------------------------------------------
+
+nametags:
+  enabled: true
+  update-interval: 40
+
+  # Allows teammates to see each other while invisible (scoreboard friendly
+  # invisibility). Leave false unless your server relies on it.
+  see-friendly-invisibles: false
+
+  groups:
+    owner:
+      priority: 100
+      prefix: "<gradient:#FF5555:#FFAA00>[OWNER]</gradient> "
+      suffix: ""
+
+    admin:
+      priority: 80
+      prefix: "<red>[ADMIN]</red> "
+      suffix: ""
+
+    moderator:
+      priority: 60
+      prefix: "<gold>[MOD]</gold> "
+      suffix: ""
+
+    helper:
+      priority: 40
+      prefix: "<aqua>[HELPER]</aqua> "
+      suffix: ""
+
+    default:
+      priority: 0
+      prefix: "<gray>"
+      suffix: ""
+
+    # Example of an explicit permission node instead of the default
+    # honeycomb.group.<name>:
+    # vip:
+    #   priority: 20
+    #   permission: "group.vip"
+    #   prefix: "<green>[VIP]</green> "

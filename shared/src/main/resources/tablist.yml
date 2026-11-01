@@ -1,0 +1,44 @@
+# ---------------------------------------------------------------------------
+#  Honeycomb - tablist
+#
+#  Header and footer are lists of lines. Every line is MiniMessage and supports
+#  placeholders (%player_name%) and animations (<anim:honeycomb>).
+#
+#  The header/footer written here form a profile called "default". Extra layouts
+#  live under "profiles"; the highest priority matching layout wins.
+# ---------------------------------------------------------------------------
+
+tablist:
+  enabled: true
+
+  # Ticks between refreshes (20 ticks = 1 second).
+  update-interval: 40
+
+  header:
+    - "<shadow:#000000:1><gradient:#FADE29:#D56B2B><bold>HONEYCOMB</bold></gradient></shadow>"
+    - "<shadow:#000000:1><gray>Welcome, <white>%player_name%</white>!</shadow>"
+
+  footer:
+    - "<shadow:#000000:1><gray>Online: <yellow>%server_online%</yellow><dark_gray>/</dark_gray><yellow>%server_max_players%</shadow>"
+    - "<shadow:#000000:1><aqua>play.example.net</shadow>"
+
+  # Name shown in the player list. Remove the line to leave names untouched.
+  player-list-name: "<white>%player_name%"
+
+  # Additional layouts. Each one may define its own header, footer, list name,
+  # update interval and conditions.
+  profiles:
+    # Staff only layout. Switched on with staff.tablist in config.yml
+    # or from the panel under Staff.
+    staff:
+      staff: true
+      priority: 10
+      header:
+        - "<gradient:#38BDF8:#2563EB><bold>HONEYCOMB STAFF</bold></gradient>"
+      footer:
+        - "<gray>TPS: <green>%server_tps%"
+        - "<gray>Online: <yellow>%server_online%"
+      player-list-name: "<aqua>[STAFF]</aqua> <white>%player_name%"
+      conditions:
+        permissions:
+          - honeycomb.staff

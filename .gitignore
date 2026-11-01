@@ -1,0 +1,28 @@
+# Build output
+build/
+.gradle/
+out/
+bin/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# Runtime test servers
+run/
+test-servers/
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local secrets and machine specific config
+*.local.yml
+.env
+docs/HANDOVER.md

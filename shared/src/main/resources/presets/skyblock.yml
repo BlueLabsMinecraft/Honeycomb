@@ -1,0 +1,29 @@
+# SkyBlock preset for Honeycomb.
+# Load it with /honeycomb preset load skyblock
+# YOURSERVER comes from server-name, yourserver.net from server-domain, both in config.yml.
+name: SkyBlock
+description: Island level, coins and gems
+
+tablist:
+  update-interval: 20
+  player-list-name: "<white>%player_name%"
+  header:
+    - "<shadow:#000000:1><gradient:#7DD3FC:#2563EB><bold>YOURSERVER</bold></gradient></shadow>"
+    - "<shadow:#000000:1><gray>Island of %island_name%</gray></shadow>"
+  footer:
+    - "<shadow:#000000:1><gray>Online %server_online%</gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"
+
+scoreboard:
+  update-interval: 20
+  title: "<shadow:#000000:1><gradient:#7DD3FC:#2563EB><bold>YOURSERVER</bold></gradient></shadow>"
+  lines:
+    - "<shadow:#000000:1><gray>Level</gray> <dark_gray>→</dark_gray> <green>%island_level%</green></shadow>"
+    - "<shadow:#000000:1><gray>Coins</gray> <dark_gray>→</dark_gray> <gold>$%vault_eco_balance_formatted%</gold></shadow>"
+    - "<shadow:#000000:1><gray>Gems</gray> <dark_gray>→</dark_gray> <aqua>%gems%</aqua></shadow>"
+    - "<shadow:#000000:1><gray>Members</gray> <dark_gray>→</dark_gray> <white>%island_members%</white></shadow>"
+    - ""
+    - "<shadow:#000000:1><gray>Online</gray> <dark_gray>→</dark_gray> <green>%server_online%</green></shadow>"
+    - "<shadow:#000000:1><gray>TPS</gray> <dark_gray>→</dark_gray> <green>%server_tps%</green></shadow>"
+    - "<shadow:#000000:1><dark_gray>-------------------</dark_gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"

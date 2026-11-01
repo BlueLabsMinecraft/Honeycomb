@@ -1,0 +1,29 @@
+# Lifesteal preset for Honeycomb.
+# Load it with /honeycomb preset load lifesteal
+# YOURSERVER comes from server-name, yourserver.net from server-domain, both in config.yml.
+name: Lifesteal
+description: Hearts, kills and revives
+
+tablist:
+  update-interval: 20
+  player-list-name: "<white>%player_name%"
+  header:
+    - "<shadow:#000000:1><gradient:#FF6B6B:#B91C1C><bold>YOURSERVER</bold></gradient></shadow>"
+    - "<shadow:#000000:1><gray>Steal a heart, lose a heart.</gray></shadow>"
+  footer:
+    - "<shadow:#000000:1><gray>Online %server_online%</gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"
+
+scoreboard:
+  update-interval: 20
+  title: "<shadow:#000000:1><gradient:#FF6B6B:#B91C1C><bold>YOURSERVER</bold></gradient></shadow>"
+  lines:
+    - "<shadow:#000000:1><gray>Hearts</gray> <dark_gray>→</dark_gray> <red>%hearts%/%max_hearts%</red></shadow>"
+    - "<shadow:#000000:1><gray>Kills</gray> <dark_gray>→</dark_gray> <gold>%kills%</gold></shadow>"
+    - "<shadow:#000000:1><gray>Deaths</gray> <dark_gray>→</dark_gray> <gray>%deaths%</gray></shadow>"
+    - "<shadow:#000000:1><gray>Shards</gray> <dark_gray>→</dark_gray> <aqua>%shards%</aqua></shadow>"
+    - ""
+    - "<shadow:#000000:1><gray>Online</gray> <dark_gray>→</dark_gray> <green>%server_online%</green></shadow>"
+    - "<shadow:#000000:1><gray>TPS</gray> <dark_gray>→</dark_gray> <green>%server_tps%</green></shadow>"
+    - "<shadow:#000000:1><dark_gray>-------------------</dark_gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"

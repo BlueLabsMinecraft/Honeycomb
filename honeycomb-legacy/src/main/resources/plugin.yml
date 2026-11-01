@@ -1,0 +1,73 @@
+name: Honeycomb
+version: '${projectVersion}'
+main: dev.bluelabs.honeycomb.HoneycombPlugin
+api-version: '1.21'
+authors: [Blue Labs]
+description: Tablist, scoreboard, nametag, bossbar and below-name displays for Paper, in one plugin.
+website: https://discord.gg/DmEPAb3NFU
+softdepend:
+  - PlaceholderAPI
+  - LuckPerms
+  - Vault
+  - Essentials
+  - EssentialsX
+  - CMI
+  - Multiverse-Core
+  - SuperVanish
+  - PremiumVanish
+  - DiscordSRV
+  - ProtocolLib
+  - TAB
+  - scoreboard-revision
+load: POSTWORLD
+
+commands:
+  updatelog:
+    description: Shows the server update log.
+    usage: /updatelog [id]
+    aliases: [changelog, updates]
+    permission: honeycomb.updatelog
+  honeycomb:
+    description: Honeycomb administration command.
+    usage: /honeycomb help
+    aliases: [hc, honey]
+    permission: honeycomb.use
+
+permissions:
+  honeycomb.use:
+    description: Allows use of the base /honeycomb command and its help output.
+    default: true
+  honeycomb.admin:
+    description: Grants every Honeycomb permission.
+    default: op
+    children:
+      honeycomb.reload: true
+      honeycomb.debug: true
+      honeycomb.status: true
+      honeycomb.test: true
+      honeycomb.placeholders: true
+      honeycomb.animations: true
+  honeycomb.reload:
+    description: Allows reloading Honeycomb configuration files.
+    default: op
+  honeycomb.debug:
+    description: Allows the debug report and debug logging toggling.
+    default: op
+  honeycomb.status:
+    description: Allows viewing plugin, display and integration status.
+    default: op
+  honeycomb.test:
+    description: Allows sending test displays to yourself.
+    default: op
+  honeycomb.placeholders:
+    description: Allows inspecting placeholder resolution.
+    default: op
+  honeycomb.animations:
+    description: Allows listing and previewing animations.
+    default: op
+  honeycomb.bypass:
+    description: Exempts the holder from Honeycomb display overrides (keeps their own displays).
+    default: false
+  honeycomb.updatelog:
+    description: Allows opening the update log.
+    default: true

@@ -1,0 +1,76 @@
+/*
+ * Honeycomb for Minecraft 1.21.9 - 1.21.11.
+ *
+ * Compiled with Java 21 against paper-api 1.21.9 (the oldest release of the
+ * range) so the jar runs on every server in the range and on Java 21.
+ */
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+ext {
+    paperApiVersion = '1.21.9-R0.1-SNAPSHOT'
+    minecraftRange = '1.21.9-1.21.11'
+    javaTarget = '21'
+}
+
+dependencies {
+    compileOnly "io.papermc.paper:paper-api:${paperApiVersion}"
+
+    // Optional integrations: compiled against, never bundled, never required at runtime.
+    compileOnly 'me.clip:placeholderapi:2.11.6'
+    // Optional: rewrites the F3 brand packet at send time.
+    compileOnly 'com.comphenix.protocol:ProtocolLib:5.3.0'
+    compileOnly 'net.luckperms:api:5.4'
+    compileOnly('com.github.MilkBowl:VaultAPI:1.7') {
+        // VaultAPI ships its own Bukkit 1.13 dependency; the Paper API provides Bukkit.
+        exclude group: 'org.bukkit', module: 'bukkit'
+    }
+
+    testImplementation "io.papermc.paper:paper-api:${paperApiVersion}"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+sourceSets {
+    main {
+        java.srcDirs = ['../shared/src/main/java']
+        resources.srcDirs = ['src/main/resources', '../shared/src/main/resources']
+    }
+    test {
+        java.srcDirs = ['../shared/src/test/java']
+    }
+}
+
+processResources {
+    filesMatching(['plugin.yml', 'honeycomb-build.properties']) {
+        expand(
+                projectVersion: project.version,
+                minecraftRange: project.minecraftRange,
+                javaTarget: project.javaTarget
+        )
+    }
+}
+
+jar {
+    archiveBaseName = 'Honeycomb'
+    archiveVersion = "${project.version}-mc${project.minecraftRange}"
+    manifest {
+        attributes(
+                'Implementation-Title': 'Honeycomb',
+                'Implementation-Version': project.version,
+                'Implementation-Vendor': 'Blue Labs',
+                'Minecraft-Range': project.minecraftRange,
+                'Built-With-Java': project.javaTarget
+        )
+    }
+}
+
+// Netty ships with the server; the F3 brand handler needs it to compile.
+dependencies {
+    compileOnly 'io.netty:netty-transport:4.1.115.Final'
+    compileOnly 'io.netty:netty-common:4.1.115.Final'
+}

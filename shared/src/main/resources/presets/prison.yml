@@ -1,0 +1,29 @@
+# Prison preset for Honeycomb.
+# Load it with /honeycomb preset load prison
+# YOURSERVER comes from server-name, yourserver.net from server-domain, both in config.yml.
+name: Prison
+description: Blocks mined, tokens and rank
+
+tablist:
+  update-interval: 20
+  player-list-name: "<white>%player_name%"
+  header:
+    - "<shadow:#000000:1><gradient:#FACC15:#78350F><bold>YOURSERVER</bold></gradient></shadow>"
+    - "<shadow:#000000:1><gray>Mine, rank up, repeat.</gray></shadow>"
+  footer:
+    - "<shadow:#000000:1><gray>Sell with /sellall</gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"
+
+scoreboard:
+  update-interval: 20
+  title: "<shadow:#000000:1><gradient:#FACC15:#78350F><bold>YOURSERVER</bold></gradient></shadow>"
+  lines:
+    - "<shadow:#000000:1><gray>Rank</gray> <dark_gray>→</dark_gray> <yellow>%rank%</yellow></shadow>"
+    - "<shadow:#000000:1><gray>Blocks</gray> <dark_gray>→</dark_gray> <green>%blocks_mined%</green></shadow>"
+    - "<shadow:#000000:1><gray>Tokens</gray> <dark_gray>→</dark_gray> <aqua>%token%</aqua></shadow>"
+    - "<shadow:#000000:1><gray>Balance</gray> <dark_gray>→</dark_gray> <gold>$%vault_eco_balance_formatted%</gold></shadow>"
+    - ""
+    - "<shadow:#000000:1><gray>Online</gray> <dark_gray>→</dark_gray> <green>%server_online%</green></shadow>"
+    - "<shadow:#000000:1><gray>TPS</gray> <dark_gray>→</dark_gray> <green>%server_tps%</green></shadow>"
+    - "<shadow:#000000:1><dark_gray>-------------------</dark_gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"

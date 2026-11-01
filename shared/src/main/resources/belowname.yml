@@ -1,0 +1,27 @@
+# ---------------------------------------------------------------------------
+#  Honeycomb - below-name display
+#
+#  The text under every nametag.
+#
+#  mode: health  uses Minecraft's own health display (free, updates client side)
+#  mode: custom  renders "value" per player
+#
+#  Custom mode costs one scoreboard write per visible player per viewer, so it is
+#  disabled by default on large servers.
+# ---------------------------------------------------------------------------
+
+belowname:
+  enabled: false
+  mode: custom
+  value: "<red>%player_health%</red><dark_gray>/</dark_gray><red>%player_max_health%</red> <dark_gray>HP"
+  update-interval: 20
+
+  profiles:
+    # Example: show level instead of health on a specific world.
+    # level:
+    #   enabled: true
+    #   mode: custom
+    #   value: "<yellow>Lv %player_level%"
+    #   priority: 20
+    #   conditions:
+    #     worlds: [skyblock]

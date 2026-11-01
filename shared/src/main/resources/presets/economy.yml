@@ -1,0 +1,28 @@
+# Economy preset for Honeycomb.
+# Load it with /honeycomb preset load economy
+# YOURSERVER comes from server-name, yourserver.net from server-domain, both in config.yml.
+name: Economy
+description: Balance, tokens and playtime
+
+tablist:
+  update-interval: 20
+  player-list-name: "<white>%player_name%"
+  header:
+    - "<shadow:#000000:1><gradient:#FFD166:#EF8354><bold>YOURSERVER</bold></gradient></shadow>"
+    - "<shadow:#000000:1><gray>Shop opens with /shop</gray></shadow>"
+  footer:
+    - "<shadow:#000000:1><gray>Sell with /sellall</gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"
+
+scoreboard:
+  update-interval: 20
+  title: "<shadow:#000000:1><gradient:#FFD166:#EF8354><bold>YOURSERVER</bold></gradient></shadow>"
+  lines:
+    - "<shadow:#000000:1><gray>Balance</gray> <dark_gray>→</dark_gray> <gold>$%vault_eco_balance_formatted%</gold></shadow>"
+    - "<shadow:#000000:1><gray>Tokens</gray> <dark_gray>→</dark_gray> <aqua>%token%</aqua></shadow>"
+    - "<shadow:#000000:1><gray>Playtime</gray> <dark_gray>→</dark_gray> <green>%player_online_time%</green></shadow>"
+    - ""
+    - "<shadow:#000000:1><gray>Online</gray> <dark_gray>→</dark_gray> <green>%server_online%</green></shadow>"
+    - "<shadow:#000000:1><gray>TPS</gray> <dark_gray>→</dark_gray> <green>%server_tps%</green></shadow>"
+    - "<shadow:#000000:1><dark_gray>-------------------</dark_gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"

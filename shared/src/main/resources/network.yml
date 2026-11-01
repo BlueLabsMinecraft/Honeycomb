@@ -1,0 +1,24 @@
+# ---------------------------------------------------------------------------
+#  Honeycomb - proxy support
+#
+#  Provides %network_online% and %network_server%. Honeycomb asks the proxy for
+#  the numbers over plugin messaging and reports nothing until the proxy answers,
+#  so the placeholders never show invented values.
+#
+#  Standalone server: leave enabled: false.
+#  BungeeCord:        type: bungee
+#  Velocity:          type: velocity  (enable bungee-plugin-message-channel in
+#                                      velocity.toml so the proxy forwards it)
+#
+#  Reading network wide counts requires the proxy, the channel and a player to
+#  carry the message: all three are real requirements, not limitations Honeycomb
+#  can hide.
+# ---------------------------------------------------------------------------
+
+network:
+  enabled: false
+  type: bungee
+  # Name of this server on the network. Leave empty to ask the proxy.
+  server-name: ""
+  # How often to ask the proxy for fresh counts.
+  request-interval-seconds: 10

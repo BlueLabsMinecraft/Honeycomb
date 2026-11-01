@@ -1,0 +1,42 @@
+# ---------------------------------------------------------------------------
+#  Honeycomb - optional integrations
+#
+#  Every integration is optional. Honeycomb starts normally when none of these
+#  plugins is installed; it simply reports them as unavailable.
+#
+#  Honeycomb never imports classes from a plugin that is not present, so a
+#  missing plugin can never break startup.
+# ---------------------------------------------------------------------------
+
+integrations:
+  placeholderapi:
+    enabled: true
+
+  luckperms:
+    enabled: true
+    # Use LuckPerms prefixes/suffixes for %player_prefix% and %player_suffix%.
+    use-prefix: true
+    use-suffix: true
+
+  vault:
+    enabled: true
+
+  essentials:
+    enabled: true
+
+  cmi:
+    enabled: true
+
+  vanish:
+    enabled: true
+
+  # State is read from player metadata, which is how EssentialsX, CMI and the
+  # vanish plugins publish it. Keys are matched case insensitively.
+  state:
+    afk-metadata-keys:
+      - afk
+      - cmi.afk
+    vanish-metadata-keys:
+      - vanished
+      - invisible
+    use-display-name-as-nickname: true

@@ -1,0 +1,30 @@
+name: Feature request
+description: Suggest a display option, a command or a behaviour
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve
+      description: Describe the situation, not only the solution
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you would like
+      description: Config shape, command, or panel screen if you have one in mind
+    validations:
+      required: true
+  - type: input
+    id: alternatives
+    attributes:
+      label: What you do today instead
+      description: Another plugin, a workaround, or nothing
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before posting
+      options:
+        - label: I searched existing issues and the docs
+          required: true

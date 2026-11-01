@@ -1,0 +1,20 @@
+# ---------------------------------------------------------------------------
+#  Honeycomb - update log
+#
+#  Titles and bodies accept MiniMessage and placeholders.
+#  Admins publish entries from /honeycomb panel > Update log.
+#  Players read them with /updatelog, /changelog or /updates.
+# ---------------------------------------------------------------------------
+
+enabled: true
+
+entries:
+  "0.6.0":
+    title: "<gradient:#FADE29:#D56B2B><bold>Animations everywhere</bold></gradient>"
+    date: "<gray>1 November 2026"
+    body:
+      - "<white>Animations can be made from the admin panel."
+      - "<gray>Use one anywhere as <white>{honeycomb.<id>}</white>, in the tablist,"
+      - "<gray>the scoreboard, the F3 brand or a boss bar."
+      - "<gray>Every default tablist and scoreboard line now has a drop shadow."
+      - "<gray>The F3 brand turns green here once ProtocolLib is installed."

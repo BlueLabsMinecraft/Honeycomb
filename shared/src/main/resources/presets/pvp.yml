@@ -1,0 +1,30 @@
+# PvP preset for Honeycomb.
+# Load it with /honeycomb preset load pvp
+# YOURSERVER comes from server-name, yourserver.net from server-domain, both in config.yml.
+name: PvP
+description: Kit PvP with kills and ping
+
+tablist:
+  update-interval: 20
+  player-list-name: "<white>%player_name%"
+  header:
+    - "<shadow:#000000:1><gradient:#FF2E4D:#8E1B2E><bold>YOURSERVER</bold></gradient></shadow>"
+    - "<shadow:#000000:1><gray>Fight hard, die never.</gray></shadow>"
+  footer:
+    - "<shadow:#000000:1><gray>Kills %kills% | Deaths %deaths%</gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"
+
+scoreboard:
+  update-interval: 20
+  title: "<shadow:#000000:1><gradient:#FF2E4D:#8E1B2E><bold>YOURSERVER</bold></gradient></shadow>"
+  lines:
+    - "<shadow:#000000:1><gray>Kills</gray> <dark_gray>→</dark_gray> <gold>%kills%</gold></shadow>"
+    - "<shadow:#000000:1><gray>Deaths</gray> <dark_gray>→</dark_gray> <gray>%deaths%</gray></shadow>"
+    - "<shadow:#000000:1><gray>Streak</gray> <dark_gray>→</dark_gray> <red>%streak%</red></shadow>"
+    - "<shadow:#000000:1><gray>Ping</gray> <dark_gray>→</dark_gray> <yellow>%player_ping% ms</yellow></shadow>"
+    - "<shadow:#000000:1><gray>Health</gray> <dark_gray>→</dark_gray> <red>%player_health%</red></shadow>"
+    - ""
+    - "<shadow:#000000:1><gray>Online</gray> <dark_gray>→</dark_gray> <green>%server_online%</green></shadow>"
+    - "<shadow:#000000:1><gray>TPS</gray> <dark_gray>→</dark_gray> <green>%server_tps%</green></shadow>"
+    - "<shadow:#000000:1><dark_gray>-------------------</dark_gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"

@@ -1,0 +1,54 @@
+plugins {
+    id 'base'
+}
+
+allprojects {
+    group = 'dev.bluelabs'
+    version = '0.7.2'
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    repositories {
+        mavenCentral()
+        // Paper API, Adventure and their transitive dependencies.
+        maven { url = uri('https://repo.papermc.io/repository/maven-public/') }
+        // PlaceholderAPI
+        maven { url = uri('https://repo.extendedclip.com/content/repositories/placeholderapi/') }
+        // VaultAPI
+        maven { url = uri('https://jitpack.io') }
+        // ProtocolLib
+        maven { url = uri('https://repo.dmulloy2.net/repository/public/') }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.compilerArgs << '-Xlint:deprecation' << '-Xlint:unchecked'
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        testLogging {
+            events 'passed', 'skipped', 'failed'
+            exceptionFormat = 'full'
+        }
+    }
+}
+
+// Convenience aggregate task: ./gradlew artifacts
+tasks.register('artifacts') {
+    group = 'build'
+    description = 'Builds the installable Honeycomb jars for every supported Minecraft range.'
+    dependsOn ':honeycomb-legacy:build', ':honeycomb-modern:build'
+    doLast {
+        println 'Honeycomb artifacts:'
+        subprojects.each { sub ->
+            sub.tasks.withType(Jar).each { jarTask ->
+                if (jarTask.archiveFile.get().asFile.exists()) {
+                    println "  ${jarTask.archiveFile.get().asFile.absolutePath}"
+                }
+            }
+        }
+    }
+}

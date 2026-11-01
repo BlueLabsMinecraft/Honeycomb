@@ -1,0 +1,29 @@
+# Factions preset for Honeycomb.
+# Load it with /honeycomb preset load factions
+# YOURSERVER comes from server-name, yourserver.net from server-domain, both in config.yml.
+name: Factions
+description: Faction power and balance
+
+tablist:
+  update-interval: 20
+  player-list-name: "<white>%player_name%"
+  header:
+    - "<shadow:#000000:1><gradient:#A78BFA:#6D28D9><bold>YOURSERVER</bold></gradient></shadow>"
+    - "<shadow:#000000:1><gray>Claim land, hold it.</gray></shadow>"
+  footer:
+    - "<shadow:#000000:1><gray>Online %server_online%</gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"
+
+scoreboard:
+  update-interval: 20
+  title: "<shadow:#000000:1><gradient:#A78BFA:#6D28D9><bold>YOURSERVER</bold></gradient></shadow>"
+  lines:
+    - "<shadow:#000000:1><gray>Faction</gray> <dark_gray>→</dark_gray> <light_purple>%faction%</light_purple></shadow>"
+    - "<shadow:#000000:1><gray>Power</gray> <dark_gray>→</dark_gray> <green>%power%</green></shadow>"
+    - "<shadow:#000000:1><gray>Land</gray> <dark_gray>→</dark_gray> <aqua>%land%</aqua></shadow>"
+    - "<shadow:#000000:1><gray>Balance</gray> <dark_gray>→</dark_gray> <gold>$%vault_eco_balance_formatted%</gold></shadow>"
+    - ""
+    - "<shadow:#000000:1><gray>Online</gray> <dark_gray>→</dark_gray> <green>%server_online%</green></shadow>"
+    - "<shadow:#000000:1><gray>TPS</gray> <dark_gray>→</dark_gray> <green>%server_tps%</green></shadow>"
+    - "<shadow:#000000:1><dark_gray>-------------------</dark_gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"

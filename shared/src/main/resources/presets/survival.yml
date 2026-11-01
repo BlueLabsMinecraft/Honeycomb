@@ -1,0 +1,29 @@
+# Survival preset for Honeycomb.
+# Load it with /honeycomb preset load survival
+# YOURSERVER comes from server-name, yourserver.net from server-domain, both in config.yml.
+name: Survival
+description: Plain survival look
+
+tablist:
+  update-interval: 20
+  player-list-name: "<white>%player_name%"
+  header:
+    - "<shadow:#000000:1><gradient:#7CFF8A:#1FA463><bold>YOURSERVER</bold></gradient></shadow>"
+    - "<shadow:#000000:1><gray>Survive the night, build the rest.</gray></shadow>"
+  footer:
+    - "<shadow:#000000:1><gray>Online %server_online%</gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"
+
+scoreboard:
+  update-interval: 20
+  title: "<shadow:#000000:1><gradient:#7CFF8A:#1FA463><bold>YOURSERVER</bold></gradient></shadow>"
+  lines:
+    - "<shadow:#000000:1><gray>Health</gray> <dark_gray>→</dark_gray> <red>%player_health%/%player_max_health%</red></shadow>"
+    - "<shadow:#000000:1><gray>Food</gray> <dark_gray>→</dark_gray> <gold>%player_food%</gold></shadow>"
+    - "<shadow:#000000:1><gray>Coords</gray> <dark_gray>→</dark_gray> <aqua>%player_x% %player_y% %player_z%</aqua></shadow>"
+    - "<shadow:#000000:1><gray>World</gray> <dark_gray>→</dark_gray> <green>%player_world%</green></shadow>"
+    - ""
+    - "<shadow:#000000:1><gray>Online</gray> <dark_gray>→</dark_gray> <green>%server_online%</green></shadow>"
+    - "<shadow:#000000:1><gray>TPS</gray> <dark_gray>→</dark_gray> <green>%server_tps%</green></shadow>"
+    - "<shadow:#000000:1><dark_gray>-------------------</dark_gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"

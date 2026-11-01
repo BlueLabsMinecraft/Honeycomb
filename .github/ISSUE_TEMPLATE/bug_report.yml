@@ -1,0 +1,62 @@
+name: Bug report
+description: Something renders wrong, breaks, or does not apply
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. A log line and the exact version make a fix much faster.
+  - type: input
+    id: version
+    attributes:
+      label: Honeycomb version
+      description: From the jar name or `/honeycomb status`
+      placeholder: 0.7.2
+    validations:
+      required: true
+  - type: input
+    id: server
+    attributes:
+      label: Server version
+      description: Output of `/version`
+      placeholder: Paper 1.21.9 build 1234, Java 21
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: What you see, and what you expected instead
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. /honeycomb preset load smp
+        2. open the sidebar
+        3. rows shift every second
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant config
+      description: The file you edited, with anything private removed
+      render: yaml
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log
+      description: Console output from startup and the moment it happens
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before posting
+      options:
+        - label: I am on the newest release
+          required: true
+        - label: I searched existing issues
+          required: true

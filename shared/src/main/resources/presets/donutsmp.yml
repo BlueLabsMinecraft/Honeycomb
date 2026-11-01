@@ -1,0 +1,30 @@
+# DonutSMP preset for Honeycomb.
+# Load it with /honeycomb preset load donutsmp
+# YOURSERVER comes from server-name, yourserver.net from server-domain, both in config.yml.
+name: DonutSMP
+description: Money, shards and K/D, the DonutSMP way
+
+tablist:
+  update-interval: 20
+  player-list-name: "<white>%player_name%"
+  header:
+    - "<shadow:#000000:1><gradient:#FF7AC6:#FF3D71><bold>YOURSERVER</bold></gradient></shadow>"
+    - "<shadow:#000000:1><gray>Grind, sell, repeat.</gray></shadow>"
+  footer:
+    - "<shadow:#000000:1><gray>Online %server_online% | TPS %server_tps%</gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"
+
+scoreboard:
+  update-interval: 20
+  title: "<shadow:#000000:1><gradient:#FF7AC6:#FF3D71><bold>YOURSERVER</bold></gradient></shadow>"
+  lines:
+    - "<shadow:#000000:1><gray>Money</gray> <dark_gray>→</dark_gray> <green>$%vault_eco_balance_formatted%</green></shadow>"
+    - "<shadow:#000000:1><gray>Shards</gray> <dark_gray>→</dark_gray> <aqua>%shards%</aqua></shadow>"
+    - "<shadow:#000000:1><gray>Kills</gray> <dark_gray>→</dark_gray> <red>%kills%</red></shadow>"
+    - "<shadow:#000000:1><gray>Deaths</gray> <dark_gray>→</dark_gray> <gray>%deaths%</gray></shadow>"
+    - "<shadow:#000000:1><gray>K/D</gray> <dark_gray>→</dark_gray> <yellow>%kdr%</yellow></shadow>"
+    - ""
+    - "<shadow:#000000:1><gray>Online</gray> <dark_gray>→</dark_gray> <green>%server_online%</green></shadow>"
+    - "<shadow:#000000:1><gray>TPS</gray> <dark_gray>→</dark_gray> <green>%server_tps%</green></shadow>"
+    - "<shadow:#000000:1><dark_gray>-------------------</dark_gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"

@@ -1,0 +1,37 @@
+# ---------------------------------------------------------------------------
+#  Honeycomb - placeholder engine
+#
+#  Internal placeholders (all %percent% wrapped):
+#    %player_name% %player_displayname% %player_uuid% %player_world%
+#    %player_ping% %player_health% %player_max_health% %player_health_percent%
+#    %player_level% %player_food% %player_gamemode% %player_x% %player_y% %player_z%
+#    %player_online_time% %player_playtime_ticks% %player_biome%
+#    %player_group% %player_prefix% %player_suffix% %player_afk% %player_afk_tag%
+#    %player_nickname% %player_vanished%
+#    %server_online% %server_max_players% %server_name% %server_version%
+#    %server_bukkit% %server_tps% %server_mspt% %server_memory_used%
+#    %server_memory_max% %server_memory_percent% %server_uptime%
+#    %server_uptime_clock% %server_time_zone%
+#    %world% %world_players% %date% %time%
+#    %econ_balance% (needs Vault + an economy plugin)
+#    %network_online% %network_server% (needs a proxy, see network.yml)
+#
+#  PlaceholderAPI placeholders also work, for example %vault_eco_balance%.
+#  Unknown placeholders are left visible so you can spot a typo immediately.
+# ---------------------------------------------------------------------------
+
+# Shown by %server_name%. Left empty, Honeycomb uses the proxy server name from
+# network.yml, then the server implementation name.
+server-name: ""
+
+# Date and time formatting for %date% and %time%.
+# Pattern reference: https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
+date-format: "dd/MM/yyyy"
+time-format: "HH:mm:ss"
+
+# Time zone for %date% and %time% (for example Europe/London). Empty = server default.
+timezone: ""
+
+# How long, in ticks, an expanded placeholder value may be reused.
+# Higher values cost less CPU but update more slowly. 0 disables caching.
+cache-ttl-ticks: 10

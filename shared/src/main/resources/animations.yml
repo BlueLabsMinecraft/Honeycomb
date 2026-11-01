@@ -1,0 +1,26 @@
+# ---------------------------------------------------------------------------
+#  Honeycomb - animations
+#
+#  Use an animation in any template as <anim:id>, for example:
+#    title: "<anim:honeycomb>"
+#
+#  interval is in ticks (5 ticks = four frames per second). One animation can
+#  drive any number of lines and players without extra tasks.
+# ---------------------------------------------------------------------------
+
+animations:
+  honeycomb:
+    interval: 5
+    loop: true
+    frames:
+      - "<gradient:#FADE29:#D56B2B><bold>HONEYCOMB</bold></gradient>"
+      - "<gradient:#D56B2B:#FADE29><bold>HONEYCOMB</bold></gradient>"
+      - "<gradient:#FADE29:#FFFFFF><bold>HONEYCOMB</bold></gradient>"
+      - "<gradient:#FFFFFF:#FADE29><bold>HONEYCOMB</bold></gradient>"
+
+  gradient:
+    interval: 3
+    loop: true
+    frames:
+      - "<gradient:#38BDF8:#2563EB>play.example.net</gradient>"
+      - "<gradient:#2563EB:#38BDF8>play.example.net</gradient>"

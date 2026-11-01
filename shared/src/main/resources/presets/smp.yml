@@ -1,0 +1,28 @@
+# SMP preset for Honeycomb.
+# Load it with /honeycomb preset load smp
+# YOURSERVER comes from server-name, yourserver.net from server-domain, both in config.yml.
+name: SMP
+description: Friendly survival multiplayer
+
+tablist:
+  update-interval: 20
+  player-list-name: "<white>%player_name%"
+  header:
+    - "<shadow:#000000:1><gradient:#FADE29:#D56B2B><bold>YOURSERVER</bold></gradient></shadow>"
+    - "<shadow:#000000:1><gray>Welcome back, %player_name%</gray></shadow>"
+  footer:
+    - "<shadow:#000000:1><gray>Online %server_online% of %server_max_players%</gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"
+
+scoreboard:
+  update-interval: 20
+  title: "<shadow:#000000:1><gradient:#FADE29:#D56B2B><bold>YOURSERVER</bold></gradient></shadow>"
+  lines:
+    - "<shadow:#000000:1><gray>Player</gray> <dark_gray>→</dark_gray> <green>%player_name%</green></shadow>"
+    - "<shadow:#000000:1><gray>World</gray> <dark_gray>→</dark_gray> <green>%player_world%</green></shadow>"
+    - "<shadow:#000000:1><gray>Ping</gray> <dark_gray>→</dark_gray> <green>%player_ping% ms</green></shadow>"
+    - ""
+    - "<shadow:#000000:1><gray>Online</gray> <dark_gray>→</dark_gray> <green>%server_online%</green></shadow>"
+    - "<shadow:#000000:1><gray>TPS</gray> <dark_gray>→</dark_gray> <green>%server_tps%</green></shadow>"
+    - "<shadow:#000000:1><dark_gray>-------------------</dark_gray></shadow>"
+    - "<shadow:#000000:1><gray>yourserver.net</gray></shadow>"

@@ -1,0 +1,86 @@
+# ---------------------------------------------------------------------------
+#  Honeycomb - general configuration
+#
+#  Displays live in their own files:
+#    tablist.yml  scoreboards.yml  nametags.yml  bossbars.yml  belowname.yml
+#    sorting.yml  animations.yml   placeholders.yml  integrations.yml
+#    network.yml  messages.yml     worlds/<world>.yml
+#
+#  Every display can be enabled or disabled on its own. Nothing in this file
+#  needs changing to get started: the defaults are safe for a live server.
+#
+#  All text uses MiniMessage: https://docs.advntr.dev/minimessage/format.html
+# ---------------------------------------------------------------------------
+
+# Do not edit: Honeycomb uses this to migrate settings between releases.
+config-version: 1
+
+# Verbose logging for troubleshooting. Equivalent to /honeycomb debug on.
+debug: false
+
+# Players with the permission honeycomb.bypass keep whatever displays they were
+# already using and are skipped by every Honeycomb system.
+respect-bypass-permission: true
+
+# Fallback refresh interval, in ticks, for displays that do not set their own.
+# 20 ticks = 1 second. Lower values look smoother and cost more CPU.
+default-update-interval: 20
+
+# Worlds in which Honeycomb updates nothing at all (lower case, exact names).
+# Individual displays can still use per-world profiles in the worlds/ folder.
+disabled-worlds: []
+#  - creative_plots
+
+# Name used inside presets. /honeycomb preset load swaps YOURSERVER for this.
+server-name: "YOURSERVER"
+# Address used inside presets. Presets print it in the footer; change it here.
+server-domain: "yourserver.net"
+
+# Nametag handling.
+nametags:
+  # true  - Honeycomb keeps its teams on its own scoreboard, so other plugins
+  #         cannot delete them and Honeycomb cannot delete theirs.
+  # false - teams are created on the server main scoreboard (legacy behaviour).
+  use-dedicated-scoreboard: true
+
+# Performance tuning.
+performance:
+  # How often, in ticks, expired placeholder cache entries are swept.
+  cache-sweep-interval: 200
+  # Warn once per unknown placeholder instead of failing silently.
+  warn-unknown-placeholders: true
+
+# Coexistence with other display plugins.
+conflicts:
+  # Detect display plugins that own the same elements and report them on startup.
+  detect: true
+  # Print the short "who should own what" advice with the detection result.
+  log-advice: true
+
+# ---------------------------------------------------------------------------
+#  Server cosmetics
+# ---------------------------------------------------------------------------
+# F3 brand: the name the client shows in the debug screen. Paper does not expose
+# this through its API on every build; when it is unavailable Honeycomb logs one
+# warning and leaves the stock brand alone.
+brand:
+  enabled: false
+  text: "Honeycomb"
+
+# Hide the plugin list and version dump from everyone without
+# honeycomb.commands.view (grant it to staff).
+commands:
+  # Hides /pl, /plugins, /version, /ver, /about and /icanhasbukkit.
+  hide-pl-version: true
+  # Also removes hidden commands from tab completion for those players.
+  hide-from-tab: true
+  # Any other command to hide, for example "help" or "bukkit:help".
+  hidden: []
+  # What the player sees instead. MiniMessage is supported.
+  hidden-message: "<red>You can't see that!"
+
+# Staff only layouts. Both are off until you turn them on here or in the panel,
+# so a fresh install shows one layout to everybody.
+staff:
+  tablist: false
+  scoreboard: false

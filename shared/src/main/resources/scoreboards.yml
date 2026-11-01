@@ -1,0 +1,51 @@
+# ---------------------------------------------------------------------------
+#  Honeycomb - sidebar scoreboards
+#
+#  Each child section is a layout. The highest priority layout whose conditions
+#  match is shown; layouts are updated in place, so the sidebar never flickers.
+#  Up to 15 lines are rendered (a Minecraft limit).
+# ---------------------------------------------------------------------------
+
+scoreboards:
+  enabled: true
+
+  default:
+    priority: 0
+    update-interval: 20
+    # true hides the red score numbers next to each line.
+    hide-numbers: true
+    title: "<shadow:#000000:1><gradient:#FADE29:#D56B2B><bold>HONEYCOMB</bold></gradient></shadow>"
+    lines:
+      - "<shadow:#000000:1><dark_gray>━━━━━━━━━━━━</shadow>"
+      - "<shadow:#000000:1><white>Player: <aqua>%player_name%</shadow>"
+      - "<shadow:#000000:1><white>Rank: <gold>%player_prefix%</shadow>"
+      - "<shadow:#000000:1><white>World: <green>%world%</shadow>"
+      - "<shadow:#000000:1><white>Ping: <yellow>%player_ping%ms</shadow>"
+      - ""
+      - "<shadow:#000000:1><white>Online: <green>%server_online%</shadow>"
+      - "<shadow:#000000:1><white>TPS: <green>%server_tps%</shadow>"
+      - "<shadow:#000000:1><gray>play.example.net</shadow>"
+      - "<shadow:#000000:1><dark_gray>━━━━━━━━━━━━</shadow>"
+
+  # Staff only layout. Switched on with staff.scoreboard in config.yml
+  # or from the panel under Staff.
+  staff:
+    staff: true
+    priority: 50
+    update-interval: 20
+    hide-numbers: true
+    title: "<gradient:#38BDF8:#2563EB><bold>STAFF VIEW</bold></gradient>"
+    lines:
+      - "<white>Player: <aqua>%player_name%"
+      - "<white>Group: <gold>%player_group%"
+      - "<white>AFK: <yellow>%player_afk_tag%"
+      - ""
+      - "<white>TPS: <green>%server_tps%"
+      - "<white>MSPT: <green>%server_mspt%"
+      - "<white>Memory: <green>%server_memory_used%<dark_gray>/</dark_gray><green>%server_memory_max% MB"
+      - "<white>Vanish: <yellow>%player_vanished%"
+      - ""
+      - "<dark_gray>━━━━━━━━━━━━"
+    conditions:
+      permissions:
+        - honeycomb.staff
