@@ -94,4 +94,40 @@ class ProfileConditionsTest {
         assertTrue(conditions.matches(context("world", "ADMIN", Set.of())));
         assertFalse(conditions.matches(context("world", "default", Set.of())));
     }
+
+    @Test
+    void placeholderComparisons() throws InvalidConfigurationException {
+        ProfileConditions conditions = parse("conditions:\n"
+                + "  placeholders:\n"
+                + "    - '%vault_eco_balance% >= 100000'\n"
+                + "    - '%player_world% == world_nether'");
+        MatchContext rich = MatchContext.of("world_nether", "owner", permission -> true)
+                .withPlaceholders(text -> text.replace("%vault_eco_balance%", "238000")
+                        .replace("%player_world%", "world_nether"));
+        MatchContext poor = MatchContext.of("world_nether", "owner", permission -> true)
+                .withPlaceholders(text -> text.replace("%vault_eco_balance%", "99")
+                        .replace("%player_world%", "world_nether"));
+        assertTrue(conditions.matches(rich));
+        assertFalse(conditions.matches(poor));
+    }
+
+    @Test
+    void numbersWithCommasCompareAsNumbers() throws InvalidConfigurationException {
+        ProfileConditions conditions = parse("conditions:\n"
+                + "  placeholders:\n"
+                + "    - '%vault_eco_balance% >= 100,000'");
+        MatchContext context = MatchContext.of("world", "default", permission -> true)
+                .withPlaceholders(text -> text.replace("%vault_eco_balance%", "100,000"));
+        assertTrue(conditions.matches(context));
+    }
+
+    @Test
+    void missingOperatorIsReported() throws InvalidConfigurationException {
+        ProfileConditions conditions = parse("conditions:\n"
+                + "  placeholders:\n"
+                + "    - '%vault_eco_balance%'");
+        MatchContext context = MatchContext.of("world", "default", permission -> true)
+                .withPlaceholders(text -> text.replace("%vault_eco_balance%", "100000"));
+        assertTrue(conditions.matches(context));
+    }
 }

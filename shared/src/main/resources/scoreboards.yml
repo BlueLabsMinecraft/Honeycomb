@@ -49,3 +49,17 @@ scoreboards:
     conditions:
       permissions:
         - honeycomb.staff
+
+  # Balance driven layout. Works with any placeholder, the comparison is what
+  # decides the layout, the text can say anything.
+  high-roller:
+    priority: 40
+    update-interval: 20
+    hide-numbers: true
+    title: "<shadow:#000000:1><gradient:#FFD34A:#C8871B><bold>WALLET</bold></gradient></shadow>"
+    lines:
+      - "<shadow:#000000:1><gray>Balance</gray> <dark_gray>→</dark_gray> <green>$%vault_eco_balance_formatted%</green></shadow>"
+      - "<shadow:#000000:1><gray>Server</gray> <dark_gray>→</dark_gray> <white>yourserver.net</white></shadow>"
+    conditions:
+      placeholders:
+        - "%vault_eco_balance% >= 100000"

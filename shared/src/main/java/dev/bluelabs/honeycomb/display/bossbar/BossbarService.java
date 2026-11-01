@@ -173,7 +173,8 @@ public final class BossbarService implements DisplaySystem {
         long now = clock.tick();
         removeExpired(player, session, now);
 
-        MatchContext context = MatchContext.of(player, groups.group(player));
+        MatchContext context = MatchContext.of(player, groups.group(player))
+                .withPlaceholders(text -> pipeline.placeholders().expand(text, PlaceholderContext.of(player)));
         Set<String> applicable = new HashSet<>();
         PlaceholderContext placeholders = PlaceholderContext.of(player);
 

@@ -3,6 +3,7 @@ package dev.bluelabs.honeycomb.display;
 import org.bukkit.entity.Player;
 
 import java.util.Locale;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -16,11 +17,14 @@ public final class MatchContext {
     private final String worldName;
     private final String group;
     private final Predicate<String> permissionCheck;
+    private final Function<String, String> placeholderResolver;
 
-    private MatchContext(String worldName, String group, Predicate<String> permissionCheck) {
+    private MatchContext(String worldName, String group, Predicate<String> permissionCheck,
+                         Function<String, String> placeholderResolver) {
         this.worldName = worldName == null ? "" : worldName;
         this.group = group == null ? "" : group.toLowerCase(Locale.ROOT);
         this.permissionCheck = permissionCheck;
+        this.placeholderResolver = placeholderResolver;
     }
 
     /**
@@ -31,7 +35,7 @@ public final class MatchContext {
      * @return the context
      */
     public static MatchContext of(Player player, String group) {
-        return new MatchContext(player.getWorld().getName(), group, player::hasPermission);
+        return new MatchContext(player.getWorld().getName(), group, player::hasPermission, null);
     }
 
     /**
@@ -43,7 +47,32 @@ public final class MatchContext {
      * @return the context
      */
     public static MatchContext of(String worldName, String group, Predicate<String> permissionCheck) {
-        return new MatchContext(worldName, group, permissionCheck);
+        return new MatchContext(worldName, group, permissionCheck, null);
+    }
+
+    /**
+     * Returns a copy of this context that can expand placeholders while matching
+     * conditions, which is what makes a money or world comparison possible.
+     *
+     * @param resolver expands a string containing placeholders
+     * @return the context, or this one when a resolver was already set
+     */
+    public MatchContext withPlaceholders(Function<String, String> resolver) {
+        if (resolver == null || placeholderResolver != null) {
+            return this;
+        }
+        return new MatchContext(worldName, group, permissionCheck, resolver);
+    }
+
+    /**
+     * @param input text that may contain placeholders
+     * @return the expanded text, or the input unchanged when no resolver is set
+     */
+    public String resolvePlaceholders(String input) {
+        if (input == null) {
+            return "";
+        }
+        return placeholderResolver == null ? input : placeholderResolver.apply(input);
     }
 
     /**

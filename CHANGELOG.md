@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.0 - 2026-11-01
+
+- Conditions can compare placeholders, not only match worlds, groups and
+  permissions. `%vault_eco_balance% >= 100000`, `%player_group% == owner` and
+  `%player_world% contains nether` all select a layout the way TAB does.
+- Operators: ==, !=, >=, <=, >, < and contains. Numbers are compared as numbers,
+  so 100000, 100,000 and $100,000 all read the same.
+- Conditions work on tablist, scoreboard, bossbar and below name layouts.
+- Presets use arrows between label and value, YOURSERVER as heading and
+  yourserver.net in the footer.
+- Bundled presets refresh on upgrade, edited copies are kept in presets/backup-<version>.
+
 ## 0.7.2 - 2026-11-01
 
 - Preset lines use an arrow instead of stacked spaces: Money -> $1,000 reads the

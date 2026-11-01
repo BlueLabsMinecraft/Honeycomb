@@ -204,7 +204,8 @@ public final class ScoreboardService implements DisplaySystem {
                 }
             }
         }
-        return ProfileSelector.select(profiles, MatchContext.of(player, groups.group(player)));
+        return ProfileSelector.select(profiles, MatchContext.of(player, groups.group(player))
+                .withPlaceholders(text -> pipeline.placeholders().expand(text, PlaceholderContext.of(player))));
     }
 
     private void apply(Player player, PlayerSession session, ScoreboardProfile profile) {

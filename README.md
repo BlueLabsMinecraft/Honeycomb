@@ -6,13 +6,13 @@
 
 **Every display on your Paper server, drawn by one plugin.**
 
-[![Release](https://img.shields.io/badge/release-0.7.2-FFB01F?style=flat-square)](https://github.com/bluegaming08/honeycomb/releases)
+[![Release](https://img.shields.io/badge/release-0.8.0-FFB01F?style=flat-square)](https://github.com/bluegaming08/honeycomb/releases)
 [![License](https://img.shields.io/badge/license-MIT-4ade80?style=flat-square)](LICENSE)
 [![Java](https://img.shields.io/badge/java-21%20%7C%2025-2563EB?style=flat-square)](https://adoptium.net)
 [![Paper](https://img.shields.io/badge/paper-1.21.9%20%E2%80%93%2026.3-38BDF8?style=flat-square)](https://papermc.io)
 [![Build](https://img.shields.io/github/actions/workflow/status/bluegaming08/honeycomb/build.yml?style=flat-square&label=build)](../../actions)
 
-[Features](#features) · [Install](#install) · [Commands](#commands) · [Config](#configuration) · [Presets](#presets) · [Contributing](CONTRIBUTING.md)
+[Features](#features) · [Install](#install) · [Commands](#commands) · [Conditions](#conditions) · [Config](#configuration) · [Presets](#presets) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -40,6 +40,8 @@ or of any other display plugin, and it needs no dependencies to run.
 | **Admin panel** | Native Minecraft dialogs on 1.21.9 and newer, edit and save without a restart |
 | **Presets** | Nine looks that mirror common server styles, load, edit, save your own |
 | **Update log** | Entries written by staff, read by players with `/updatelog` |
+| **Conditions** | World, group, permission and placeholder comparisons pick the layout, like TAB |
+| **Staff layouts** | Separate tablist and sidebar for staff, behind a permission |
 
 ## Install
 
@@ -48,8 +50,8 @@ not share a Java runtime:
 
 | Jar | Minecraft | Java |
 |---|---|---|
-| `Honeycomb-0.7.2-mc1.21.9-1.21.11.jar` | Paper 1.21.9 to 1.21.11 | 21 |
-| `Honeycomb-0.7.2-mc26.1-26.3.jar` | Paper 26.1 to 26.3 | 25 |
+| `Honeycomb-0.8.0-java21.jar` | Paper, Spigot, Bukkit 1.21.9 to 1.21.11 | 21 |
+| `Honeycomb-0.8.0-java25.jar` | Paper, Spigot, Bukkit 26.1 to 26.3 | 25 |
 
 1. Drop the jar that matches your server into `plugins/`.
 2. Start the server once. Honeycomb writes its files and reports anything it adjusted.
@@ -74,6 +76,34 @@ you want the F3 brand line replaced; everything else works without it.
 All nodes follow one shape: `honeycomb.<area>`, plus `honeycomb.group.<name>` for rank
 based layouts. Staff layouts need the permission to be granted explicitly, operator
 status alone is not enough.
+
+## Conditions
+
+Every layout can carry a `conditions:` block, and the highest priority layout whose
+conditions all pass is the one a player sees. Worlds, groups and permissions work out
+of the box, and so do placeholder comparisons, which is how a nether tablist or a
+wallet board is built:
+
+```yaml
+tablist:
+  nether:
+    priority: 30
+    header:
+      - "<bold>THE NETHER"
+    conditions:
+      worlds: [world_nether, nether]
+
+scoreboards:
+  high-roller:
+    priority: 40
+    conditions:
+      placeholders:
+        - "%vault_eco_balance% >= 100000"
+```
+
+The comparison operators are `==`, `!=`, `>=`, `<=`, `>` , `<` and `contains`. Numeric
+operators compare as numbers, so `100000`, `100,000` and `$100,000` all match. Read
+[docs/CONDITIONS.md](docs/CONDITIONS.md) for the full rule set.
 
 ## Configuration
 
@@ -143,7 +173,7 @@ honeycomb/
 
 ## Project status
 
-0.7.2 is the current release. The plugin is in active development: the display engines
+0.8.0 is the current release. The plugin is in active development: the display engines
 and the panel are stable, and the API is published in [docs/API.md](docs/API.md).
 
 ## Contributing

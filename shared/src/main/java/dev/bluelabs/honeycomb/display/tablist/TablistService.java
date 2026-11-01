@@ -232,7 +232,8 @@ public final class TablistService implements DisplaySystem {
                 }
             }
         }
-        MatchContext context = MatchContext.of(player, groups.group(player));
+        MatchContext context = MatchContext.of(player, groups.group(player))
+                .withPlaceholders(text -> pipeline.placeholders().expand(text, PlaceholderContext.of(player)));
         TablistProfile selected = ProfileSelector.select(profiles, context);
         session.tablist.profile = selected == null ? null : selected.name();
         return selected;

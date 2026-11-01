@@ -194,7 +194,8 @@ public final class BelowNameService implements DisplaySystem {
                 }
             }
         }
-        return ProfileSelector.select(profiles, MatchContext.of(viewer, groups.group(viewer)));
+        return ProfileSelector.select(profiles, MatchContext.of(viewer, groups.group(viewer))
+                .withPlaceholders(text -> pipeline.placeholders().expand(text, PlaceholderContext.of(viewer))));
     }
 
     private void apply(Player viewer, PlayerSession session, BelowNameProfile profile) {
