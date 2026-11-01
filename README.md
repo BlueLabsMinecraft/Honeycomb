@@ -26,6 +26,29 @@ conditions, driven by MiniMessage, placeholders and animations.
 It is an original implementation on the Bukkit and Paper APIs. It is not a fork of TAB
 or of any other display plugin, and it needs no dependencies to run.
 
+## Why teams pick it over TAB
+
+Honeycomb is a common TAB alternative for one reason: the layout lives in an editor,
+not in a wall of YAML.
+
+- **No file editing for a text change.** `/honeycomb panel` opens 1.21.9 dialogs that
+  edit the tablist header, sidebar rows, nametags, bossbars and animations while
+  players are online, writing to `panel.yml` so updates never touch your work.
+- **One conditions block, five displays.** Worlds, groups, permissions and placeholder
+  comparisons behave the same on tablist, sidebar, bossbars, below name and nametags,
+  which is how per world layouts stay readable.
+- **Presets that look like real servers.** SMP, PvP, survival, economy, factions,
+  DonutSMP and Lifesteal styles ship in the jar, with edited copies backed up before an
+  upgrade refreshes them.
+- **Folia in the same jar.** Displays are scheduled on the thread that owns each player,
+  so Paper, Spigot, Bukkit, Folia, Purpur and Pufferfish all use one file per Java
+  version, 1.21.9 to 26.3.
+- **No paywall.** MIT licensed, no paid tier, no network calls.
+
+TAB is still the safer choice for a large network with a team that knows its config. It
+has years of edge cases behind it. Read [docs/CONDITIONS.md](docs/CONDITIONS.md) to see
+whether the condition language covers what you need before switching.
+
 ## Features
 
 | | |
