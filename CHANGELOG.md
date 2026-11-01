@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.1
+
+- New: `/honeycomb migrate` imports a TAB installation. Header, footer, sidebar
+  lines, nametag groups, bossbars and the below name display are copied from
+  `plugins/TAB/config.yml` and `groups.yml`, legacy colour codes are converted to
+  MiniMessage, TAB placeholders are mapped to PlaceholderAPI names, and the
+  current files are backed up to `migration-backup/<timestamp>/` before writing.
+  `migrate` without arguments is a preview, `migrate apply` writes and reloads.
+- New: `docs/MIGRATION.md` describes the mapping and what is not copied.
+- Fixed: migrated text closes every tag and resets formatting the way Minecraft
+  does, so `&c&l[ADMIN] &c` no longer produces unbalanced MiniMessage.
+- Tests: 7 new cases in `TabMigrationTest`, 126 tests green across both modules.
+
 ## 0.9.0 - 2026-11-01
 
 - Folia support. The plugin detects the threaded region server and schedules every

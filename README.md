@@ -35,6 +35,22 @@ Honeycomb draws the tablist, sidebar, nametags, bossbars and the below name line
 lets you edit all of it from an in game panel. Per world layouts use one conditions
 block on every display. MIT licensed, no paid tier.
 
+
+## Coming from TAB
+
+One command copies a TAB installation into Honeycomb:
+
+```
+/honeycomb migrate          preview what would be copied
+/honeycomb migrate apply    back up, write, reload
+```
+
+Header, footer, sidebar, nametags, bossbars and the below name display are read
+from `plugins/TAB/config.yml` and `groups.yml`. Legacy colour codes become
+MiniMessage, and TAB's own placeholders are mapped to their PlaceholderAPI
+equivalents. Current files are backed up to `migration-backup/<timestamp>/`
+first. Details in [docs/MIGRATION.md](docs/MIGRATION.md).
+
 ## TAB alternative: why servers switch
 
 Honeycomb is a common TAB alternative for one reason: the layout lives in an editor,
