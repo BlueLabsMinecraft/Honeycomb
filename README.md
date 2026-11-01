@@ -8,7 +8,7 @@
 nametag plugin, bossbar and below name line in one jar, for Paper, Spigot, Bukkit, Folia,
 Purpur and Pufferfish.
 
-<img src="docs/banner.png" alt="Honeycomb Banner" width="112" height="112" />
+<img src="docs/banner.png" alt="Honeycomb Banner" width="112" height="112" style="transform: rotate(-90deg);" />
 
 [![Release](https://img.shields.io/badge/release-0.9.0-FFB01F?style=flat-square)](https://github.com/bluegaming08/honeycomb/releases)
 [![License](https://img.shields.io/badge/license-MIT-4ade80?style=flat-square)](LICENSE)
