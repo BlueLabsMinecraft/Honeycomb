@@ -4,12 +4,16 @@
 
 # Honeycomb
 
-**Every display on your Paper server, drawn by one plugin.**
+**The TAB alternative for Minecraft 1.21.9 to 26.3.** A tablist plugin, scoreboard plugin,
+nametag plugin, bossbar and below name line in one jar, for Paper, Spigot, Bukkit, Folia,
+Purpur and Pufferfish.
 
 [![Release](https://img.shields.io/badge/release-0.9.0-FFB01F?style=flat-square)](https://github.com/bluegaming08/honeycomb/releases)
 [![License](https://img.shields.io/badge/license-MIT-4ade80?style=flat-square)](LICENSE)
 [![Java](https://img.shields.io/badge/java-21%20%7C%2025-2563EB?style=flat-square)](https://adoptium.net)
 [![Paper](https://img.shields.io/badge/paper-1.21.9%20%E2%80%93%2026.3-38BDF8?style=flat-square)](https://papermc.io)
+[![Folia](https://img.shields.io/badge/folia-supported-FFB01F?style=flat-square)](https://papermc.io/software/folia)
+[![TAB alternative](https://img.shields.io/badge/tab-alternative-7DE9F7?style=flat-square)](https://github.com/bluegaming08/honeycomb)
 [![Build](https://img.shields.io/github/actions/workflow/status/bluegaming08/honeycomb/build.yml?style=flat-square&label=build)](../../actions)
 
 [Features](#features) · [Install](#install) · [Commands](#commands) · [Conditions](#conditions) · [Config](#configuration) · [Presets](#presets) · [Contributing](CONTRIBUTING.md)
@@ -26,7 +30,12 @@ conditions, driven by MiniMessage, placeholders and animations.
 It is an original implementation on the Bukkit and Paper APIs. It is not a fork of TAB
 or of any other display plugin, and it needs no dependencies to run.
 
-## Why teams pick it over TAB
+Looking for a TAB alternative, or a tablist plugin that does not need a config wall?
+Honeycomb draws the tablist, sidebar, nametags, bossbars and the below name line, and
+lets you edit all of it from an in game panel. Per world layouts use one conditions
+block on every display. MIT licensed, no paid tier.
+
+## TAB alternative: why servers switch
 
 Honeycomb is a common TAB alternative for one reason: the layout lives in an editor,
 not in a wall of YAML.
@@ -44,6 +53,10 @@ not in a wall of YAML.
   so Paper, Spigot, Bukkit, Folia, Purpur and Pufferfish all use one file per Java
   version, 1.21.9 to 26.3.
 - **No paywall.** MIT licensed, no paid tier, no network calls.
+
+If you are comparing options for Minecraft 1.21.9 and newer, the usual shortlist is
+TAB, TAB Reloaded forks, and Honeycomb. TAB wins on years in production, Honeycomb wins
+on editing, presets and per world nametags.
 
 TAB is still the safer choice for a large network with a team that knows its config. It
 has years of edge cases behind it. Read [docs/CONDITIONS.md](docs/CONDITIONS.md) to see
