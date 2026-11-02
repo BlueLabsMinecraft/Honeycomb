@@ -1,24 +1,32 @@
 # ---------------------------------------------------------------------------
 #  Honeycomb - proxy support
 #
-#  Provides %network_online% and %network_server%. Honeycomb asks the proxy for
-#  the numbers over plugin messaging and reports nothing until the proxy answers,
-#  so the placeholders never show invented values.
+#  Adds %network_online%, %network_server%, %network_server_online%,
+#  %network_servers% and %network_proxy% so one layout can show network wide
+#  numbers behind Velocity or BungeeCord.
 #
-#  Standalone server: leave enabled: false.
-#  BungeeCord:        type: bungee
-#  Velocity:          type: velocity  (enable bungee-plugin-message-channel in
-#                                      velocity.toml so the proxy forwards it)
+#  Both proxies use the same payloads on the bungeecord:main channel, so nothing
+#  extra is needed on the backend. On the proxy:
+#    Velocity  - set bungee-plugin-message-channel = true in velocity.toml
+#                (it is true by default) and enable
+#                proxies.velocity in config/paper-global.yml or startup fails.
+#    BungeeCord- set bungee_plugin_messages: true in config.yml (default true)
+#                and settings.bungee-cord: true in spigot.yml.
 #
-#  Reading network wide counts requires the proxy, the channel and a player to
-#  carry the message: all three are real requirements, not limitations Honeycomb
-#  can hide.
+#  Honeycomb reports nothing until the proxy answers, so the placeholders never
+#  show invented values.
 # ---------------------------------------------------------------------------
 
 network:
+  # false on a standalone server.
   enabled: false
-  type: bungee
+  # auto reads the server configuration and picks bungee or velocity.
+  # Other values: bungee, velocity, none.
+  type: auto
   # Name of this server on the network. Leave empty to ask the proxy.
   server-name: ""
+  # Ask the proxy for the full server list, which fills %network_servers%
+  # and the per server counts shown in the panel.
+  ask-server-list: true
   # How often to ask the proxy for fresh counts.
   request-interval-seconds: 10

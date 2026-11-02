@@ -1,0 +1,85 @@
+# Honeycomb 1.1.0 handover
+
+Velocity and BungeeCord support, built, tested against a live Folia 1.21.11 server with a client and a stand-in proxy, packaged for both Java versions.
+
+## What this version adds
+
+### Proxy support, done properly
+
+`NetworkService` speaks the payloads both proxies share on `bungeecord:main`, so one code path serves Velocity, BungeeCord, Waterfall and Purpur behind either.
+
+- **Automatic detection.** `type: auto` reads the server's own configuration: `config/paper-global.yml` for Velocity (`proxies.velocity.enabled` or a non-empty secret), `spigot.yml` for BungeeCord (`settings.bungee-cord`), then `proxies.bungee-cord.online-mode` as a second Bungee signal. Detection never guesses from version strings.
+- **Both channels.** Registration tries `bungeecord:main` and falls back to the legacy `BungeeCord` name, so old forks keep working.
+- **Richer replies.** `PlayerCount` (whole network and per server), `GetServers` (server list, which also drives per-server polling) and `GetServer` (this server's name) are all handled.
+- **Five placeholders.** `%network_online%`, `%network_server_online%`, `%network_server%`, `%network_servers%`, `%network_proxy%`.
+- **Honest by design.** Nothing resolves until the proxy answers, and answers older than 60 seconds stop counting as live.
+- **Panel page.** New `Network` entry in the panel shows proxy type, connection state, totals and server count, with Turn on/off and a Type cycler that writes to `panel.yml`.
+
+### Files
+
+| Path | Role |
+|---|---|
+| `network/ProxyType.java` | Enum plus configuration-driven detection |
+| `network/ProxyReply.java` | Wire format, parsed into a record for testability |
+| `network/NetworkService.java` | Channels, polling, state, placeholders |
+| `network/ProxyMessageListener.java` | Bukkit listener, forwards to the service |
+| `resources/network.yml` | Documented config with `type: auto` and `ask-server-list` |
+| `panel/ConfigPanel.java` | Network screen |
+
+### Setup, both proxies
+
+Backend `network.yml`:
+
+```yaml
+network:
+  enabled: true
+  type: auto
+  server-name: ""
+  ask-server-list: true
+  request-interval-seconds: 10
+```
+
+Velocity: `bungee-plugin-message-channel = true` in `velocity.toml` (default true), and Velocity must actually be enabled in `paper-global.yml` or the backend refuses the connection.
+
+BungeeCord: `bungee_plugin_messages: true` in the proxy `config.yml` and `settings.bungee-cord: true` in `spigot.yml`.
+
+## Verification (this build)
+
+Run on Folia 1.21.11-14 with Java 21, plugin `Honeycomb-1.1.0-mc1.21.9-1.21.11.jar`, a real 1.21.11 client and a stand-in proxy plugin that dispatches proxy payloads into the server:
+
+| Check | Result |
+|---|---|
+| Startup | `Configuration: 0 warning(s), 0 error(s)` |
+| Proxy registration | `Proxy support on: BungeeCord over bungeecord:main, BungeeCord` |
+| Auto detection | With `paper-global.yml` velocity enabled, log reads `Proxy support on: Velocity` |
+| PlayerCount | `%network_online%` resolved to 37 |
+| GetServer | `%network_server%` resolved to `lobby` |
+| GetServers | `%network_servers%` resolved to 3 |
+| Rendered output | `Net 37 on lobby via BungeeCord, 3` in the tablist footer |
+| Scoreboard on Folia | Packet engine active, objective and rows delivered |
+| Console | No exceptions, no warnings from Honeycomb |
+| Unit tests | 168 pass, 0 failures (14 new network tests) |
+
+Client taps on panel buttons cannot be scripted with the test client; the panel screen was verified by construction and by driving the same save path the buttons call.
+
+## Structure
+
+```
+shared/            one source tree
+  network/         proxy support, new in 1.1.0
+  display/         tablist, scoreboard (API and packet engines), nametags, bossbars, belowname, actionbar
+  panel/           in-game dialog editor
+  placeholder/     internal and PlaceholderAPI bridging
+  preset/          nine presets
+honeycomb-legacy/  1.21.9-1.21.11, Java 21
+honeycomb-modern/  26.1-26.3, Java 25
+jars/              prebuilt for both
+```
+
+Build: `./gradlew build --offline` (JDK 21 for the legacy module, JDK 25 for the modern one; both are auto-detected).
+
+## Known limits
+
+- The panel needs Paper or Folia; Spigot has no dialog API.
+- Below-name and nametag features use Bukkit teams, so on Folia only the scoreboard is available until those move to packets.
+- Network counts need a player online to carry the request, which is a proxy requirement rather than a plugin one.

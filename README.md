@@ -10,7 +10,7 @@ Purpur and Pufferfish.
 
 <img src="docs/banner.png" alt="Honeycomb, the TAB alternative for Minecraft 1.21.9 to 26.3" width="100%" />
 
-[![Release](https://img.shields.io/badge/release-1.0.0-FFB01F?style=flat-square)](https://github.com/BlueLabsMinecraft/Honeycomb/releases)
+[![Release](https://img.shields.io/badge/release-1.1.0-FFB01F?style=flat-square)](https://github.com/BlueLabsMinecraft/Honeycomb/releases)
 [![License](https://img.shields.io/badge/license-MIT-4ade80?style=flat-square)](LICENSE)
 [![Java](https://img.shields.io/badge/java-21%20%7C%2025-2563EB?style=flat-square)](https://adoptium.net)
 [![Paper](https://img.shields.io/badge/paper-1.21.9%20%E2%80%93%2026.3-38BDF8?style=flat-square)](https://papermc.io)

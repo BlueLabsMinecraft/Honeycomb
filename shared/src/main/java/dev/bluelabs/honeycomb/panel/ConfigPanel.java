@@ -55,6 +55,7 @@ public final class ConfigPanel {
             case "updates" -> updates();
             case "actionbar", "action-bar" -> ProfilesPanel.list(plugin, "actionbar");
             case "actionbar-entries" -> ProfilesPanel.list(plugin, "actionbar");
+            case "network" -> network();
             case "layouts", "tablists" -> ProfilesPanel.list(plugin, "tablist");
             case "boards" -> ProfilesPanel.list(plugin, "scoreboards");
             case "bars" -> ProfilesPanel.list(plugin, "bossbars");
@@ -139,6 +140,7 @@ public final class ConfigPanel {
         buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>F3 brand"), BACK + " brand"));
         buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Commands"), BACK + " commands"));
         buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Messages"), BACK + " messages"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Network"), BACK + " network"));
         buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Animations"), BACK + " animations"));
         buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Staff layouts"), BACK + " staff"));
         buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Presets"), BACK + " presets"));
@@ -172,6 +174,65 @@ public final class ConfigPanel {
             case "nametags" -> "nametags";
             default -> "bossbars";
         };
+    }
+
+    private Dialog network() {
+        var yaml = plugin.configManager().yaml(dev.bluelabs.honeycomb.config.ConfigType.NETWORK);
+        boolean on = yaml.getBoolean("network.enabled", false);
+        String type = yaml.getString("network.type", "auto");
+        var proxy = plugin.network();
+        String state = on
+                ? (proxy.available()
+                    ? "<green>connected <dark_gray>to <white>" + proxy.proxyName()
+                    : "<gold>waiting for the proxy")
+                : "<dark_gray>off";
+        List<Component> body = List.of(
+                DialogKit.heading("NETWORK"),
+                DialogKit.styled("<shadow:#000000:1><gray>Proxy: <white>" + proxy.proxyName()
+                        + " <dark_gray>| <gray>Type: <white>" + type),
+                DialogKit.styled("<shadow:#000000:1><gray>State: " + state),
+                DialogKit.shade(proxy.available()
+                        ? "Online now: " + proxy.onlineEverywhere() + ", servers: " + proxy.servers().size()
+                        : "Turn it on for Velocity or BungeeCord counts."));
+        List<ActionButton> buttons = new ArrayList<>();
+        buttons.add(DialogKit.act(DialogKit.styled(on
+                        ? "<shadow:#000000:1><bold><red>Turn off"
+                        : "<shadow:#000000:1><bold><green>Turn on"),
+                audience -> toggleNetwork()));
+        buttons.add(DialogKit.act(DialogKit.styled("<shadow:#000000:1><white>Type: <yellow>" + type),
+                audience -> cycleNetworkType()));
+        buttons.add(DialogKit.run("Back", BACK + " main"));
+        buttons.add(DialogKit.close());
+        return DialogKit.menu("Network", body, buttons);
+    }
+
+    private void toggleNetwork() {
+        var yaml = plugin.configManager().yaml(dev.bluelabs.honeycomb.config.ConfigType.NETWORK);
+        boolean on = yaml.getBoolean("network.enabled", false);
+        plugin.panelOverrides().set(dev.bluelabs.honeycomb.config.ConfigType.NETWORK, "network.enabled", !on);
+        try {
+            plugin.panelOverrides().save();
+        } catch (java.io.IOException error) {
+            return;
+        }
+        plugin.reload();
+    }
+
+    private void cycleNetworkType() {
+        var yaml = plugin.configManager().yaml(dev.bluelabs.honeycomb.config.ConfigType.NETWORK);
+        String current = yaml.getString("network.type", "auto");
+        String next = switch (current == null ? "auto" : current.toLowerCase(java.util.Locale.ROOT)) {
+            case "auto" -> "bungee";
+            case "bungee" -> "velocity";
+            default -> "auto";
+        };
+        plugin.panelOverrides().set(dev.bluelabs.honeycomb.config.ConfigType.NETWORK, "network.type", next);
+        try {
+            plugin.panelOverrides().save();
+        } catch (java.io.IOException error) {
+            return;
+        }
+        plugin.reload();
     }
 
     private Dialog brand() {

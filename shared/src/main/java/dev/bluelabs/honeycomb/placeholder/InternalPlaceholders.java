@@ -339,6 +339,11 @@ public final class InternalPlaceholders {
                 network.available() ? Integer.toString(Math.max(0, network.onlineEverywhere())) : null);
         registry.register("network_server", context ->
                 network.available() ? network.serverName() : null);
+        registry.register("network_server_online", context ->
+                network.available() ? Integer.toString(Math.max(0, network.onlineHere())) : null);
+        registry.register("network_servers", context ->
+                network.available() ? Integer.toString(network.servers().size()) : null);
+        registry.register("network_proxy", context -> network.proxyName());
     }
 
     /**
@@ -357,7 +362,8 @@ public final class InternalPlaceholders {
                 "server_memory_max", "server_memory_percent", "server_uptime",
                 "server_uptime_clock", "server_time_zone",
                 "world", "world_players", "date", "time",
-                "econ_balance", "network_online", "network_server"
+                "econ_balance", "network_online", "network_server", "network_server_online",
+                "network_servers", "network_proxy"
         );
     }
 }

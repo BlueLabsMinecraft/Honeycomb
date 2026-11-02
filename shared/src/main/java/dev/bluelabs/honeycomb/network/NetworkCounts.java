@@ -26,6 +26,21 @@ public interface NetworkCounts {
     int onlineOn(String serverName);
 
     /**
+     * @return players on this server, falling back to the local count
+     */
+    int onlineHere();
+
+    /**
+     * @return the proxy name for diagnostics: None, BungeeCord or Velocity
+     */
+    String proxyName();
+
+    /**
+     * @return server names the proxy reported
+     */
+    java.util.List<String> servers();
+
+    /**
      * @return the name this server is known by on the network
      */
     String serverName();
