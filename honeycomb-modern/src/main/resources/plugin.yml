@@ -43,19 +43,11 @@ permissions:
     default: op
     children:
       honeycomb.reload: true
-      honeycomb.debug: true
-      honeycomb.status: true
       honeycomb.test: true
       honeycomb.placeholders: true
       honeycomb.animations: true
   honeycomb.reload:
     description: Allows reloading Honeycomb configuration files.
-    default: op
-  honeycomb.debug:
-    description: Allows the debug report and debug logging toggling.
-    default: op
-  honeycomb.status:
-    description: Allows viewing plugin, display and integration status.
     default: op
   honeycomb.test:
     description: Allows sending test displays to yourself.

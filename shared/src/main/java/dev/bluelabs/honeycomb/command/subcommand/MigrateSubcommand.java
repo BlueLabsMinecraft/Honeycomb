@@ -81,6 +81,15 @@ public final class MigrateSubcommand implements Subcommand {
             return;
         }
 
+        if (args.length == 0 && sender instanceof org.bukkit.entity.Player player) {
+            try {
+                dev.bluelabs.honeycomb.panel.MigrationPanel.open(player, plugin, folder);
+                return;
+            } catch (RuntimeException | LinkageError noDialogs) {
+                // Older Paper without the dialog API: fall through to chat output.
+            }
+        }
+
         TabMigration.Report report;
         try {
             report = migration.run(folder, apply);

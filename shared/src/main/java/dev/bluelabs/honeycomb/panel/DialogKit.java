@@ -11,6 +11,8 @@ import io.papermc.paper.registry.data.dialog.input.TextDialogInput;
 import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.entity.Player;
 import net.kyori.adventure.text.event.ClickCallback;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -92,18 +94,31 @@ final class DialogKit {
     static TextDialogInput text(String key, String label, String initial) {
         return DialogInput.text(key, Component.text(label))
                 .initial(initial == null ? "" : initial)
-                .maxLength(1024)
+                .maxLength(4096)
                 .width(260)
                 .build();
+    }
+
+    /** Rows a list input accepts. The client scrolls past the visible height. */
+    static final int MAX_ROWS = 50;
+
+    /**
+     * Height of a list input, in pixels.
+     *
+     * @param rows visible rows to size the box for
+     * @return a height between 140 and 400 pixels
+     */
+    private static int height(int rows) {
+        return Math.max(140, Math.min(400, rows * 18 + 40));
     }
 
     /** A multi line text field, used for lists such as scoreboard lines. */
     static TextDialogInput lines(String key, String label, String initial, int rows) {
         return DialogInput.text(key, Component.text(label))
                 .initial(initial == null ? "" : initial)
-                .maxLength(4096)
+                .maxLength(16384)
                 .width(320)
-                .multiline(TextDialogInput.MultilineOptions.create(rows, 255))
+                .multiline(TextDialogInput.MultilineOptions.create(MAX_ROWS, height(rows)))
                 .build();
     }
 
@@ -114,9 +129,34 @@ final class DialogKit {
 
     /** A button that runs a Honeycomb command as the player who clicked it. */
     static ActionButton run(String label, String command) {
-        return ActionButton.builder(Component.text(label, NamedTextColor.AQUA))
+        return run(Component.text(label, NamedTextColor.AQUA), command);
+    }
+
+    /** A button with a custom label that runs a command. */
+    static ActionButton run(Component label, String command) {
+        return ActionButton.builder(label)
                 .width(150)
                 .action(DialogAction.staticAction(ClickEvent.runCommand("/" + command)))
+                .build();
+    }
+
+    /** A button with a custom label that calls back into the server. */
+    static ActionButton act(Component label, Consumer<Audience> handler) {
+        return ActionButton.builder(label)
+                .width(150)
+                .action(DialogAction.staticAction(ClickEvent.callback(handler::accept)))
+                .build();
+    }
+
+    /** A button with a custom label that receives the typed values. */
+    static ActionButton save(Component label, BiConsumer<org.bukkit.entity.Player, DialogResponseView> handler) {
+        return ActionButton.builder(label)
+                .width(150)
+                .action(DialogAction.customClick((response, audience) -> {
+                    if (audience instanceof org.bukkit.entity.Player player) {
+                        handler.accept(player, response);
+                    }
+                }, ClickCallback.Options.builder().uses(500).lifetime(Duration.ofHours(6)).build()))
                 .build();
     }
 
@@ -136,7 +176,7 @@ final class DialogKit {
                     if (audience instanceof org.bukkit.entity.Player player) {
                         handler.accept(player, response);
                     }
-                }, ClickCallback.Options.builder().uses(3).lifetime(Duration.ofMinutes(30)).build()))
+                }, ClickCallback.Options.builder().uses(500).lifetime(Duration.ofHours(6)).build()))
                 .build();
     }
 
@@ -147,7 +187,33 @@ final class DialogKit {
 
     /** Bold orange heading used by every panel screen. */
     static Component heading(String text) {
-        return Component.text(text, NamedTextColor.GOLD).decorate(TextDecoration.BOLD);
+        return styled("<gradient:#FFE3A8:#FFB01F:#FF7A00><shadow:#000000:1><bold>" + text);
+    }
+
+    /**
+     * Renders MiniMessage, falling back to plain gold when a tag is unknown on the
+     * running server, so a heading can never break a dialog.
+     *
+     * @param miniMessage markup
+     * @return the component
+     */
+    static Component styled(String miniMessage) {
+        try {
+            return dev.bluelabs.honeycomb.util.Text.parse(miniMessage);
+        } catch (RuntimeException unsupported) {
+            return Component.text(miniMessage.replaceAll("<[^>]*>", ""), NamedTextColor.GOLD)
+                    .decorate(TextDecoration.BOLD);
+        }
+    }
+
+    /**
+     * A shadowed gray line, used for the explanations under a screen.
+     *
+     * @param text plain text
+     * @return the component
+     */
+    static Component shade(String text) {
+        return styled("<shadow:#000000:1><dark_gray>" + text);
     }
 
     /** Coloured button label: navigation, save and close each read differently. */
@@ -163,8 +229,19 @@ final class DialogKit {
         return Component.text(text, NamedTextColor.RED).decorate(TextDecoration.BOLD);
     }
 
+    static void show(Player player, org.bukkit.plugin.Plugin plugin, Dialog dialog) {
+        dev.bluelabs.honeycomb.scheduler.Scheduling.forPlayer(plugin, player, () -> {
+            try {
+                player.showDialog(dialog);
+            } catch (RuntimeException failure) {
+                player.sendMessage(Component.text("Honeycomb: that screen could not open ("
+                        + failure.getClass().getSimpleName() + ")", NamedTextColor.RED));
+            }
+        });
+    }
+
     static Component hint(String text) {
-        return Component.text(text, NamedTextColor.DARK_GRAY);
+        return styled("<shadow:#000000:1><dark_gray>" + MiniMessage.miniMessage().escapeTags(text));
     }
 
     /**
@@ -179,9 +256,9 @@ final class DialogKit {
     static DialogInput multiline(String key, String label, String initial, int rows) {
         return DialogInput.text(key, Component.text(label))
                 .initial(initial == null ? "" : initial)
-                .maxLength(2048)
+                .maxLength(16384)
                 .width(320)
-                .multiline(TextDialogInput.MultilineOptions.create(rows, 120))
+                .multiline(TextDialogInput.MultilineOptions.create(MAX_ROWS, height(rows)))
                 .build();
     }
 }

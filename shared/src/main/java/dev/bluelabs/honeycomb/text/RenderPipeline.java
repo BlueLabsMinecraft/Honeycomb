@@ -93,6 +93,61 @@ public final class RenderPipeline {
     }
 
     /**
+     * Renders a block of lines, carrying a tag that was left open on one line into
+     * the next one.
+     *
+     * <p>MiniMessage closes a tag at the end of the string it parses, so a design
+     * that opens {@code <yellow>} on the first row and closes it on the last would
+     * otherwise lose its colour after row one. This keeps the open tags alive
+     * across the block, which is what config authors expect from a multi line
+     * layout.</p>
+     *
+     * @param templates raw lines, top to bottom
+     * @param context   render context
+     * @return one component per line
+     */
+    public List<Component> renderBlock(List<String> templates, PlaceholderContext context) {
+        List<Component> lines = new ArrayList<>(templates.size());
+        List<String> open = new ArrayList<>();
+        for (String template : templates) {
+            String prepared = prepare(template, context);
+            String combined = open.isEmpty() ? prepared : String.join("", open) + prepared;
+            lines.add(Text.parse(combined));
+            open = openTags(open, template);
+        }
+        return lines;
+    }
+
+    /**
+     * Works out which tags are still open after one line.
+     *
+     * @param open     tags open before this line
+     * @param template raw line
+     * @return the tags open after it
+     */
+    static List<String> openTags(List<String> open, String template) {
+        List<String> stack = new ArrayList<>(open);
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("<(/)?([a-zA-Z#_][^<>]*)>").matcher(template == null ? "" : template);
+        while (matcher.find()) {
+            boolean closing = matcher.group(1) != null;
+            String raw = "<" + (closing ? "/" : "") + matcher.group(2) + ">";
+            if (closing) {
+                String name = matcher.group(2).split(":")[0];
+                for (int index = stack.size() - 1; index >= 0; index--) {
+                    if (stack.get(index).contains("<" + name) || stack.get(index).contains("</" + name)) {
+                        stack.subList(index, stack.size()).clear();
+                        break;
+                    }
+                }
+            } else if (!matcher.group(2).endsWith("/")) {
+                stack.add(raw);
+            }
+        }
+        return stack;
+    }
+
+    /**
      * Renders a list of template lines.
      *
      * @param templates raw templates
@@ -117,6 +172,7 @@ public final class RenderPipeline {
      */
     public Component renderMultiline(List<String> templates, PlaceholderContext context) {
         Component result = Component.empty();
+        List<String> open = new ArrayList<>();
         for (int index = 0; index < templates.size(); index++) {
             if (index > 0) {
                 result = result.append(Component.newline());

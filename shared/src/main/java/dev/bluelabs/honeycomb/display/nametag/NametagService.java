@@ -4,7 +4,9 @@ import dev.bluelabs.honeycomb.config.ConfigManager;
 import dev.bluelabs.honeycomb.config.ConfigType;
 import dev.bluelabs.honeycomb.config.Settings;
 import dev.bluelabs.honeycomb.config.ValidationReport;
+import dev.bluelabs.honeycomb.display.BoardAccess;
 import dev.bluelabs.honeycomb.display.DisplaySystem;
+import dev.bluelabs.honeycomb.display.PlayerBoard;
 import dev.bluelabs.honeycomb.display.MatchContext;
 import dev.bluelabs.honeycomb.display.WorldProfiles;
 import dev.bluelabs.honeycomb.integration.GroupProvider;
@@ -49,6 +51,7 @@ public final class NametagService implements DisplaySystem {
     private final TickClock clock;
     private final ValidationReport report;
 
+    private final java.util.Set<UUID> warnedGroups = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private final Map<UUID, Decoration> decorations = new HashMap<>();
     private final Map<UUID, Long> lastComputed = new HashMap<>();
     private long versionCounter;
@@ -179,12 +182,14 @@ public final class NametagService implements DisplaySystem {
     }
 
     private void applyToViewer(Player viewer, PlayerSession session) {
-        Scoreboard board = viewer.getScoreboard();
+        PlayerBoard acquired = BoardAccess.acquire(viewer, session);
+        Scoreboard board = acquired == null ? viewer.getScoreboard() : acquired.board();
         if (session.nametag.lastBoard != board) {
             // A new board sees none of the teams we applied before.
             session.nametag.appliedVersions.clear();
             session.nametag.lastBoard = board;
         }
+        int touched = 0;
         for (Player target : Bukkit.getOnlinePlayers()) {
             if (target.getUniqueId().equals(viewer.getUniqueId())) {
                 continue;
@@ -202,6 +207,11 @@ public final class NametagService implements DisplaySystem {
             }
             applyTeam(board, target, decoration);
             session.nametag.appliedVersions.put(target.getUniqueId(), decoration.version());
+            touched++;
+        }
+        if (touched == 0 && nametagGroups.isEmpty() && warnedGroups.add(viewer.getUniqueId())) {
+            Bukkit.getLogger().warning("Honeycomb nametags: enabled, but nametags.yml has no groups, "
+                    + "so nothing is drawn.");
         }
     }
 
@@ -244,6 +254,11 @@ public final class NametagService implements DisplaySystem {
         }
         NametagGroup group = NametagGroup.select(allowed, groups.group(target), target::hasPermission);
         if (group == null) {
+            if (warnedGroups.add(id)) {
+                Bukkit.getLogger().warning("Honeycomb nametags: no group matched " + target.getName()
+                        + ". Every group needs the player's LuckPerms group name, a 'permission:'"
+                        + " node they hold, or the group must be called 'default'.");
+            }
             return existing;
         }
         PlaceholderContext context = PlaceholderContext.of(target);
@@ -331,8 +346,12 @@ public final class NametagService implements DisplaySystem {
 
     private List<Scoreboard> boardsInUse() {
         List<Scoreboard> boards = new ArrayList<>();
-        if (Bukkit.getScoreboardManager() != null) {
-            boards.add(Bukkit.getScoreboardManager().getMainScoreboard());
+        try {
+            if (Bukkit.getScoreboardManager() != null) {
+                boards.add(Bukkit.getScoreboardManager().getMainScoreboard());
+            }
+        } catch (RuntimeException | LinkageError noMainBoard) {
+            // Folia has no main scoreboard, only player boards exist there.
         }
         for (PlayerSession session : sessions.all()) {
             if (session.sidebar.board != null) {

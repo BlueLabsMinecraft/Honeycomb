@@ -11,8 +11,8 @@
 # ---------------------------------------------------------------------------
 
 belowname:
-  enabled: false
-  mode: custom
+  enabled: true
+  mode: health
   value: "<red>%player_health%</red><dark_gray>/</dark_gray><red>%player_max_health%</red> <dark_gray>HP"
   update-interval: 20
 

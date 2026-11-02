@@ -2,7 +2,6 @@ package dev.bluelabs.honeycomb.command;
 
 import dev.bluelabs.honeycomb.HoneycombPlugin;
 import dev.bluelabs.honeycomb.command.subcommand.AnimationsSubcommand;
-import dev.bluelabs.honeycomb.command.subcommand.DebugSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.HelpSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.IntegrationsSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.PanelSubcommand;
@@ -11,7 +10,6 @@ import dev.bluelabs.honeycomb.command.subcommand.MigrateSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.PresetSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.RefreshSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.ReloadSubcommand;
-import dev.bluelabs.honeycomb.command.subcommand.StatusSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.TestSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.VersionSubcommand;
 import org.bukkit.command.Command;
@@ -44,8 +42,6 @@ public final class HoneycombCommand implements TabExecutor {
                 new HelpSubcommand(plugin),
                 new ReloadSubcommand(plugin),
                 new VersionSubcommand(plugin),
-                new StatusSubcommand(plugin),
-                new DebugSubcommand(plugin),
                 new TestSubcommand(plugin),
                 new AnimationsSubcommand(plugin),
                 new PlaceholdersSubcommand(plugin),

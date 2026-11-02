@@ -1,5 +1,73 @@
 # Changelog
 
+## 0.12.0
+
+- Closing tags now work across a whole layout. A design that opens <yellow> on the first
+  row and closes it on the last keeps its colour on every row instead of only the first,
+  which is exactly how TAB layouts are written.
+- Action bar: the line above the hotbar is now a display of its own. Switch it on in
+  config.yml under actionbar, or from the Action bar button in the panel, and give it any
+  template, placeholders and animations included.
+- The shipped welcome bossbar no longer appears on its own: bossbars are off by default,
+  and importing TAB bars disables the sample bar so it cannot sit there over your design.
+
+## 0.11.0
+
+- The panel can now manage every layout instead of only the default one. Manage layouts lists
+  each tablist design, sidebar, bossbar and nametag group that already exists, with its
+  conditions shown next to the name, and one bold green Create new button.
+- Each entry opens an editor with its own text, priority, worlds, permissions and placeholder
+  conditions. Naming a new entry creates it and drops you straight into the editor.
+- Panel headings use the honey gradient with a shadow, and the explanation lines are shadowed
+  too, so a heading can never break a dialog on an older server.
+
+## 0.10.1
+
+- `/honeycomb migrate` opens a dialog for players: tick tablist, sideboards, below name,
+  nametags, bossbars and animations, and choose merge or replace before pressing Preview
+  or Import. The panel has an Import from TAB button that opens the same dialog.
+- Fixed animations not importing: TAB stores them under an `animations:` root, which the
+  reader skipped.
+- Display failures now log a full stack trace once a minute instead of a bare exception
+  name every tick.
+- Sidebar and below name no longer crash on servers that refuse a private scoreboard or
+  refuse custom score names; they report it once and fall back instead of warning forever.
+
+## 0.10.0
+
+- New name holograms: a text display above every player's head driven by a template,
+  so `%luckperms_prefix%` or a level can float over names without touching the vanilla
+  nametag. Configured in `holograms.yml`, off by default.
+- `offset` sets the height in blocks, `update-interval` the refresh rate, `view-range`,
+  `shadow`, `see-through` and `background` control the look.
+- Holograms are per world and conditional: each profile can set its own offset and
+  template and match on `worlds`, `permissions` or `placeholders` such as
+  `%vault_eco_balance% >= 100000`.
+- Each player owns one non persistent display entity, created on the thread that owns
+  the player, so it also works on Folia.
+
+## 0.9.3
+
+- `/honeycomb migrate` now reads TAB's modern `header-footer.designs` blocks and
+  `scoreboard.scoreboards` blocks, so a TAB install with per world designs imports instead
+  of reporting an empty config.
+- TAB `display-condition: '%world%=spawn|%world%=arenas'` becomes a Honeycomb world
+  condition on a tablist profile or scoreboard entry. Designs keep their names and order.
+- TAB `animations.yml` is imported, and `%animation:Name%` inside any line is rewritten to
+  `<anim:name>` so the frames keep working.
+- TAB `belowname-objective` now imports its text, not just its enabled flag.
+- Legacy hex such as `&#FF007C` is converted to MiniMessage along with the `&` codes.
+- Unsupported TAB sections (layout player list grid, playerlist objective column) are
+  reported as skipped instead of failing silently.
+
+## 0.9.2
+
+- Panel list fields accept 50 rows instead of 6, with room for long MiniMessage lines.
+- Saving a panel screen writes `panel.yml` first, then reloads, so a reload problem can no
+  longer swallow the save. Both outcomes are reported in chat and the console.
+- Panel Save buttons stay valid for 6 hours and 500 clicks instead of 3 clicks.
+- The F3 brand accepts legacy codes (`&9`, `&c`, `&#FFAA00`) and MiniMessage tags.
+
 ## 0.9.1
 
 - New: `/honeycomb migrate` imports a TAB installation. Header, footer, sidebar

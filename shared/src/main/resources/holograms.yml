@@ -1,0 +1,60 @@
+# ---------------------------------------------------------------------------
+#  Honeycomb - name holograms
+#
+#  Draws a template above every player's head on a text display entity. The
+#  vanilla nametag stays where it is, this is an extra line you fully control.
+#
+#  Every placeholder the rest of the plugin knows works here, including
+#  %luckperms_prefix%, %player_name%, %player_health% and %server_online%.
+#  MiniMessage is supported, so a gradient or a shadow works too.
+# ---------------------------------------------------------------------------
+
+holograms:
+  enabled: false
+
+  # How often the text and position are refreshed, in ticks (4 = five times a second).
+  update-interval: 4
+
+  # Distance above the player's head, in blocks. Raise it if the hologram
+  # overlaps the nametag. Negative values drop it towards the shoulders.
+  offset: 0.35
+
+  # What the hologram says. Legacy & codes work as well as MiniMessage.
+  template: "<white>%player_name%"
+
+  # 1.0 is the normal entity view distance, lower values hide it sooner.
+  view-range: 1.0
+
+  # Drop shadow under the glyphs.
+  shadow: true
+
+  # Draw through blocks. Off by default so it behaves like a nametag.
+  see-through: false
+
+  # "" / transparent for no box, or a colour such as "#00000080".
+  background: transparent
+
+  # Extra layouts. The highest priority match wins, then the values above apply.
+  profiles:
+    staff:
+      priority: 20
+      offset: 0.5
+      template: "<gold>[STAFF]</gold> <white>%player_name%"
+      conditions:
+        permissions:
+          - honeycomb.staff
+
+    nether:
+      priority: 10
+      offset: 0.6
+      template: "<red>%player_name%"
+      conditions:
+        worlds:
+          - world_nether
+          - nether
+
+    rich:
+      priority: 5
+      conditions:
+        placeholders:
+          - "%vault_eco_balance% >= 100000"

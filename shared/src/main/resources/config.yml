@@ -84,3 +84,14 @@ commands:
 staff:
   tablist: false
   scoreboard: false
+
+# ---------------------------------------------------------------------------
+#  Action bar
+#
+#  The line above the hotbar. Off by default so nothing is added to a server
+#  that already has something there. Every placeholder and animation works.
+# ---------------------------------------------------------------------------
+actionbar:
+  enabled: true
+  update-interval: 40
+  template: "<shadow:#000000:1><dark_gray>| <gray>Ping <white>%player_ping%ms <dark_gray>| <gray>Online <white>%server_online% <dark_gray>| <gray>TPS <white>%server_tps% <dark_gray>|"

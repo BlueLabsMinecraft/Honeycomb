@@ -149,8 +149,7 @@ public final class DisplayCoordinator {
                         system.tick(player);
                     } catch (RuntimeException exception) {
                         // One broken display must never stop the others updating.
-                        Bukkit.getLogger().warning("[Honeycomb] " + system.name()
-                                + " failed while updating " + player.getName() + ": " + exception);
+                        warn(system.name(), player, exception);
                         if (metrics != null) {
                             metrics.recordError();
                         }
@@ -167,5 +166,28 @@ public final class DisplayCoordinator {
      */
     public List<DisplaySystem> systems() {
         return Collections.unmodifiableList(systems);
+    }
+
+    private static final java.util.Map<String, Long> LAST_WARN = new java.util.HashMap<>();
+
+    /**
+     * Logs a display failure with its stack trace, at most once a minute per
+     * player and display, so a repeating error cannot bury the log.
+     *
+     * @param system    display name
+     * @param player    player being updated
+     * @param exception the failure
+     */
+    private static void warn(String system, Player player, RuntimeException exception) {
+        String key = system + "/" + player.getName();
+        long now = System.currentTimeMillis();
+        Long seen = LAST_WARN.get(key);
+        if (seen != null && now - seen < 60_000L) {
+            return;
+        }
+        LAST_WARN.put(key, now);
+        Bukkit.getLogger().log(java.util.logging.Level.WARNING,
+                "[Honeycomb] " + system + " failed while updating " + player.getName(),
+                exception);
     }
 }

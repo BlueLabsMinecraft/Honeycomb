@@ -127,7 +127,16 @@ public final class ProfileConditions {
             };
         }
         boolean equal = left.equalsIgnoreCase(right) || (leftNumber != null && leftNumber.equals(rightNumber));
-        return operator.equals("==") ? equal : !equal;
+        if (operator.equals("==")) {
+            return equal;
+        }
+        if (operator.equals("!=")) {
+            return !equal;
+        }
+        // A comparison with a side that is not a number cannot be true. Without this a
+        // missing placeholder (an empty string) matched every ">=" rule and stole the
+        // scoreboard from the layout that should have been shown.
+        return false;
     }
 
     private static int operatorIndex(String check) {

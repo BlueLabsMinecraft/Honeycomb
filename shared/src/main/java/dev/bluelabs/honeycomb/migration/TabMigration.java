@@ -38,6 +38,18 @@ public final class TabMigration {
             "k", "<obfuscated>", "l", "<bold>", "m", "<strikethrough>",
             "n", "<underlined>", "o", "<italic>", "r", "<reset>");
 
+    /** Matches TAB's animation placeholder, which becomes a Honeycomb animation tag. */
+    private static final java.util.regex.Pattern ANIMATION =
+            java.util.regex.Pattern.compile("(?i)%animation:([A-Za-z0-9_\\-]+)%");
+
+    /** Matches legacy hex colour codes such as {@code &#FF007C}. */
+    private static final java.util.regex.Pattern HEX =
+            java.util.regex.Pattern.compile("(?i)&#([0-9a-f]{6})");
+
+    /** Matches one {@code %world%=value} term of a TAB display-condition. */
+    private static final java.util.regex.Pattern WORLD_TERM =
+            java.util.regex.Pattern.compile("(?i)%world%\\s*=\\s*([^|;]+)");
+
     private static final Map<String, String> PLACEHOLDERS = Map.ofEntries(
             Map.entry("player", "player_name"),
             Map.entry("displayname", "player_displayname"),
@@ -104,13 +116,45 @@ public final class TabMigration {
     }
 
     /**
-     * Runs the migration.
+     * Which parts of a TAB install to copy.
+     *
+     * @param tablist     header and footer designs
+     * @param scoreboards sidebar layouts
+     * @param belowname   below name text
+     * @param nametags    prefixes and suffixes from groups.yml
+     * @param bossbars    bossbar definitions
+     * @param animations  frames from animations.yml
+     * @param override    clear the Honeycomb layouts first instead of merging
+     */
+    public record Selection(boolean tablist, boolean scoreboards, boolean belowname, boolean nametags,
+                            boolean bossbars, boolean animations, boolean override) {
+
+        /** @return every section, merged on top of what is there */
+        public static Selection all() {
+            return new Selection(true, true, true, true, true, true, false);
+        }
+    }
+
+    /**
+     * Runs the migration with everything selected.
      *
      * @param folder TAB folder
      * @param apply  false for a dry run
      * @return the report
      */
     public Report run(File folder, boolean apply) {
+        return run(folder, apply, Selection.all());
+    }
+
+    /**
+     * Runs the migration.
+     *
+     * @param folder    TAB folder
+     * @param apply     false for a dry run
+     * @param selection what to copy and whether to replace
+     * @return the report
+     */
+    public Report run(File folder, boolean apply, Selection selection) {
         List<String> notes = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
 
@@ -123,9 +167,68 @@ public final class TabMigration {
         List<String> header = convertList(fetchList(tab, "header-footer.header", "header"));
         List<String> footer = convertList(fetchList(tab, "header-footer.footer", "footer"));
 
-        ConfigurationSection board = tab.getConfigurationSection("scoreboard");
-        String title = board == null ? "" : convert(board.getString("title", ""));
-        List<String> lines = board == null ? List.of() : convertList(board.getStringList("lines"));
+        List<Design> designs = new ArrayList<>();
+        ConfigurationSection headerFooter = tab.getConfigurationSection("header-footer");
+        ConfigurationSection designRoot = headerFooter == null ? null : headerFooter.getConfigurationSection("designs");
+        if (designRoot != null) {
+            for (String key : designRoot.getKeys(false)) {
+                ConfigurationSection design = designRoot.getConfigurationSection(key);
+                if (design == null) {
+                    continue;
+                }
+                List<String> designHeader = convertList(design.getStringList("header"));
+                List<String> designFooter = convertList(design.getStringList("footer"));
+                if (designHeader.isEmpty() && designFooter.isEmpty()) {
+                    continue;
+                }
+                designs.add(new Design(slug(key), designHeader, designFooter,
+                        worlds(design.getString("display-condition", "")), List.of()));
+            }
+        }
+        if (designs.isEmpty() && (!header.isEmpty() || !footer.isEmpty())) {
+            designs.add(new Design("default", header, footer, worlds(tab.getString("header-footer.display-condition", "")),
+                    List.of()));
+        }
+        if (!designs.isEmpty()) {
+            Design primary = designs.stream().filter(d -> d.id().equals("default")).findFirst().orElse(designs.get(0));
+            header = primary.header();
+            footer = primary.footer();
+        }
+
+        ConfigurationSection scoreboardRoot = tab.getConfigurationSection("scoreboard");
+        String title = scoreboardRoot == null ? "" : convert(scoreboardRoot.getString("title", ""));
+        List<String> lines = scoreboardRoot == null ? List.of() : convertList(scoreboardRoot.getStringList("lines"));
+
+        List<Design> boards = new ArrayList<>();
+        ConfigurationSection boardRoot = scoreboardRoot == null ? null : scoreboardRoot.getConfigurationSection("scoreboards");
+        if (boardRoot != null) {
+            for (String key : boardRoot.getKeys(false)) {
+                ConfigurationSection section = boardRoot.getConfigurationSection(key);
+                if (section == null) {
+                    continue;
+                }
+                List<String> boardLines = convertList(section.getStringList("lines"));
+                String boardTitle = convert(section.getString("title", ""));
+                if (boardLines.isEmpty() && boardTitle.isBlank()) {
+                    continue;
+                }
+                boards.add(new Design(slug(key), boardLines, List.of(),
+                        worlds(section.getString("display-condition", "")),
+                        List.of(boardTitle)));
+            }
+        }
+        if (boards.isEmpty() && (!lines.isEmpty() || !title.isBlank())) {
+            boards.add(new Design("default", lines, List.of(),
+                    worlds(scoreboardRoot == null ? "" : scoreboardRoot.getString("display-condition", "")),
+                    List.of(title)));
+        }
+        if (!boards.isEmpty() && lines.isEmpty()) {
+            Design primary = boards.stream().filter(b -> b.id().equals("default")).findFirst().orElse(boards.get(0));
+            lines = primary.header();
+            title = primary.extra().isEmpty() ? "" : primary.extra().get(0);
+        }
+
+        List<Animation> animations = readAnimations(folder, notes, warnings);
 
         Map<String, Map<String, Object>> tagGroups = new LinkedHashMap<>();
         int index = 0;
@@ -174,12 +277,29 @@ public final class TabMigration {
         }
 
         ConfigurationSection below = tab.getConfigurationSection("belowname");
-        boolean belowname = below != null && below.getBoolean("enabled", false);
+        ConfigurationSection belowObjective = tab.getConfigurationSection("belowname-objective");
+        String belowValue = "";
+        boolean belowname = false;
+        if (belowObjective != null && belowObjective.getBoolean("enabled", false)) {
+            belowname = true;
+            belowValue = convert(belowObjective.getString("fancy-value",
+                    belowObjective.getString("fancy-value-default", "")));
+        } else if (below != null && below.getBoolean("enabled", false)) {
+            belowname = true;
+        }
+
+        if (tab.isConfigurationSection("layout") && tab.getConfigurationSection("layout").getBoolean("enabled", false)) {
+            warnings.add("TAB's layout section (player list grid) has no Honeycomb equivalent, skipped");
+        }
+        if (tab.isConfigurationSection("playerlist-objective")
+                && tab.getConfigurationSection("playerlist-objective").getBoolean("enabled", false)) {
+            warnings.add("TAB's playerlist objective column is not migrated, sorting and nametags are");
+        }
 
         if (header.isEmpty() && footer.isEmpty()) {
             warnings.add("No header or footer found in TAB config.yml");
         }
-        if (board == null || lines.isEmpty()) {
+        if (lines.isEmpty() && boards.isEmpty()) {
             warnings.add("No sidebar lines found in TAB config.yml");
         }
         if (tagGroups.isEmpty()) {
@@ -192,21 +312,88 @@ public final class TabMigration {
         File backup = null;
         if (apply) {
             backup = backup();
-            writeTablist(header, footer, !tagGroups.isEmpty());
-            writeScoreboard(title, lines);
-            writeGroups(tagGroups);
-            writeBars(bars);
-            writeBelowName(belowname);
+            if (selection.override()) {
+                clear(selection);
+            }
+            if (selection.tablist()) {
+                writeTablist(designs.isEmpty()
+                        ? List.of(new Design("default", header, footer, List.of(), List.of()))
+                        : designs, !tagGroups.isEmpty());
+            }
+            if (selection.scoreboards()) {
+                writeScoreboards(boards.isEmpty()
+                        ? List.of(new Design("default", lines, List.of(), List.of(), List.of(title)))
+                        : boards);
+            }
+            if (selection.animations()) {
+                writeAnimations(animations);
+            }
+            if (selection.nametags()) {
+                writeGroups(tagGroups);
+            }
+            if (selection.bossbars()) {
+                writeBars(bars);
+            }
+            if (selection.belowname()) {
+                writeBelowName(belowname, belowValue);
+            }
             plugin.reload();
         }
 
+        int sidebarLines = boards.stream().mapToInt(b -> b.header().size()).sum();
         notes.add(header.size() + " header line(s)");
         notes.add(footer.size() + " footer line(s)");
-        notes.add(lines.size() + " sidebar line(s)");
+        notes.add(Math.max(lines.size(), sidebarLines) + " sidebar line(s)");
+        if (designs.size() > 1) {
+            notes.add(designs.size() + " tablist design(s) with world conditions");
+        }
+        if (boards.size() > 1) {
+            notes.add(boards.size() + " scoreboard(s) with world conditions");
+        }
+        notes.add(animations.size() + " animation(s)");
         notes.add(tagGroups.size() + " nametag group(s)");
         notes.add(bars.size() + " bossbar(s)");
-        return new Report(apply, header.size(), footer.size(), lines.size(), tagGroups.size(), bars.size(),
-                belowname, backup, notes, warnings);
+        return new Report(apply, header.size(), footer.size(), Math.max(lines.size(), sidebarLines),
+                tagGroups.size(), bars.size(), belowname, backup, notes, warnings);
+    }
+
+    /**
+     * Empties the sections the owner chose to replace, so a TAB design that no
+     * longer exists cannot linger in the Honeycomb files.
+     *
+     * @param selection what the owner selected
+     */
+    private void clear(Selection selection) {
+        if (selection.tablist()) {
+            clear(ConfigType.TABLIST, "tablist.profiles", "tablist.header", "tablist.footer",
+                    "tablist.player-list-name");
+        }
+        if (selection.scoreboards()) {
+            clear(ConfigType.SCOREBOARDS, "scoreboards");
+            var scoreboardFile = plugin.configManager().file(ConfigType.SCOREBOARDS);
+            scoreboardFile.yaml().set("scoreboards.enabled", true);
+            scoreboardFile.save(plugin.configManager().report());
+        }
+        if (selection.animations()) {
+            clear(ConfigType.ANIMATIONS, "animations");
+        }
+        if (selection.belowname()) {
+            clear(ConfigType.BELOWNAME, "belowname.profiles", "belowname.value");
+        }
+        if (selection.bossbars()) {
+            clear(ConfigType.BOSSBARS, "bossbars.server_info_bar", "bossbars.bossbars");
+        }
+        if (selection.nametags()) {
+            clear(ConfigType.NAMETAGS, "nametags.groups");
+        }
+    }
+
+    private void clear(ConfigType type, String... paths) {
+        var file = plugin.configManager().file(type);
+        for (String path : paths) {
+            file.yaml().set(path, null);
+        }
+        file.save(plugin.configManager().report());
     }
 
     private File backup() {
@@ -232,34 +419,78 @@ public final class TabMigration {
         return target;
     }
 
-    private void writeTablist(List<String> header, List<String> footer, boolean tagGroups) {
+    private void writeTablist(List<Design> designs, boolean tagGroups) {
         var file = plugin.configManager().file(ConfigType.TABLIST);
         var yaml = file.yaml();
         yaml.set("tablist.enabled", true);
-        if (!header.isEmpty()) {
-            yaml.set("tablist.header", header);
+        Design primary = designs.stream().filter(d -> d.id().equals("default")).findFirst().orElse(designs.get(0));
+        if (!primary.header().isEmpty()) {
+            yaml.set("tablist.header", primary.header());
         }
-        if (!footer.isEmpty()) {
-            yaml.set("tablist.footer", footer);
+        if (!primary.footer().isEmpty()) {
+            yaml.set("tablist.footer", primary.footer());
         }
         if (tagGroups && yaml.getString("tablist.player-list-name", "").isBlank()) {
             yaml.set("tablist.player-list-name", "<white>%player_name%");
         }
+        int priority = 10;
+        for (Design design : designs) {
+            if (design == primary && design.worlds().isEmpty()) {
+                continue;
+            }
+            String path = "tablist.profiles." + design.id();
+            yaml.set(path + ".priority", priority);
+            priority += 10;
+            if (!design.header().isEmpty()) {
+                yaml.set(path + ".header", design.header());
+            }
+            if (!design.footer().isEmpty()) {
+                yaml.set(path + ".footer", design.footer());
+            }
+            if (!design.worlds().isEmpty()) {
+                yaml.set(path + ".conditions.worlds", design.worlds());
+            }
+        }
         file.save(plugin.configManager().report());
     }
 
-    private void writeScoreboard(String title, List<String> lines) {
+    private void writeScoreboards(List<Design> boards) {
         var file = plugin.configManager().file(ConfigType.SCOREBOARDS);
         var yaml = file.yaml();
         yaml.set("scoreboards.enabled", true);
-        yaml.set("scoreboards.default.priority", 0);
-        yaml.set("scoreboards.default.update-interval", 20);
-        yaml.set("scoreboards.default.hide-numbers", true);
-        if (!title.isBlank()) {
-            yaml.set("scoreboards.default.title", title);
+        int priority = 20;
+        for (Design board : boards) {
+            String path = "scoreboards." + board.id();
+            yaml.set(path + ".enabled", true);
+            yaml.set(path + ".priority", priority);
+            priority += 10;
+            yaml.set(path + ".update-interval", 20);
+            yaml.set(path + ".hide-numbers", true);
+            String boardTitle = board.extra().isEmpty() ? "" : board.extra().get(0);
+            if (!boardTitle.isBlank()) {
+                yaml.set(path + ".title", boardTitle);
+            }
+            if (!board.header().isEmpty()) {
+                yaml.set(path + ".lines", board.header());
+            }
+            if (!board.worlds().isEmpty()) {
+                yaml.set(path + ".conditions.worlds", board.worlds());
+            }
         }
-        if (!lines.isEmpty()) {
-            yaml.set("scoreboards.default.lines", lines);
+        file.save(plugin.configManager().report());
+    }
+
+    private void writeAnimations(List<Animation> animations) {
+        if (animations.isEmpty()) {
+            return;
+        }
+        var file = plugin.configManager().file(ConfigType.ANIMATIONS);
+        var yaml = file.yaml();
+        for (Animation animation : animations) {
+            String path = "animations." + animation.id();
+            yaml.set(path + ".interval", animation.interval());
+            yaml.set(path + ".loop", true);
+            yaml.set(path + ".frames", animation.frames());
         }
         file.save(plugin.configManager().report());
     }
@@ -283,23 +514,74 @@ public final class TabMigration {
         var file = plugin.configManager().file(ConfigType.BOSSBARS);
         var yaml = file.yaml();
         yaml.set("bossbars.enabled", true);
+        if (!bars.containsKey("welcome")) {
+            yaml.set("bossbars.welcome.enabled", false);
+        }
         bars.forEach((name, values) -> values.forEach((key, value) ->
                 yaml.set("bossbars." + name + "." + key, value)));
         file.save(plugin.configManager().report());
     }
 
-    private void writeBelowName(boolean enabled) {
+    private void writeBelowName(boolean enabled, String value) {
         if (!enabled) {
             return;
         }
         var file = plugin.configManager().file(ConfigType.BELOWNAME);
         var yaml = file.yaml();
         yaml.set("belowname.enabled", true);
-        yaml.set("belowname.mode", "health");
+        if (value.isBlank()) {
+            yaml.set("belowname.mode", "health");
+        } else {
+            yaml.set("belowname.mode", "custom");
+            yaml.set("belowname.value", value);
+        }
         file.save(plugin.configManager().report());
     }
 
-    private List<String> fetchList(YamlConfiguration config, String... paths) {
+    /**
+     * Reads TAB's animations.yml. TAB offers several animation types; frame lists
+     * are imported, everything else is reported and skipped.
+     *
+     * @param folder   TAB folder
+     * @param notes    notes to add to
+     * @param warnings warnings to add to
+     * @return animations in TAB order
+     */
+    private List<Animation> readAnimations(File folder, List<String> notes, List<String> warnings) {
+        List<Animation> result = new ArrayList<>();
+        File file = new File(folder, "animations.yml");
+        if (!file.isFile()) {
+            return result;
+        }
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        ConfigurationSection root = yaml.getConfigurationSection("animations");
+        if (root == null) {
+            root = yaml;
+        }
+        for (String key : root.getKeys(false)) {
+            ConfigurationSection section = root.getConfigurationSection(key);
+            if (section == null) {
+                continue;
+            }
+            List<String> frames = new ArrayList<>();
+            for (String path : List.of("texts", "frames", "text", "lines", "values")) {
+                frames.addAll(fetchList(section, path));
+            }
+            if (frames.isEmpty()) {
+                warnings.add("TAB animation '" + key + "' has no text frames, skipped");
+                continue;
+            }
+            int millis = section.getInt("change-interval", section.getInt("interval", 1000));
+            int ticks = Math.max(1, millis / 50);
+            result.add(new Animation(slug(key), ticks, convertList(frames)));
+        }
+        if (!result.isEmpty()) {
+            notes.add("animations.yml read");
+        }
+        return result;
+    }
+
+    private List<String> fetchList(ConfigurationSection config, String... paths) {
         for (String path : paths) {
             List<String> found = config.getStringList(path);
             if (!found.isEmpty()) {
@@ -316,9 +598,69 @@ public final class TabMigration {
     private List<String> convertList(List<String> input) {
         List<String> output = new ArrayList<>(input.size());
         for (String line : input) {
-            output.add(convert(line));
+            output.add(finish(convert(line)));
         }
         return output;
+    }
+
+    /**
+     * Handles the parts of TAB text that survive the colour conversion: animation
+     * placeholders and hex colour codes.
+     *
+     * @param input converted line
+     * @return line ready for a Honeycomb config file
+     */
+    static String finish(String input) {
+        String text = HEX.matcher(input).replaceAll("<#$1>");
+        java.util.regex.Matcher animation = ANIMATION.matcher(text);
+        StringBuilder buffer = new StringBuilder();
+        while (animation.find()) {
+            animation.appendReplacement(buffer, java.util.regex.Matcher.quoteReplacement(
+                    "<anim:" + slug(animation.group(1)) + ">"));
+        }
+        animation.appendTail(buffer);
+        return buffer.toString();
+    }
+
+    /**
+     * @param text design or animation name
+     * @return a Honeycomb safe id
+     */
+    static String slug(String text) {
+        String id = text.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_-]", "-").replaceAll("-{2,}", "-");
+        id = id.replaceAll("^-|-$", "");
+        return id.isEmpty() ? "default" : id;
+    }
+
+    /**
+     * Reads the worlds out of a TAB display-condition such as
+     * {@code %world%=spawn|%world%=arenas}.
+     *
+     * @param condition TAB condition
+     * @return world names, empty when the condition has no world term
+     */
+    static List<String> worlds(String condition) {
+        if (condition == null || condition.isBlank() || condition.equals("''")) {
+            return List.of();
+        }
+        List<String> found = new ArrayList<>();
+        java.util.regex.Matcher matcher = WORLD_TERM.matcher(condition);
+        while (matcher.find()) {
+            String world = matcher.group(1).trim();
+            if (!world.isEmpty() && !world.contains("%") && !found.contains(world)) {
+                found.add(world);
+            }
+        }
+        return found;
+    }
+
+    /** One tablist design or scoreboard read from TAB. */
+    private record Design(String id, List<String> header, List<String> footer, List<String> worlds,
+                          List<String> extra) {
+    }
+
+    /** One animation read from TAB's animations.yml. */
+    private record Animation(String id, int interval, List<String> frames) {
     }
 
     /**

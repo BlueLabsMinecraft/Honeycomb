@@ -16,6 +16,7 @@ import dev.bluelabs.honeycomb.player.PlayerSessionRegistry;
 import dev.bluelabs.honeycomb.placeholder.PlaceholderContext;
 import dev.bluelabs.honeycomb.scheduler.TickClock;
 import dev.bluelabs.honeycomb.text.RenderPipeline;
+import dev.bluelabs.honeycomb.util.Text;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -84,8 +85,26 @@ public final class ScoreboardService implements DisplaySystem {
         return "scoreboard";
     }
 
+    /**
+     * Reports once whether this server can hand out a private scoreboard. Folia is
+     * the reason this exists: the answer decides which drawing path is available.
+     */
+    private void probeScoreboardSupport() {
+        try {
+            org.bukkit.scoreboard.Scoreboard probe =
+                    org.bukkit.Bukkit.getScoreboardManager().getNewScoreboard();
+            probe.registerNewObjective("honeycomb-probe", org.bukkit.scoreboard.Criteria.DUMMY,
+                    net.kyori.adventure.text.Component.empty());
+            org.bukkit.Bukkit.getLogger().info("[Honeycomb] Scoreboard support: private boards work");
+        } catch (Throwable failure) {
+            org.bukkit.Bukkit.getLogger().info("[Honeycomb] Scoreboard support: no private boards on this "
+                    + "server, the scoreboard is sent as packets instead");
+        }
+    }
+
     @Override
     public void enable() {
+        probeScoreboardSupport();
         ConfigurationSection root = configManager.yaml(ConfigType.SCOREBOARDS).getConfigurationSection("scoreboards");
         this.enabled = root != null && root.getBoolean("enabled", true);
         if (!enabled) {
@@ -204,11 +223,43 @@ public final class ScoreboardService implements DisplaySystem {
                 }
             }
         }
-        return ProfileSelector.select(profiles, MatchContext.of(player, groups.group(player))
+        ScoreboardProfile chosen = ProfileSelector.select(profiles, MatchContext.of(player, groups.group(player))
                 .withPlaceholders(text -> pipeline.placeholders().expand(text, PlaceholderContext.of(player))));
+        if (chosen != null && chosen.isEnabled() && !isStaffLayout(chosen.name())) {
+            return chosen;
+        }
+        if (chosen != null && chosen.isEnabled() && player.hasPermission("honeycomb.staff")) {
+            return chosen;
+        }
+        // Nothing matched, or a staff layout is off: keep a normal sidebar rather than nothing.
+        for (ScoreboardProfile candidate : profiles) {
+            if (candidate.isEnabled() && !isStaffLayout(candidate.name())) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     private void apply(Player player, PlayerSession session, ScoreboardProfile profile) {
+        try {
+            draw(player, session, profile);
+        } catch (RuntimeException failure) {
+            if (reportedFailure.compareAndSet(false, true)) {
+                org.bukkit.Bukkit.getLogger().warning("[Honeycomb] The scoreboard could not be drawn: "
+                        + failure.getClass().getSimpleName() + ": " + failure.getMessage());
+                player.sendMessage(Text.parse("<red>Honeycomb: your scoreboard could not be drawn ("
+                        + failure.getClass().getSimpleName() + ": "
+                        + String.valueOf(failure.getMessage()) + "). <gray>Send this line to the developer."));
+            }
+        }
+    }
+
+    private final java.util.concurrent.atomic.AtomicBoolean reportedFailure =
+            new java.util.concurrent.atomic.AtomicBoolean();
+    private final java.util.concurrent.atomic.AtomicBoolean plainRows =
+            new java.util.concurrent.atomic.AtomicBoolean();
+
+    private void draw(Player player, PlayerSession session, ScoreboardProfile profile) {
         if (session.sidebar.hideNumbers != profile.hideNumbers() && session.sidebar.board != null) {
             session.sidebar.board.disposeSidebar();
         }
@@ -216,15 +267,28 @@ public final class ScoreboardService implements DisplaySystem {
         session.sidebar.profile = profile.name();
 
         PlayerBoard board = BoardAccess.acquire(player, session);
-        PlayerSidebar sidebar = board.sidebar(profile.hideNumbers());
+        if (board == null) {
+            return;
+        }
+        Sidebar sidebar = board.sidebar(profile.hideNumbers());
 
         PlaceholderContext context = PlaceholderContext.of(player);
         Component title = pipeline.render(profile.title(), context);
-        List<Component> lines = new ArrayList<>(profile.lines().size());
-        for (String template : profile.lines()) {
-            lines.add(pipeline.render(template, context));
+        List<Component> lines = pipeline.renderBlock(profile.lines(), context);
+        try {
+            sidebar.update(title, lines);
+        } catch (RuntimeException failure) {
+            // A row the server refuses must not cost the player the whole sidebar.
+            if (plainRows.compareAndSet(false, true)) {
+                org.bukkit.Bukkit.getLogger().warning("[Honeycomb] Scoreboard fell back to plain rows: "
+                        + failure.getClass().getSimpleName() + ": " + failure.getMessage());
+            }
+            List<Component> plain = new ArrayList<>(profile.lines().size());
+            for (String raw : profile.lines()) {
+                plain.add(Component.text(Text.stripTags(raw)));
+            }
+            sidebar.update(Component.text(Text.stripTags(profile.title())), plain);
         }
-        sidebar.update(title, lines);
     }
 
     private void clear(Player player, PlayerSession session) {

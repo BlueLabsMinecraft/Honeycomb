@@ -278,18 +278,26 @@ public final class InternalPlaceholders {
         });
     }
 
+    /**
+     * @param value resolved text, may be null when the integration is absent
+     * @return the text, or an empty string so the token disappears cleanly
+     */
+    private static String emptyIfNull(String value) {
+        return value == null ? "" : value;
+    }
+
     private void registerIntegrationPlaceholders() {
         registry.register("player_group", context -> {
             Player player = context.player();
-            return player == null ? null : groups.group(player);
+            return player == null ? "" : emptyIfNull(groups.group(player));
         });
         registry.register("player_prefix", context -> {
             Player player = context.player();
-            return player == null ? null : groups.prefix(player);
+            return player == null ? "" : emptyIfNull(groups.prefix(player));
         });
         registry.register("player_suffix", context -> {
             Player player = context.player();
-            return player == null ? null : groups.suffix(player);
+            return player == null ? "" : emptyIfNull(groups.suffix(player));
         });
         registry.register("player_afk", context -> {
             Player player = context.player();

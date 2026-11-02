@@ -10,20 +10,22 @@ Purpur and Pufferfish.
 
 <img src="docs/banner.png" alt="Honeycomb, the TAB alternative for Minecraft 1.21.9 to 26.3" width="100%" />
 
-[![Release](https://img.shields.io/badge/release-0.12.0-FFB01F?style=flat-square)](https://github.com/bluegaming08/honeycomb/releases)
+[![Release](https://img.shields.io/badge/release-1.0.0-FFB01F?style=flat-square)](https://github.com/BlueLabsMinecraft/Honeycomb/releases)
 [![License](https://img.shields.io/badge/license-MIT-4ade80?style=flat-square)](LICENSE)
 [![Java](https://img.shields.io/badge/java-21%20%7C%2025-2563EB?style=flat-square)](https://adoptium.net)
 [![Paper](https://img.shields.io/badge/paper-1.21.9%20%E2%80%93%2026.3-38BDF8?style=flat-square)](https://papermc.io)
 [![Folia](https://img.shields.io/badge/folia-supported-FFB01F?style=flat-square)](https://papermc.io/software/folia)
-[![TAB alternative](https://img.shields.io/badge/tab-alternative-7DE9F7?style=flat-square)](https://github.com/bluegaming08/honeycomb)
-[![Build](https://img.shields.io/github/actions/workflow/status/bluegaming08/honeycomb/build.yml?style=flat-square&label=build)](../../actions)
+[![TAB alternative](https://img.shields.io/badge/tab-alternative-7DE9F7?style=flat-square)](https://github.com/BlueLabsMinecraft/Honeycomb)
+[![Build](https://img.shields.io/github/actions/workflow/status/BlueLabsMinecraft/Honeycomb/build.yml?style=flat-square&label=build)](../../actions)
 
 [Features](#features) · [Install](#install) · [Commands](#commands) · [Conditions](#conditions) · [Config](#configuration) · [Presets](#presets) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
+<img src="docs/preview.png" alt="Honeycomb scoreboard, tablist and panel" width="100%" />
+
 Honeycomb owns the parts of the screen players look at all day: the tablist, the
-sidebar, the name above each head, bossbars and the line below a nametag. Each one is
+scoreboard, the name above each head, bossbars and the line below a nametag. Each one is
 a separate engine with its own YAML file, its own update interval and its own
 conditions, driven by MiniMessage, placeholders and animations.
 
@@ -31,9 +33,10 @@ It is an original implementation on the Bukkit and Paper APIs. It is not a fork 
 or of any other display plugin, and it needs no dependencies to run.
 
 Looking for a TAB alternative, or a tablist plugin that does not need a config wall?
-Honeycomb draws the tablist, sidebar, nametags, bossbars and the below name line, and
+Honeycomb draws the tablist, scoreboard, nametags, bossbars and the below name line, and
 lets you edit all of it from an in game panel. Per world layouts use one conditions
 block on every display. MIT licensed, no paid tier.
+
 
 ## Coming from TAB
 
@@ -44,7 +47,7 @@ One command copies a TAB installation into Honeycomb:
 /honeycomb migrate apply    back up, write, reload
 ```
 
-Header, footer, sidebar, nametags, bossbars and the below name display are read
+Header, footer, scoreboard, nametags, bossbars and the below name display are read
 from `plugins/TAB/config.yml` and `groups.yml`. Legacy colour codes become
 MiniMessage, and TAB's own placeholders are mapped to their PlaceholderAPI
 equivalents. Current files are backed up to `migration-backup/<timestamp>/`
@@ -56,10 +59,10 @@ Honeycomb is a common TAB alternative for one reason: the layout lives in an edi
 not in a wall of YAML.
 
 - **No file editing for a text change.** `/honeycomb panel` opens 1.21.9 dialogs that
-  edit the tablist header, sidebar rows, nametags, bossbars and animations while
+  edit the tablist header, scoreboard rows, nametags, bossbars and animations while
   players are online, writing to `panel.yml` so updates never touch your work.
 - **One conditions block, five displays.** Worlds, groups, permissions and placeholder
-  comparisons behave the same on tablist, sidebar, bossbars, below name and nametags,
+  comparisons behave the same on tablist, scoreboard, bossbars, below name and nametags,
   which is how per world layouts stay readable.
 - **Presets that look like real servers.** SMP, PvP, survival, economy, factions,
   DonutSMP and Lifesteal styles ship in the jar, with edited copies backed up before an
@@ -79,10 +82,12 @@ whether the condition language covers what you need before switching.
 
 ## Features
 
+- Name holograms: a template drawn above every head, per world and conditional.
+
 | | |
 |---|---|
 | **Tablist** | Header and footer of any length, per player list names, separate staff layout behind a permission |
-| **Sidebar** | Layouts by priority and condition, up to 15 rows, per world switching, no flicker on updates |
+| **Scoreboard** | Layouts by priority and condition, up to 15 rows, per world switching, no flicker on updates |
 | **Nametags** | Prefix, suffix and colour per group, applied per viewer with packet level diffing |
 | **Bossbars** | Several at once, each with colour, overlay, progress and announce behaviour |
 | **Below name** | Health, ping or any placeholder under the floating name |
@@ -93,7 +98,7 @@ whether the condition language covers what you need before switching.
 | **Update log** | Entries written by staff, read by players with `/updatelog` |
 | **Conditions** | World, group, permission and placeholder comparisons pick the layout, like TAB |
 | **Per world** | Every display can be limited or replaced per world, nametags and below name included |
-| **Staff layouts** | Separate tablist and sidebar for staff, behind a permission |
+| **Staff layouts** | Separate tablist and scoreboard for staff, behind a permission |
 | **Folia** | Region aware scheduling, so the same jar runs on Folia without a second build |
 
 ## Install
@@ -126,7 +131,6 @@ you want the F3 brand line replaced; everything else works without it.
 | `/honeycomb preset list` | Lists bundled and saved presets | `honeycomb.admin` |
 | `/honeycomb preset load <name>` | Applies a preset over the current layout | `honeycomb.admin` |
 | `/honeycomb preset save <name>` | Captures the live layout as a preset | `honeycomb.admin` |
-| `/honeycomb status` | Displays, integrations, unknown placeholders | `honeycomb.status` |
 | `/honeycomb debug` | Render and packet diagnostics | `honeycomb.debug` |
 | `/updatelog`, `/changelog`, `/updates` | Shows the update log to players | everyone |
 
@@ -211,7 +215,7 @@ build refreshes the bundled copies and keeps your edited ones in `presets/backup
 ## Build from source
 
 ```bash
-git clone https://github.com/bluegaming08/honeycomb.git
+git clone https://github.com/BlueLabsMinecraft/Honeycomb.git
 cd honeycomb
 ./gradlew build                      # every module plus tests
 ./gradlew :honeycomb-legacy:build     # Java 21 artifact

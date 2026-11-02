@@ -26,10 +26,13 @@ public final class BoardAccess {
     public static PlayerBoard acquire(Player player, PlayerSession session) {
         PlayerBoard board = session.sidebar.board;
         if (board == null) {
-            board = PlayerBoard.create();
+            board = PlayerBoard.create(player);
+            if (board == null) {
+                return null;
+            }
             session.sidebar.board = board;
         }
-        if (player.getScoreboard() != board.board()) {
+        if (board.board() != null && player.getScoreboard() != board.board()) {
             // Another plugin may have replaced the board since the last update.
             player.setScoreboard(board.board());
         }
@@ -53,8 +56,12 @@ public final class BoardAccess {
         }
         board.dispose();
         session.sidebar.board = null;
-        if (player.getScoreboard() == board.board()) {
-            player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+        if (board.board() != null && player.getScoreboard() == board.board()) {
+            try {
+                player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+            } catch (RuntimeException | LinkageError noMainBoard) {
+                // Folia keeps the player on the board it already has.
+            }
         }
     }
 }

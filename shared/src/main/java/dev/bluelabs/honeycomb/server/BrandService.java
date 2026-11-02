@@ -1,6 +1,8 @@
 package dev.bluelabs.honeycomb.server;
 
 import dev.bluelabs.honeycomb.HoneycombPlugin;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
@@ -56,10 +58,10 @@ public final class BrandService implements Listener {
      * joins later. Passing a blank name clears the override.
      *
      * @param enabled whether the brand override is on
-     * @param text    brand text, MiniMessage is not interpreted here
+     * @param text    brand text, MiniMessage or legacy {@code &} codes
      */
     public void apply(boolean enabled, String text) {
-        String wanted = enabled && text != null ? text.trim() : "";
+        String wanted = enabled ? translate(text) : "";
         if (wanted.equals(brand)) {
             return;
         }
@@ -79,7 +81,7 @@ public final class BrandService implements Listener {
         }
         // The brand packet is sent as the player finishes logging in, so the handler
         // has to be in the channel before that happens.
-        Bukkit.getScheduler().runTask(plugin, () -> inject(event.getPlayer()));
+        dev.bluelabs.honeycomb.scheduler.Scheduling.later(plugin, 1L, () -> inject(event.getPlayer()));
     }
 
     /**
@@ -175,5 +177,53 @@ public final class BrandService implements Listener {
                 return null;
             }
         }
+    }
+
+    /** Matches {@code &#RRGGBB}. */
+    private static final java.util.regex.Pattern HEX_CODE =
+            java.util.regex.Pattern.compile("(?i)&#([0-9a-f]{6})");
+
+    private static final String LEGACY_CHARS = "0123456789abcdefklmnorABCDEFKLMNOR";
+
+    /**
+     * Turns MiniMessage and legacy {@code &} codes into the section codes the brand
+     * payload carries. Text that fails to parse is sent as typed rather than dropped.
+     *
+     * @param input raw text from the panel or config
+     * @return text ready for the packet
+     */
+    static String translate(String input) {
+        String text = input == null ? "" : input.trim();
+        if (text.indexOf('<') >= 0) {
+            try {
+                text = LegacyComponentSerializer.legacySection()
+                        .serialize(MiniMessage.miniMessage().deserialize(text));
+            } catch (RuntimeException ignored) {
+                // not MiniMessage, keep it as typed
+            }
+        }
+        java.util.regex.Matcher hex = HEX_CODE.matcher(text);
+        StringBuilder buffer = new StringBuilder();
+        while (hex.find()) {
+            StringBuilder code = new StringBuilder("§x");
+            for (char digit : hex.group(1).toCharArray()) {
+                code.append('§').append(digit);
+            }
+            hex.appendReplacement(buffer, java.util.regex.Matcher.quoteReplacement(code.toString()));
+        }
+        hex.appendTail(buffer);
+        text = buffer.toString();
+
+        StringBuilder result = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '&' && i + 1 < text.length() && LEGACY_CHARS.indexOf(text.charAt(i + 1)) >= 0) {
+                result.append('§').append(Character.toLowerCase(text.charAt(i + 1)));
+                i++;
+                continue;
+            }
+            result.append(c);
+        }
+        return result.toString();
     }
 }

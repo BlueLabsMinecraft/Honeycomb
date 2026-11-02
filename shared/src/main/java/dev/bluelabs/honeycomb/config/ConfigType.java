@@ -14,6 +14,7 @@ public enum ConfigType {
     NAMETAGS("nametags.yml", "Nametag prefixes and suffixes", "nametags"),
     BOSSBARS("bossbars.yml", "Bossbar definitions", "bossbars"),
     BELOWNAME("belowname.yml", "Below-name displays", "belowname"),
+    HOLOGRAMS("holograms.yml", "Name holograms above player heads", "holograms"),
     SORTING("sorting.yml", "Player sorting and grouping", "sorting"),
     ANIMATIONS("animations.yml", "Animation definitions", "animations"),
     PLACEHOLDERS("placeholders.yml", "Placeholder engine settings", "placeholders"),

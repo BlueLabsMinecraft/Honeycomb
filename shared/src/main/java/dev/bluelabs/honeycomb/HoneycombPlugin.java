@@ -21,6 +21,8 @@ import dev.bluelabs.honeycomb.server.BrandService;
 import dev.bluelabs.honeycomb.server.CommandHider;
 import dev.bluelabs.honeycomb.display.WorldProfiles;
 import dev.bluelabs.honeycomb.display.belowname.BelowNameService;
+import dev.bluelabs.honeycomb.display.actionbar.ActionbarService;
+import dev.bluelabs.honeycomb.display.hologram.NameHologramService;
 import dev.bluelabs.honeycomb.display.bossbar.BossbarService;
 import dev.bluelabs.honeycomb.display.nametag.NametagService;
 import dev.bluelabs.honeycomb.display.scoreboard.ScoreboardService;
@@ -87,6 +89,8 @@ public final class HoneycombPlugin extends JavaPlugin {
     private NametagService nametags;
     private BossbarService bossbars;
     private BelowNameService belowName;
+    private NameHologramService holograms;
+    private ActionbarService actionbar;
     private SortingService sorting;
     private DisplayCoordinator coordinator;
     private DiagnosticsService diagnostics;
@@ -140,6 +144,8 @@ public final class HoneycombPlugin extends JavaPlugin {
                 integrations.groups(), clock, report);
         belowName = new BelowNameService(configManager, settings, pipeline, sessions,
                 integrations.groups(), clock, report);
+        holograms = new NameHologramService(configManager, pipeline);
+        actionbar = new ActionbarService(configManager, pipeline);
         sorting = new SortingService(configManager, sessions, integrations.groups(), clock, report);
 
         worldProfiles = new WorldProfiles(configManager, report);
@@ -156,6 +162,8 @@ public final class HoneycombPlugin extends JavaPlugin {
         coordinator.register(nametags);
         coordinator.register(bossbars);
         coordinator.register(belowName);
+        coordinator.register(holograms);
+        coordinator.register(actionbar);
         coordinator.register(sorting);
 
         diagnostics = new DiagnosticsService(tasks, sessions, placeholderService, coordinator, integrations, network);
@@ -266,6 +274,18 @@ public final class HoneycombPlugin extends JavaPlugin {
 
     public ReloadResult reload() {
         long started = System.nanoTime();
+        try {
+            return reloadUnchecked(started);
+        } catch (RuntimeException | LinkageError failure) {
+            // A display that refuses to reload must not break the panel that saved the
+            // change: log it, keep the old state, and let the caller carry on.
+            getLogger().severe("[Honeycomb] Reload failed: " + failure.getClass().getName()
+                    + ": " + failure.getMessage());
+            return new ReloadResult((System.nanoTime() - started) / 1_000_000L, new ValidationReport());
+        }
+    }
+
+    private ReloadResult reloadUnchecked(long started) {
         panelOverrides.load();
         ValidationReport reloadReport = configManager.reloadAll();
         worldProfiles.load();

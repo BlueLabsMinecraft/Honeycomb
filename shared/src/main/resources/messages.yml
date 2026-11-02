@@ -5,7 +5,12 @@
 #  command that sends the message; %percent% placeholders are not used here.
 # ---------------------------------------------------------------------------
 
-prefix: "<gradient:#FADE29:#D56B2B><bold>Honeycomb</bold></gradient> <dark_gray>»</dark_gray> "
+prefix: "<shadow:#000000:1><bold><gradient:#FFE3A8:#FFB01F:#FF7A00>HONEYCOMB</gradient></bold></shadow> <shadow:#000000:1><dark_gray>»</dark_gray></shadow> "
+
+panel:
+  saved: "<green>Saved {kind} <white>{name}</white> and applied it."
+  save-failed: "<red>Could not save: <white>{reason}"
+  name-required: "<red>Give it a name first."
 
 general:
   no-permission: "<red>You do not have permission to do that."
@@ -18,22 +23,25 @@ general:
   refresh-success: "<green>Refreshed {count} display(s) for you."
 
 command:
-  help-header: "<gradient:#FADE29:#D56B2B><bold>Honeycomb</bold></gradient> <dark_gray>- <gray>v{version} <dark_gray>({mc})"
+  help-header: "<shadow:#000000:1><bold><gradient:#FFE3A8:#FFB01F:#FF7A00>HONEYCOMB</gradient></bold></shadow> <dark_gray>- <gray>v{version} <dark_gray>({mc})"
   help-line: "<yellow>/{label} {usage}</yellow> <dark_gray>- <gray>{description}"
   version: "<gray>Honeycomb <white>{version}</white> <dark_gray>|</dark_gray> <gray>build <white>{range}</white> <dark_gray>|</dark_gray> <gray>server <white>{server}</white> <dark_gray>|</dark_gray> <gray>java <white>{java}</white>"
-  status-header: "<dark_gray>―― <gray>Display status <dark_gray>――"
+  status-header: "<dark_gray>-- <gray>Display status <dark_gray>--"
   status-line: "<gray>{name}: {state} <dark_gray>|</dark_gray> <dark_gray>{detail}"
   status-disabled: "<red>disabled"
   status-enabled: "<green>enabled"
   test-sent: "<green>Sent a test display through <white>{system}</white>."
   test-no-display: "<red>{system} is not active for you right now."
-  placeholders-header: "<dark_gray>―― <gray>Placeholder demo for <white>{player}</white> <dark_gray>――"
+  placeholders-header: "<dark_gray>-- <gray>Placeholder demo for <white>{player}</white> <dark_gray>--"
   placeholders-unknown: "<gray>Unknown placeholders seen: <yellow>{list}"
-  animations-header: "<dark_gray>―― <gray>Animations ({count}) <dark_gray>――"
+  animations-header: "<dark_gray>-- <gray>Animations ({count}) <dark_gray>--"
   animations-line: "<gray>{id} <dark_gray>|</dark_gray> <gray>{frames} frames <dark_gray>|</dark_gray> <gray>every {interval} ticks"
   animations-preview: "<gray>{id}: {frame}"
-  integrations-header: "<dark_gray>―― <gray>Integrations <dark_gray>――"
+  integrations-header: "<dark_gray>-- <gray>Integrations <dark_gray>--"
   integrations-line: "<gray>{name}: {state} <dark_gray>{detail}"
-  debug-header: "<dark_gray>―― <gray>Debug report <dark_gray>――"
+  debug-header: "<dark_gray>-- <gray>Debug report <dark_gray>--"
   debug-line: "<gray>{line}"
   debug-written: "<green>Wrote <white>{file}</white>."
+
+scoreboard:
+  failed: "<red>Your scoreboard could not be drawn: <white>{reason}</white>. <gray>Send this line to the developer."

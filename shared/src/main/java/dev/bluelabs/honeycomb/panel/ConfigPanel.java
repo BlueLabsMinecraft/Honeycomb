@@ -42,10 +42,10 @@ public final class ConfigPanel {
     public void open(Player player, String section) {
         String key = section == null ? "main" : section.toLowerCase();
         Dialog dialog = switch (key) {
-            case "tablist" -> tablist();
-            case "scoreboard", "scoreboards" -> scoreboard();
-            case "nametags" -> nametags();
-            case "bossbars" -> bossbars();
+            case "tablist" -> ProfilesPanel.list(plugin, "tablist");
+            case "scoreboard", "scoreboards" -> ProfilesPanel.list(plugin, "scoreboards");
+            case "nametags" -> ProfilesPanel.list(plugin, "nametags");
+            case "bossbars" -> ProfilesPanel.list(plugin, "bossbars");
             case "brand" -> brand();
             case "commands" -> commands();
             case "messages" -> messages();
@@ -53,6 +53,12 @@ public final class ConfigPanel {
             case "staff" -> staff();
             case "presets" -> presets();
             case "updates" -> updates();
+            case "actionbar", "action-bar" -> ProfilesPanel.list(plugin, "actionbar");
+            case "actionbar-entries" -> ProfilesPanel.list(plugin, "actionbar");
+            case "layouts", "tablists" -> ProfilesPanel.list(plugin, "tablist");
+            case "boards" -> ProfilesPanel.list(plugin, "scoreboards");
+            case "bars" -> ProfilesPanel.list(plugin, "bossbars");
+            case "groups" -> ProfilesPanel.list(plugin, "nametags");
             default -> main();
         };
         show(player, dialog);
@@ -70,10 +76,11 @@ public final class ConfigPanel {
         }
         List<Case> cases = List.of(
                 new Case("main", this::main),
-                new Case("tablist", this::tablist),
-                new Case("scoreboard", this::scoreboard),
-                new Case("nametags", this::nametags),
-                new Case("bossbars", this::bossbars),
+                new Case("tablist", () -> ProfilesPanel.list(plugin, "tablist")),
+                new Case("scoreboard", () -> ProfilesPanel.list(plugin, "scoreboards")),
+                new Case("nametags", () -> ProfilesPanel.list(plugin, "nametags")),
+                new Case("bossbars", () -> ProfilesPanel.list(plugin, "bossbars")),
+                new Case("actionbar", () -> ProfilesPanel.list(plugin, "actionbar")),
                 new Case("brand", this::brand),
                 new Case("commands", this::commands),
                 new Case("messages", this::messages),
@@ -101,7 +108,7 @@ public final class ConfigPanel {
 
     private void show(Player player, Dialog dialog) {
         try {
-            player.showDialog(dialog);
+            DialogKit.show(player, plugin, dialog);
         } catch (Throwable error) {
             player.sendMessage(Component.text("Honeycomb could not open that dialog: "
                     + error.getClass().getSimpleName() + ": " + error.getMessage(), NamedTextColor.RED));
@@ -113,122 +120,58 @@ public final class ConfigPanel {
 
     private Dialog main() {
         YamlConfiguration config = plugin.configManager().yaml(ConfigType.CONFIG);
+        boolean brand = config.getBoolean("brand.enabled", false);
+        boolean hider = config.getBoolean("commands.hide-pl-version", true);
         List<Component> body = new ArrayList<>(List.of(
-                Component.text("Edit the displays without touching a YAML file."),
-                DialogKit.hint("Changes are written to panel.yml and applied instantly."),
-                DialogKit.hint("Brand: " + (config.getBoolean("brand.enabled", false) ? "on" : "off")
-                        + "  |  /pl + /version hiding: "
-                        + (config.getBoolean("commands.hide-pl-version", true) ? "on" : "off"))));
+                DialogKit.styled("<shadow:#000000:1><gold>DISPLAYS"),
+                DialogKit.shade("Each one has its own layouts and conditions."),
+                DialogKit.styled("<shadow:#000000:1><gold>SERVER"),
+                DialogKit.styled("<shadow:#000000:1><gray>F3 brand " + (brand ? "<green>on" : "<dark_gray>off")
+                        + " <dark_gray>|</dark_gray> /pl hiding "
+                        + (hider ? "<green>on" : "<dark_gray>off")),
+                DialogKit.styled("<shadow:#000000:1><gold>MAINTENANCE")));
         List<ActionButton> buttons = new ArrayList<>();
-        buttons.add(DialogKit.run("Tablist", BACK + " tablist"));
-        buttons.add(DialogKit.run("Scoreboard", BACK + " scoreboard"));
-        buttons.add(DialogKit.run("Nametags", BACK + " nametags"));
-        buttons.add(DialogKit.run("Bossbars", BACK + " bossbars"));
-        buttons.add(DialogKit.run("F3 brand", BACK + " brand"));
-        buttons.add(DialogKit.run("Commands", BACK + " commands"));
-        buttons.add(DialogKit.run("Messages", BACK + " messages"));
-        buttons.add(DialogKit.run("Animations", BACK + " animations"));
-        buttons.add(DialogKit.run("Staff layouts", BACK + " staff"));
-        buttons.add(DialogKit.run("Presets", BACK + " presets"));
-        buttons.add(DialogKit.run("Update log", BACK + " updates"));
-        buttons.add(DialogKit.run("Reload all", "honeycomb reload"));
+        buttons.add(section("Tablist", "tablist"));
+        buttons.add(section("Scoreboard", "scoreboard"));
+        buttons.add(section("Action bar", "actionbar"));
+        buttons.add(section("Nametags", "nametags"));
+        buttons.add(section("Bossbars", "bossbars"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>F3 brand"), BACK + " brand"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Commands"), BACK + " commands"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Messages"), BACK + " messages"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Animations"), BACK + " animations"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Staff layouts"), BACK + " staff"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Presets"), BACK + " presets"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Import from TAB"),
+                "honeycomb migrate"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Update log"), BACK + " updates"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><gold>Apply changes"),
+                "honeycomb reload"));
         buttons.add(DialogKit.close());
-        body.add(DialogKit.hint("Click a section. Gray text explains what to type."));
         return DialogKit.menu("Honeycomb", body, buttons);
     }
 
-    private Dialog tablist() {
-        YamlConfiguration yaml = plugin.configManager().yaml(ConfigType.TABLIST);
-        List<String> header = strings(yaml, "tablist.header");
-        List<String> footer = strings(yaml, "tablist.footer");
-        int interval = yaml.getInt("tablist.update-interval", 40);
-
-        List<DialogInput> inputs = List.of(
-                DialogKit.lines("header", "Header, one line per row", join(header), 6),
-                DialogKit.lines("footer", "Footer, one line per row", join(footer), 4),
-                DialogKit.text("interval", "Update interval in ticks", String.valueOf(interval)));
-
-        List<ActionButton> buttons = List.of(
-                DialogKit.save("Save", this::saveTablist),
-                DialogKit.run("Back", BACK),
-                DialogKit.close());
-        return DialogKit.form("Tablist", List.of(DialogKit.hint("Type MiniMessage, e.g. <gray>Welcome <white>%player_name%"), DialogKit.hint("Each header and footer row is one line.")),
-                inputs, buttons);
+    /**
+     * Builds one section button with the number of layouts it holds.
+     *
+     * @param label visible name
+     * @param route panel route
+     * @return the button
+     */
+    private ActionButton section(String label, String route) {
+        int count = ProfilesPanel.count(plugin, countKind(route));
+        return DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>" + label
+                + " <dark_gray>(" + count + ")"), BACK + " " + route);
     }
 
-    private Dialog scoreboard() {
-        YamlConfiguration yaml = plugin.configManager().yaml(ConfigType.SCOREBOARDS);
-        String title = yaml.getString("scoreboards.default.title", "<gradient:#FADE29:#D56B2B>HONEYCOMB</gradient>");
-        List<String> lines = strings(yaml, "scoreboards.default.lines");
-        int interval = yaml.getInt("scoreboards.default.update-interval", 20);
-
-        List<DialogInput> inputs = List.of(
-                DialogKit.text("title", "Title", title),
-                DialogKit.lines("lines", "Lines, one per row (blank rows allowed)", join(lines), 12),
-                DialogKit.text("interval", "Update interval in ticks", String.valueOf(interval)));
-
-        List<ActionButton> buttons = List.of(
-                DialogKit.save("Save", this::saveScoreboard),
-                DialogKit.run("Back", BACK),
-                DialogKit.close());
-        return DialogKit.form("Scoreboard", List.of(DialogKit.hint("One line per row, MiniMessage allowed."), DialogKit.hint("An empty row leaves a gap. Keep it to 15 rows.")),
-                inputs, buttons);
-    }
-
-    private Dialog nametags() {
-        YamlConfiguration yaml = plugin.configManager().yaml(ConfigType.NAMETAGS);
-        ConfigurationSection groups = yaml.getConfigurationSection("nametags.groups");
-        List<DialogInput> inputs = new ArrayList<>();
-        inputs.add(DialogKit.toggle("enabled", "Nametags enabled", yaml.getBoolean("nametags.enabled", true)));
-
-        List<String> names = new ArrayList<>();
-        if (groups != null) {
-            for (String name : groups.getKeys(false)) {
-                if (names.size() >= 4) {
-                    break;
-                }
-                names.add(name);
-                inputs.add(DialogKit.text("prefix_" + name, "Prefix for " + name,
-                        groups.getString(name + ".prefix", "")));
-            }
-        }
-
-        List<ActionButton> buttons = List.of(
-                DialogKit.save("Save", (player, response) -> saveNametags(player, response, names)),
-                DialogKit.run("Back", BACK),
-                DialogKit.close());
-        return DialogKit.form("Nametags", List.of(DialogKit.hint("Type the prefix as MiniMessage, e.g. <red>[ADMIN]</red> "), DialogKit.hint("The highest priority group a player matches wins.")),
-                inputs, buttons);
-    }
-
-    private Dialog bossbars() {
-        YamlConfiguration yaml = plugin.configManager().yaml(ConfigType.BOSSBARS);
-        ConfigurationSection root = yaml.getConfigurationSection("bossbars");
-        String firstId = null;
-        if (root != null) {
-            for (String key : root.getKeys(false)) {
-                if (root.isConfigurationSection(key) && root.getConfigurationSection(key).isString("title")) {
-                    firstId = key;
-                    break;
-                }
-            }
-        }
-        String title = firstId == null ? ""
-                : yaml.getString("bossbars." + firstId + ".title", "");
-
-        List<DialogInput> inputs = List.of(
-                DialogKit.toggle("enabled", "Bossbars enabled", yaml.getBoolean("bossbars.enabled", true)),
-                DialogKit.text("title", "Title of " + (firstId == null ? "the first bar" : firstId), title),
-                DialogKit.text("interval", "Update interval in ticks",
-                        String.valueOf(yaml.getInt("bossbars.update-interval", 20))));
-
-        String id = firstId;
-        List<ActionButton> buttons = List.of(
-                DialogKit.save("Save", (player, response) -> saveBossbars(player, response, id)),
-                DialogKit.run("Back", BACK),
-                DialogKit.close());
-        return DialogKit.form("Bossbars", List.of(DialogKit.hint("Edit the first bossbar definition.")),
-                inputs, buttons);
+    private static String countKind(String route) {
+        return switch (route) {
+            case "tablist" -> "tablist";
+            case "scoreboard" -> "scoreboards";
+            case "actionbar" -> "actionbar";
+            case "nametags" -> "nametags";
+            default -> "bossbars";
+        };
     }
 
     private Dialog brand() {
@@ -305,26 +248,28 @@ public final class ConfigPanel {
         boolean tab = config.getBoolean("staff.tablist", false);
         boolean scoreboard = config.getBoolean("staff.scoreboard", false);
         List<Component> body = new ArrayList<>();
-        body.add(DialogKit.hint("Staff tablist: " + (tab ? "on" : "off")
-                + "   Staff scoreboard: " + (scoreboard ? "on" : "off")));
-        body.add(DialogKit.hint("These layouts only appear for players with"));
-        body.add(DialogKit.hint("honeycomb.staff, everyone else keeps the normal one."));
+        body.add(DialogKit.shade("Staff tablist: " + (tab ? "<green>on" : "<red>off")
+                + " <dark_gray>| <gray>Staff scoreboard: " + (scoreboard ? "<green>on" : "<red>off")));
+        body.add(DialogKit.shade("Staff layouts only show for <white>honeycomb.staff</white>."));
+        body.add(DialogKit.shade("With a layout off, staff see the normal one instead of nothing."));
         body.add(DialogKit.hint("Header and footer: one line each, MiniMessage allowed."));
         body.add(DialogKit.hint("Scoreboard lines: one row each, 15 rows maximum."));
         List<DialogInput> inputs = List.of(
                 DialogKit.lines("header", "Staff tablist header",
-                        join(tablist.getStringList("tablist.profiles.staff.header")), 4),
+                        join(tablist.getStringList("tablist.profiles.staff.header")), 10),
                 DialogKit.lines("footer", "Staff tablist footer",
-                        join(tablist.getStringList("tablist.profiles.staff.footer")), 4),
+                        join(tablist.getStringList("tablist.profiles.staff.footer")), 10),
                 DialogKit.text("title", "Staff scoreboard title",
                         boards.getString("scoreboards.staff.title",
                                 "<gradient:#38BDF8:#2563EB><bold>STAFF VIEW</bold></gradient>")),
                 DialogKit.lines("lines", "Staff scoreboard lines",
-                        join(boards.getStringList("scoreboards.staff.lines")), 8));
+                        join(boards.getStringList("scoreboards.staff.lines")), 18));
         List<ActionButton> buttons = new ArrayList<>();
-        buttons.add(DialogKit.act((tab ? "Staff tablist: ON" : "Staff tablist: OFF"),
+        buttons.add(DialogKit.act(DialogKit.styled("<shadow:#000000:1><gray>Staff tablist <white>"
+                        + (tab ? "on" : "off") + " <dark_gray>click to turn " + (tab ? "off" : "on")),
                 audience -> toggle("staff.tablist", !tab, audience)));
-        buttons.add(DialogKit.act((scoreboard ? "Staff scoreboard: ON" : "Staff scoreboard: OFF"),
+        buttons.add(DialogKit.act(DialogKit.styled("<shadow:#000000:1><gray>Staff scoreboard <white>"
+                        + (scoreboard ? "on" : "off") + " <dark_gray>click to turn " + (scoreboard ? "off" : "on")),
                 audience -> toggle("staff.scoreboard", !scoreboard, audience)));
         buttons.add(DialogKit.save("Save layouts", this::saveStaff));
         buttons.add(DialogKit.run("Back", BACK + " main"));
@@ -383,7 +328,7 @@ public final class ConfigPanel {
                 DialogKit.text("id", "Update id, for example 0.4.0", ""),
                 DialogKit.text("title", "Headline", ""),
                 DialogKit.text("date", "Date label", ""),
-                DialogKit.multiline("body", "Body, one line per row", "", 12));
+                DialogKit.multiline("body", "Body, one line per row", "", 22));
         List<ActionButton> buttons = new ArrayList<>();
         buttons.add(DialogKit.save("Publish", (player, response) -> publish(player, response)));
         buttons.add(DialogKit.run("Back", BACK + " main"));
@@ -493,7 +438,7 @@ public final class ConfigPanel {
         List<DialogInput> inputs = List.of(
                 DialogKit.text("id", "Animation id, for example honeycomb", ""),
                 DialogKit.text("interval", "Interval in ticks, for example 5", "5"),
-                DialogKit.lines("frames", "Frames, one line each", "", 8));
+                DialogKit.lines("frames", "Frames, one line each", "", 18));
         List<ActionButton> buttons = new ArrayList<>();
         buttons.add(DialogKit.save("Create or replace", this::saveAnimation));
         buttons.add(DialogKit.run("Back", BACK + " main"));
@@ -569,53 +514,6 @@ public final class ConfigPanel {
         open(player, "animations");
     }
 
-    private void saveTablist(Player player, DialogResponseView response) {
-        plugin.panelOverrides().set(ConfigType.TABLIST, "header", split(response.getText("header")));
-        plugin.panelOverrides().set(ConfigType.TABLIST, "footer", split(response.getText("footer")));
-        Integer interval = number(response.getText("interval"));
-        if (interval != null) {
-            plugin.panelOverrides().set(ConfigType.TABLIST, "update-interval", interval);
-        }
-        commit(player, "Tablist", "tablist");
-    }
-
-    private void saveScoreboard(Player player, DialogResponseView response) {
-        String title = response.getText("title");
-        if (title != null && !title.isBlank()) {
-            plugin.panelOverrides().set(ConfigType.SCOREBOARDS, "default.title", title);
-        }
-        plugin.panelOverrides().set(ConfigType.SCOREBOARDS, "default.lines", split(response.getText("lines")));
-        Integer interval = number(response.getText("interval"));
-        if (interval != null) {
-            plugin.panelOverrides().set(ConfigType.SCOREBOARDS, "default.update-interval", interval);
-        }
-        commit(player, "Scoreboard", "scoreboard");
-    }
-
-    private void saveNametags(Player player, DialogResponseView response, List<String> groups) {
-        plugin.panelOverrides().set(ConfigType.NAMETAGS, "enabled", response.getBoolean("enabled"));
-        for (String group : groups) {
-            String prefix = response.getText("prefix_" + group);
-            if (prefix != null) {
-                plugin.panelOverrides().set(ConfigType.NAMETAGS, "groups." + group + ".prefix", prefix);
-            }
-        }
-        commit(player, "Nametags", "nametags");
-    }
-
-    private void saveBossbars(Player player, DialogResponseView response, String id) {
-        plugin.panelOverrides().set(ConfigType.BOSSBARS, "enabled", response.getBoolean("enabled"));
-        String title = response.getText("title");
-        if (id != null && title != null && !title.isBlank()) {
-            plugin.panelOverrides().set(ConfigType.BOSSBARS, id + ".title", title);
-        }
-        Integer interval = number(response.getText("interval"));
-        if (interval != null) {
-            plugin.panelOverrides().set(ConfigType.BOSSBARS, "update-interval", interval);
-        }
-        commit(player, "Bossbars", "bossbars");
-    }
-
     private void saveBrand(Player player, DialogResponseView response) {
         plugin.panelOverrides().set(ConfigType.CONFIG, "brand.enabled", response.getBoolean("enabled"));
         String text = response.getText("text");
@@ -648,13 +546,21 @@ public final class ConfigPanel {
     private void commit(Player player, String label, String section) {
         try {
             plugin.panelOverrides().save();
-            plugin.reload();
-            player.sendMessage(Component.text(label + " saved.", NamedTextColor.GREEN));
-            open(player, section);
         } catch (IOException error) {
             player.sendMessage(Component.text("Could not save " + label + ": " + error.getMessage(),
                     NamedTextColor.RED));
+            return;
         }
+        player.sendMessage(Component.text(label + " saved.", NamedTextColor.GREEN));
+        try {
+            plugin.reload();
+        } catch (RuntimeException error) {
+            plugin.getLogger().warning("[Honeycomb] " + label + " saved but reload failed: " + error);
+            player.sendMessage(Component.text("Saved, but reload failed: " + error.getMessage(),
+                    NamedTextColor.YELLOW));
+            return;
+        }
+        open(player, section);
     }
 
     // ---------------------------------------------------------------- helpers

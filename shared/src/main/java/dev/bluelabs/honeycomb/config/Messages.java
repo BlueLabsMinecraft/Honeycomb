@@ -57,7 +57,22 @@ public final class Messages {
         if (reportedMissing.add(key)) {
             report.warning("messages.yml", "Missing message key '" + key + "'");
         }
-        return "<red>Missing message: " + key;
+        return "<gray>" + humanise(key);
+    }
+
+    /**
+     * Turns a dotted key into words, so a missing message never prints
+     * {@code command.status-line} to a player.
+     *
+     * @param key message path
+     * @return readable text
+     */
+    private static String humanise(String key) {
+        String leaf = key.substring(key.lastIndexOf('.') + 1).replace('-', ' ').replace('_', ' ').trim();
+        if (leaf.isEmpty()) {
+            return key;
+        }
+        return Character.toUpperCase(leaf.charAt(0)) + leaf.substring(1);
     }
 
     /**

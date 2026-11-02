@@ -208,7 +208,13 @@ public final class BelowNameService implements DisplaySystem {
         session.belowName.profile = profile.name();
 
         PlayerBoard board = BoardAccess.acquire(viewer, session);
+        if (board == null) {
+            return;
+        }
         Objective objective = board.belowNameObjective(healthBased);
+        if (objective == null) {
+            return;
+        }
         if (healthBased) {
             // Minecraft's own health criteria keeps the value correct without any writes.
             return;

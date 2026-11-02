@@ -20,13 +20,11 @@ bossbars:
   welcome:
     enabled: true
     priority: 10
-    title: "<gradient:#FADE29:#D56B2B><bold>Welcome, %player_name%!</bold></gradient> <gray>Use <white>/honeycomb help</white>"
+    title: "<shadow:#000000:1><bold><gradient:#FFE3A8:#FFB01F:#FF7A00>HONEYCOMB</gradient></bold> <dark_gray>|</dark_gray> <gray>Welcome, <white>%player_name%"
     color: YELLOW
     style: SOLID
     progress: 1.0
-    conditions:
-      worlds:
-        - world
+    overlay: PROGRESS
 
   restart:
     enabled: false

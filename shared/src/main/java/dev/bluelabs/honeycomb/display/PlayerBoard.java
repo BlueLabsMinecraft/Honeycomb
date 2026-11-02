@@ -1,6 +1,9 @@
 package dev.bluelabs.honeycomb.display;
 
 import dev.bluelabs.honeycomb.display.scoreboard.PlayerSidebar;
+import dev.bluelabs.honeycomb.display.scoreboard.Sidebar;
+import dev.bluelabs.honeycomb.display.scoreboard.packet.PacketSidebar;
+import org.bukkit.entity.Player;
 import org.bukkit.Bukkit;
 import org.bukkit.scoreboard.Criteria;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -20,11 +23,12 @@ public final class PlayerBoard {
     private static final String BELOW_NAME_OBJECTIVE = "hcbname";
 
     private final Scoreboard board;
-    private PlayerSidebar sidebar;
+    private Sidebar sidebar;
     private Objective belowNameObjective;
 
     private PlayerBoard(Scoreboard board) {
         this.board = board;
+        this.owner = null;
     }
 
     /**
@@ -32,9 +36,40 @@ public final class PlayerBoard {
      *
      * @return the board
      */
-    public static PlayerBoard create() {
-        return new PlayerBoard(Bukkit.getScoreboardManager().getNewScoreboard());
+    public static PlayerBoard create(Player player) {
+        try {
+            return new PlayerBoard(Bukkit.getScoreboardManager().getNewScoreboard());
+        } catch (RuntimeException | LinkageError unavailable) {
+            // Folia has no private scoreboards: the manager throws. Packets do not need
+            // one, so the board is created without a scoreboard and draws over the wire.
+            if (PacketSidebar.available()) {
+                if (!REPORTED_PACKETS) {
+                    REPORTED_PACKETS = true;
+                    Bukkit.getLogger().info("[Honeycomb] No private scoreboards on this server ("
+                            + unavailable.getClass().getSimpleName()
+                            + "), so the scoreboard is sent as packets.");
+                }
+                return new PlayerBoard(player);
+            }
+            if (!REPORTED) {
+                REPORTED = true;
+                Bukkit.getLogger().warning("[Honeycomb] This server cannot create a private scoreboard ("
+                        + unavailable.getClass().getSimpleName() + ") and packets are unavailable ("
+                        + PacketSidebar.unavailableReason() + "), so the scoreboard and below-name "
+                        + "displays are off. Tablist, nametags, bossbars and holograms are unaffected.");
+            }
+            return null;
+        }
     }
+
+    private PlayerBoard(Player player) {
+        this.board = null;
+        this.owner = player;
+    }
+
+    private static boolean REPORTED;
+    private static boolean REPORTED_PACKETS;
+    private final Player owner;
 
     /**
      * Returns the sidebar, creating it when needed.
@@ -42,11 +77,37 @@ public final class PlayerBoard {
      * @param hideNumbers whether score numbers should be hidden
      * @return the sidebar
      */
-    public PlayerSidebar sidebar(boolean hideNumbers) {
+    public Sidebar sidebar(boolean hideNumbers) {
         if (sidebar == null) {
-            sidebar = new PlayerSidebar(board, hideNumbers);
+            sidebar = board != null
+                    ? new PlayerSidebar(board, hideNumbers)
+                    : packetSidebar(hideNumbers);
         }
         return sidebar;
+    }
+
+    private Sidebar packetSidebar(boolean hideNumbers) {
+        try {
+            return new PacketSidebar(owner, hideNumbers);
+        } catch (ReflectiveOperationException | RuntimeException failure) {
+            if (!REPORTED_PACKETS) {
+                REPORTED_PACKETS = true;
+                Bukkit.getLogger().warning("[Honeycomb] The packet scoreboard could not start: "
+                        + failure.getClass().getName() + ": " + failure.getMessage());
+            }
+            return new Sidebar() {
+                @Override
+                public void update(net.kyori.adventure.text.Component title,
+                                   java.util.List<net.kyori.adventure.text.Component> lines) {
+                    // Nothing to draw on.
+                }
+
+                @Override
+                public void dispose() {
+                    // Nothing to remove.
+                }
+            };
+        }
     }
 
     /**
@@ -56,6 +117,9 @@ public final class PlayerBoard {
      * @return the objective, already shown in the below-name slot
      */
     public Objective belowNameObjective(boolean healthBased) {
+        if (board == null) {
+            return null;
+        }
         if (belowNameObjective == null) {
             Criteria criteria = healthBased ? Criteria.HEALTH : Criteria.DUMMY;
             belowNameObjective = board.registerNewObjective(BELOW_NAME_OBJECTIVE, criteria,
@@ -95,6 +159,9 @@ public final class PlayerBoard {
     public void dispose() {
         disposeSidebar();
         disposeBelowName();
+        if (board == null) {
+            return;
+        }
         for (Objective objective : board.getObjectives()) {
             try {
                 objective.unregister();
@@ -114,7 +181,7 @@ public final class PlayerBoard {
     /**
      * @return the sidebar, or {@code null} when it was never created
      */
-    public PlayerSidebar sidebarOrNull() {
+    public Sidebar sidebarOrNull() {
         return sidebar;
     }
 

@@ -15,12 +15,15 @@ tablist:
   update-interval: 40
 
   header:
-    - "<shadow:#000000:1><gradient:#FADE29:#D56B2B><bold>HONEYCOMB</bold></gradient></shadow>"
-    - "<shadow:#000000:1><gray>Welcome, <white>%player_name%</white>!</shadow>"
+    - "<shadow:#000000:1><dark_gray>                          </shadow>"
+    - "<shadow:#000000:1><bold><gradient:#FFE3A8:#FFB01F:#FF7A00>HONEYCOMB</gradient></bold></shadow>"
+    - "<shadow:#000000:1><gray>Welcome back, <white>%player_name%</shadow>"
+    - "<shadow:#000000:1><dark_gray>                          </shadow>"
 
   footer:
-    - "<shadow:#000000:1><gray>Online: <yellow>%server_online%</yellow><dark_gray>/</dark_gray><yellow>%server_max_players%</shadow>"
-    - "<shadow:#000000:1><aqua>play.example.net</shadow>"
+    - "<shadow:#000000:1><dark_gray>                          </shadow>"
+    - "<shadow:#000000:1><gray>Players <white>%server_online%<dark_gray>/</dark_gray><white>%server_max_players% <dark_gray>|</dark_gray> <gray>Ping <white>%player_ping%ms"
+    - "<shadow:#000000:1><gray>play.example.net</shadow>"
 
   # Name shown in the player list. Remove the line to leave names untouched.
   player-list-name: "<white>%player_name%"
