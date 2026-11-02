@@ -23,6 +23,12 @@ public record ProxyReply(String kind, String scope, int count, List<String> serv
 
     /** Sub channel asking for a player count. */
     public static final String PLAYER_COUNT = "playercount";
+    /** Sub channel name as it goes on the wire. */
+    public static final String WIRE_PLAYER_COUNT = "PlayerCount";
+    /** Server list sub channel as it goes on the wire. */
+    public static final String WIRE_GET_SERVERS = "GetServers";
+    /** Server name sub channel as it goes on the wire. */
+    public static final String WIRE_GET_SERVER = "GetServer";
     /** Sub channel asking for the server list. */
     public static final String GET_SERVERS = "getservers";
     /** Sub channel asking which server this is. */
@@ -55,10 +61,15 @@ public record ProxyReply(String kind, String scope, int count, List<String> serv
                     }
                 }
                 case GET_SERVERS -> {
-                    while (in.available() > 0) {
+                    int guard = 0;
+                    while (in.available() > 0 && guard++ < 256) {
+                        int before = in.available();
                         String name = safeUtf(in);
                         if (name != null && !name.isBlank()) {
                             servers.add(name);
+                        }
+                        if (in.available() == before) {
+                            break;
                         }
                     }
                 }

@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class NetworkService implements NetworkCounts {
 
+    private static final String HONEYCOMB_CHANNEL = "honeycomb:network";
     private static final String MODERN_CHANNEL = "bungeecord:main";
     private static final String LEGACY_CHANNEL = "BungeeCord";
     private static final String TASK_NAME = "network-counts";
@@ -102,7 +103,7 @@ public final class NetworkService implements NetworkCounts {
 
     private void register(java.util.function.BiConsumer<Plugin, String> outgoing,
                           PluginChannelRegistrar incoming) {
-        for (String channel : List.of(MODERN_CHANNEL, LEGACY_CHANNEL)) {
+        for (String channel : List.of(HONEYCOMB_CHANNEL, MODERN_CHANNEL, LEGACY_CHANNEL)) {
             try {
                 outgoing.accept(plugin, channel);
                 incoming.accept(plugin, channel, listener);
@@ -157,21 +158,29 @@ public final class NetworkService implements NetworkCounts {
         if (carrier == null) {
             return;
         }
-        send(carrier, ProxyReply.PLAYER_COUNT.toUpperCase(java.util.Locale.ROOT), "ALL");
+        send(carrier, ProxyReply.WIRE_PLAYER_COUNT, "ALL");
         if (askServerList) {
-            send(carrier, "GetServers");
+            send(carrier, ProxyReply.WIRE_GET_SERVERS);
         }
         if (serverName.isEmpty()) {
-            send(carrier, "GetServer");
+            send(carrier, ProxyReply.WIRE_GET_SERVER);
         }
         for (String known : List.copyOf(serverNames)) {
-            send(carrier, ProxyReply.PLAYER_COUNT.toUpperCase(java.util.Locale.ROOT), known);
+            send(carrier, ProxyReply.WIRE_PLAYER_COUNT, known);
         }
         lastRequest = System.currentTimeMillis();
     }
 
     private void send(Player carrier, String... parts) {
-        String channel = registeredChannels.isEmpty() ? MODERN_CHANNEL : registeredChannels.get(0);
+        if (registeredChannels.isEmpty()) {
+            return;
+        }
+        for (String channel : List.copyOf(registeredChannels)) {
+            sendOn(carrier, channel, parts);
+        }
+    }
+
+    private void sendOn(Player carrier, String channel, String... parts) {
         try {
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(bytes);
@@ -193,6 +202,7 @@ public final class NetworkService implements NetworkCounts {
     public void handle(String channel, byte[] message) {
         ProxyReply reply = ProxyReply.parse(message);
         if (reply == null) {
+            report.warning("network.yml", "Unreadable proxy reply on " + channel);
             return;
         }
         if (reply.isPlayerCount()) {

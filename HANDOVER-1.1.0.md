@@ -43,6 +43,20 @@ Velocity: `bungee-plugin-message-channel = true` in `velocity.toml` (default tru
 
 BungeeCord: `bungee_plugin_messages: true` in the proxy `config.yml` and `settings.bungee-cord: true` in `spigot.yml`.
 
+
+### Proxy side jars (new)
+
+The backend jar cannot carry `velocity-plugin.json` or `bungee.yml`, so the proxy side is a separate, tiny plugin:
+
+| File | Platform | Manifest |
+|---|---|---|
+| `HoneycombProxy-1.1.0-velocity.jar` | Velocity 3.x | `velocity-plugin.json`, id `honeycombproxy` |
+| `HoneycombProxy-1.1.0-bungeecord.jar` | BungeeCord, Waterfall | `bungee.yml` |
+
+Both answer `PlayerCount`, `GetServers` and `GetServer` on `honeycomb:network` using the proxy's own data, and both are compiled against the real APIs (`velocity-api 3.3.0`, `bungeecord-api 1.21-R0.1`). The backend asks on `honeycomb:network`, `bungeecord:main` and the legacy `BungeeCord` channel, so it works with the bridge installed, or without it when the proxy forwards the bungee channel.
+
+Sources live in `proxy/bungee` and `proxy/velocity`; build with `javac` against those two API jars and zip the classes with the manifest at the root.
+
 ## Verification (this build)
 
 Run on Folia 1.21.11-14 with Java 21, plugin `Honeycomb-1.1.0-mc1.21.9-1.21.11.jar`, a real 1.21.11 client and a stand-in proxy plugin that dispatches proxy payloads into the server:
@@ -59,6 +73,9 @@ Run on Folia 1.21.11-14 with Java 21, plugin `Honeycomb-1.1.0-mc1.21.9-1.21.11.j
 | Scoreboard on Folia | Packet engine active, objective and rows delivered |
 | Console | No exceptions, no warnings from Honeycomb |
 | Unit tests | 168 pass, 0 failures (14 new network tests) |
+| Real BungeeCord proxy | BungeeCord build 26.1, backend in bungee mode, client through the proxy: `Net 1 on lobby via BungeeCord, 1` |
+| Real Velocity proxy | Velocity 3.5.1, modern forwarding, client through the proxy: `Net 1 on lobby via Velocity, 1` |
+| Proxy bridge load | `[honeycombproxy]: Honeycomb proxy bridge ready on honeycomb:network` on both proxies |
 
 Client taps on panel buttons cannot be scripted with the test client; the panel screen was verified by construction and by driving the same save path the buttons call.
 

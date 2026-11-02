@@ -48,7 +48,16 @@ TAB wins on years in production. Honeycomb wins on editing, presets, the action 
 | `Honeycomb-1.1.0-java21.jar` | 1.21.9 to 1.21.11 | 21 |
 | `Honeycomb-1.1.0-java25.jar` | 26.1 to 26.3 | 25 |
 
-Drop the matching jar in `plugins/`, start once, run `/honeycomb panel` as an operator. PlaceholderAPI, LuckPerms and ProtocolLib are optional. The dialog panel needs Paper or Folia.
+Drop the matching jar in `plugins/`, start once, run `/honeycomb panel` as an operator.
+
+**On a proxy network:** the game server takes the jar above. The proxy takes one companion file, and that file is what registers Honeycomb under the Velocity and BungeeCord loaders on Modrinth:
+
+| File | Loader | Goes in |
+|---|---|---|
+| `HoneycombProxy-1.1.0-velocity.jar` | Velocity | `plugins/` on Velocity |
+| `HoneycombProxy-1.1.0-bungeecord.jar` | BungeeCord, Waterfall | `plugins/` on the proxy |
+
+The backend jar itself stays Paper, Spigot, Bukkit, Purpur, Pufferfish and Folia only: it has no proxy manifest, which is why uploading it under a Velocity loader is rejected. PlaceholderAPI, LuckPerms and ProtocolLib are optional. The dialog panel needs Paper or Folia.
 
 **Behind a proxy:** set `network.enabled: true` in `network.yml`. Velocity needs `bungee-plugin-message-channel = true` in `velocity.toml`; BungeeCord needs `bungee_plugin_messages: true`. Everything else is automatic.
 

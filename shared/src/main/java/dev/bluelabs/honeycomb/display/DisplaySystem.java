@@ -11,7 +11,7 @@ import org.bukkit.entity.Player;
 public interface DisplaySystem {
 
     /**
-     * @return stable internal name, also used by {@code /honeycomb status}
+     * @return stable internal name, also used in panel headings
      */
     String name();
 

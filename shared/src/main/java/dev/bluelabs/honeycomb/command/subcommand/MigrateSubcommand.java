@@ -125,7 +125,7 @@ public final class MigrateSubcommand implements Subcommand {
         if (report.backup() != null) {
             sender.sendMessage(Component.text("  Backed up to " + report.backup().getName(), NamedTextColor.GRAY));
         }
-        sender.sendMessage(Component.text("Reloaded. Check /honeycomb status, then /honeycomb panel to tweak.",
+        sender.sendMessage(Component.text("Reloaded. Open /honeycomb panel to tweak anything.",
                 NamedTextColor.GRAY));
     }
 

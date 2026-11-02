@@ -101,6 +101,17 @@ whether the condition language covers what you need before switching.
 | **Staff layouts** | Separate tablist and scoreboard for staff, behind a permission |
 | **Folia** | Region aware scheduling, so the same jar runs on Folia without a second build |
 
+## Network aware
+
+Two optional companion jars carry the proxy side, so Honeycomb is a real Velocity and BungeeCord plugin too:
+
+| File | Goes in |
+|---|---|
+| `HoneycombProxy-1.1.0-velocity.jar` | `plugins/` on the Velocity proxy |
+| `HoneycombProxy-1.1.0-bungeecord.jar` | `plugins/` on the BungeeCord or Waterfall proxy |
+
+The game server keeps the normal Honeycomb jar. The bridge answers with the proxy's own numbers over `honeycomb:network`, so counts stay correct even when the proxy's legacy bungee channel is off.
+
 ## Install
 
 Two jars come from one source tree, because the Minecraft generations it supports do
