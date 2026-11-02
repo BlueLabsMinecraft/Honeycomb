@@ -59,6 +59,17 @@ Drop the matching jar in `plugins/`, start once, run `/honeycomb panel` as an op
 
 The backend jar itself stays Paper, Spigot, Bukkit, Purpur, Pufferfish and Folia only: it has no proxy manifest, which is why uploading it under a Velocity loader is rejected. PlaceholderAPI, LuckPerms and ProtocolLib are optional. The dialog panel needs Paper or Folia.
 
+**Which boxes to tick when publishing:**
+
+| File | Loaders | Game versions |
+|---|---|---|
+| `Honeycomb-1.1.0-java21.jar` | Paper, Spigot, Bukkit, Purpur, Pufferfish, Folia | 1.21.9, 1.21.10, 1.21.11 |
+| `Honeycomb-1.1.0-java25.jar` | Paper, Spigot, Bukkit, Purpur, Pufferfish, Folia | 26.1, 26.2, 26.3 |
+| `HoneycombProxy-1.1.0-velocity.jar` | Velocity | all six: 1.21.9 to 26.3 |
+| `HoneycombProxy-1.1.0-bungeecord.jar` | BungeeCord, Waterfall | all six: 1.21.9 to 26.3 |
+
+The proxy files are version agnostic (plugin messages only), so tick the whole range and nobody sees a version warning. The backend jars are tied to one game version each, so keep them split.
+
 **Behind a proxy:** set `network.enabled: true` in `network.yml`. Velocity needs `bungee-plugin-message-channel = true` in `velocity.toml`; BungeeCord needs `bungee_plugin_messages: true`. Everything else is automatic.
 
 ## Commands
