@@ -88,6 +88,18 @@ public final class ProfilesPanel {
                         return;
                     }
                     String id = raw.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_-]", "-");
+                    if (id.isEmpty()) {
+                        who.sendMessage(plugin.messages().prefixed("panel.name-required",
+                                java.util.Map.of()));
+                        return;
+                    }
+                    // A duplicate id would silently reopen and overwrite someone else's layout.
+                    if (plugin.configManager().yaml(type(kind))
+                            .getConfigurationSection(base(kind, id)) != null) {
+                        who.sendMessage(plugin.messages().prefixed("panel.name-taken",
+                                java.util.Map.of("name", id)));
+                        return;
+                    }
                     var overrides = plugin.panelOverrides();
                     overrides.set(type(kind), base(kind, id) + ".enabled", true);
                     try {
@@ -97,7 +109,7 @@ public final class ProfilesPanel {
                                 java.util.Map.of("reason", String.valueOf(error.getMessage()))));
                         return;
                     }
-                    plugin.reload();
+                    reloadQuietly(plugin);
                     open(who, plugin, kind, id);
                 }), DialogKit.close()));
         DialogKit.show(player, plugin, dialog);
@@ -270,9 +282,25 @@ public final class ProfilesPanel {
                     java.util.Map.of("reason", String.valueOf(error.getMessage()))));
             return;
         }
-        plugin.reload();
+        reloadQuietly(plugin);
         player.sendMessage(plugin.messages().prefixed("panel.saved",
                 java.util.Map.of("name", id, "kind", noun(kind))));
+        // Reopen the editor so the saved values are visible instead of dumping the player
+        // back into the world wondering whether it worked.
+        open(player, plugin, kind, id);
+    }
+
+    /**
+     * Reloads after a write, without letting a reload failure swallow the next screen.
+     *
+     * @param plugin plugin
+     */
+    private static void reloadQuietly(HoneycombPlugin plugin) {
+        try {
+            plugin.reload();
+        } catch (RuntimeException error) {
+            plugin.getLogger().warning("Reload after a panel save failed: " + error);
+        }
     }
 
     private static void setLines(dev.bluelabs.honeycomb.config.PanelOverrides overrides, ConfigType type,

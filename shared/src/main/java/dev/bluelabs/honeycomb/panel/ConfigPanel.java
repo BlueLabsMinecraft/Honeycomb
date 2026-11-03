@@ -56,6 +56,10 @@ public final class ConfigPanel {
             case "actionbar", "action-bar" -> ProfilesPanel.list(plugin, "actionbar");
             case "actionbar-entries" -> ProfilesPanel.list(plugin, "actionbar");
             case "network" -> network();
+            case "displays" -> displays();
+            case "server" -> server();
+            case "setup" -> setup();
+            case "maintenance" -> maintenance();
             case "layouts", "tablists" -> ProfilesPanel.list(plugin, "tablist");
             case "boards" -> ProfilesPanel.list(plugin, "scoreboards");
             case "bars" -> ProfilesPanel.list(plugin, "bossbars");
@@ -89,7 +93,11 @@ public final class ConfigPanel {
                 new Case("staff", this::staff),
                 new Case("presets", this::presets),
                 new Case("presetsave", this::presetsave),
-                new Case("updates", this::updates));
+                new Case("updates", this::updates),
+                new Case("displays", this::displays),
+                new Case("server", this::server),
+                new Case("setup", this::setup),
+                new Case("maintenance", this::maintenance));
         for (Case test : cases) {
             try {
                 Dialog dialog = test.supplier().get();
@@ -123,34 +131,108 @@ public final class ConfigPanel {
         YamlConfiguration config = plugin.configManager().yaml(ConfigType.CONFIG);
         boolean brand = config.getBoolean("brand.enabled", false);
         boolean hider = config.getBoolean("commands.hide-pl-version", true);
-        List<Component> body = new ArrayList<>(List.of(
-                DialogKit.styled("<shadow:#000000:1><gold>DISPLAYS"),
-                DialogKit.shade("Each one has its own layouts and conditions."),
-                DialogKit.styled("<shadow:#000000:1><gold>SERVER"),
-                DialogKit.styled("<shadow:#000000:1><gray>F3 brand " + (brand ? "<green>on" : "<dark_gray>off")
-                        + " <dark_gray>|</dark_gray> /pl hiding "
-                        + (hider ? "<green>on" : "<dark_gray>off")),
-                DialogKit.styled("<shadow:#000000:1><gold>MAINTENANCE")));
+        List<Component> body = List.of(
+                DialogKit.heading("WHAT DO YOU WANT TO CHANGE?"),
+                DialogKit.styled("<shadow:#000000:1><gray>Four groups. Pick one, then pick what you want to edit."),
+                DialogKit.styled("<shadow:#000000:1><white>Displays <dark_gray>- the five things players see on screen."),
+                DialogKit.styled("<shadow:#000000:1><white>Server <dark_gray>- F3 brand, messages, proxy network, staff view."),
+                DialogKit.styled("<shadow:#000000:1><white>Setup <dark_gray>- presets, TAB import, animations."),
+                DialogKit.styled("<shadow:#000000:1><white>Maintenance <dark_gray>- reload, update log, self check."),
+                DialogKit.shade("Right now: F3 brand " + (brand ? "on" : "off") + ", /pl version hiding "
+                        + (hider ? "on" : "off") + "."));
+        List<ActionButton> buttons = new ArrayList<>();
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Displays"), BACK + " displays"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Server"), BACK + " server"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Setup"), BACK + " setup"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Maintenance"), BACK + " maintenance"));
+        buttons.add(DialogKit.close());
+        return DialogKit.menu("Honeycomb panel", body, buttons);
+    }
+
+    /** The five on-screen displays, each named with what it actually shows. */
+    private Dialog displays() {
+        List<Component> body = List.of(
+                DialogKit.heading("DISPLAYS"),
+                DialogKit.styled("<shadow:#000000:1><white>Tablist <dark_gray>- the player list, header and footer."),
+                DialogKit.styled("<shadow:#000000:1><white>Sidebar <dark_gray>- the lines down the right of the screen."),
+                DialogKit.styled("<shadow:#000000:1><white>Action bar <dark_gray>- the one line just above the hotbar."),
+                DialogKit.styled("<shadow:#000000:1><white>Nametags <dark_gray>- prefix and suffix above player heads."),
+                DialogKit.styled("<shadow:#000000:1><white>Bossbars <dark_gray>- bars at the top of the screen."),
+                DialogKit.shade("The number is how many layouts that display has. Each layout has its own conditions."));
         List<ActionButton> buttons = new ArrayList<>();
         buttons.add(section("Tablist", "tablist"));
-        buttons.add(section("Scoreboard", "scoreboard"));
+        buttons.add(section("Sidebar", "scoreboard"));
         buttons.add(section("Action bar", "actionbar"));
         buttons.add(section("Nametags", "nametags"));
         buttons.add(section("Bossbars", "bossbars"));
-        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>F3 brand"), BACK + " brand"));
-        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Commands"), BACK + " commands"));
-        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Messages"), BACK + " messages"));
-        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Network"), BACK + " network"));
-        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Animations"), BACK + " animations"));
-        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Staff layouts"), BACK + " staff"));
-        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Presets"), BACK + " presets"));
-        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Import from TAB"),
-                "honeycomb migrate"));
-        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Update log"), BACK + " updates"));
-        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><gold>Apply changes"),
-                "honeycomb reload"));
+        buttons.add(DialogKit.run("Back", "honeycomb panel"));
         buttons.add(DialogKit.close());
-        return DialogKit.menu("Honeycomb", body, buttons);
+        return DialogKit.menu("Displays", body, buttons);
+    }
+
+    /** Server wide behaviour: brand line, messages, proxy network, staff view. */
+    private Dialog server() {
+        var yaml = plugin.configManager().yaml(ConfigType.NETWORK);
+        String state = !yaml.getBoolean("network.enabled", false)
+                ? "off"
+                : (plugin.network().available() ? "connected to " + plugin.network().proxyName() : "waiting for a proxy");
+        List<Component> body = List.of(
+                DialogKit.heading("SERVER"),
+                DialogKit.styled("<shadow:#000000:1><white>F3 brand <dark_gray>- the text in the debug screen brand line."),
+                DialogKit.styled("<shadow:#000000:1><white>Commands <dark_gray>- hide the plugin version from /pl and /plugins."),
+                DialogKit.styled("<shadow:#000000:1><white>Messages <dark_gray>- the wording Honeycomb sends to players."),
+                DialogKit.styled("<shadow:#000000:1><white>Network <dark_gray>- Proxy counts across your server group."),
+                DialogKit.styled("<shadow:#000000:1><white>Staff layouts <dark_gray>- who gets the staff tablist and sidebar."),
+                DialogKit.shade("Network is " + state + "."));
+        List<ActionButton> buttons = new ArrayList<>();
+        buttons.add(button("F3 brand", "brand"));
+        buttons.add(button("Commands", "commands"));
+        buttons.add(button("Messages", "messages"));
+        buttons.add(button("Network", "network"));
+        buttons.add(button("Staff layouts", "staff"));
+        buttons.add(DialogKit.run("Back", "honeycomb panel"));
+        buttons.add(DialogKit.close());
+        return DialogKit.menu("Server", body, buttons);
+    }
+
+    /** Presets, the TAB import and the animation list. */
+    private Dialog setup() {
+        List<Component> body = List.of(
+                DialogKit.heading("SETUP"),
+                DialogKit.styled("<shadow:#000000:1><white>Presets <dark_gray>- nine ready made layouts. Load one, then edit it."),
+                DialogKit.styled("<shadow:#000000:1><white>Import from TAB <dark_gray>- copies your TAB header, sidebar and tags."),
+                DialogKit.styled("<shadow:#000000:1><white>Animations <dark_gray>- the frame lists you can use as {honeycomb.id}."),
+                DialogKit.shade("Importing backs up your current files before it writes anything."));
+        List<ActionButton> buttons = new ArrayList<>();
+        buttons.add(button("Presets", "presets"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Import from TAB"), "honeycomb migrate"));
+        buttons.add(button("Animations", "animations"));
+        buttons.add(DialogKit.run("Back", "honeycomb panel"));
+        buttons.add(DialogKit.close());
+        return DialogKit.menu("Setup", body, buttons);
+    }
+
+    /** Reload, the update log and a self check of every screen. */
+    private Dialog maintenance() {
+        List<Component> body = List.of(
+                DialogKit.heading("MAINTENANCE"),
+                DialogKit.styled("<shadow:#000000:1><white>Apply changes <dark_gray>- reloads every file, no restart needed."),
+                DialogKit.styled("<shadow:#000000:1><white>Update log <dark_gray>- the notes players see with /updatelog."),
+                DialogKit.styled("<shadow:#000000:1><white>Self check <dark_gray>- builds every panel screen and reports errors."),
+                DialogKit.shade("Use Apply changes after editing files by hand."));
+        List<ActionButton> buttons = new ArrayList<>();
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><bold><green>Apply changes"), "honeycomb reload"));
+        buttons.add(button("Update log", "updates"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Self check"), "honeycomb panel debug"));
+        buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Command list"), "honeycomb help"));
+        buttons.add(DialogKit.run("Back", "honeycomb panel"));
+        buttons.add(DialogKit.close());
+        return DialogKit.menu("Maintenance", body, buttons);
+    }
+
+    /** A navigation button that opens a section of this panel. */
+    private ActionButton button(String label, String route) {
+        return DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>" + label), BACK + " " + route);
     }
 
     /**

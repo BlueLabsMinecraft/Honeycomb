@@ -19,9 +19,9 @@ import java.util.Locale;
  */
 public final class PanelSubcommand implements Subcommand {
 
-    private static final List<String> SECTIONS = List.of("tablist", "scoreboard", "nametags",
-            "bossbars", "brand", "commands", "messages", "animations", "staff", "presets",
-            "presetsave", "updates", "debug");
+    private static final List<String> SECTIONS = List.of("displays", "server", "setup", "maintenance",
+            "tablist", "scoreboard", "actionbar", "nametags", "bossbars", "brand", "commands",
+            "messages", "network", "animations", "staff", "presets", "updates", "debug");
 
     private final HoneycombPlugin plugin;
 
@@ -46,12 +46,12 @@ public final class PanelSubcommand implements Subcommand {
 
     @Override
     public String usage() {
-        return "panel [tablist|scoreboard|nametags|bossbars|brand|staff|presets|updates|animations]";
+        return "panel";
     }
 
     @Override
     public String description() {
-        return "Edit displays in game with dialog screens";
+        return "Open the in game editor";
     }
 
     @Override

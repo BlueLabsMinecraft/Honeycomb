@@ -87,6 +87,27 @@ public final class Scheduling {
     }
 
     /**
+     * Runs work for one player after a delay, on the thread that owns them.
+     *
+     * <p>Dialogs use this: a screen opened from a button click has to be shown after
+     * the click callback has returned, otherwise the client drops it and the player is
+     * left looking at nothing.</p>
+     *
+     * @param plugin   plugin owning the task
+     * @param player   player whose scheduler is used on Folia
+     * @param delay    delay in ticks
+     * @param runnable work to run
+     * @return the task handle
+     */
+    public static Object forPlayerLater(Plugin plugin, Player player, long delay, Runnable runnable) {
+        long d = Math.max(1L, delay);
+        if (FOLIA) {
+            return player.getScheduler().runDelayed(plugin, task -> runnable.run(), null, d);
+        }
+        return Bukkit.getScheduler().runTaskLater(plugin, runnable, d);
+    }
+
+    /**
      * Runs work for every online player on the thread that owns each of them.
      *
      * @param plugin   plugin owning the tasks

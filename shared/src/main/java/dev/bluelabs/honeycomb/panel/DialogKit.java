@@ -230,7 +230,9 @@ final class DialogKit {
     }
 
     static void show(Player player, org.bukkit.plugin.Plugin plugin, Dialog dialog) {
-        dev.bluelabs.honeycomb.scheduler.Scheduling.forPlayer(plugin, player, () -> {
+        // Two ticks: the click callback that asked for this screen has to finish first,
+        // or the client closes the new dialog along with the old one.
+        dev.bluelabs.honeycomb.scheduler.Scheduling.forPlayerLater(plugin, player, 2L, () -> {
             try {
                 player.showDialog(dialog);
             } catch (RuntimeException failure) {

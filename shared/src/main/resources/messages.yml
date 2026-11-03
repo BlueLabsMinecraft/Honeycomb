@@ -11,6 +11,7 @@ panel:
   saved: "<green>Saved {kind} <white>{name}</white> and applied it."
   save-failed: "<red>Could not save: <white>{reason}"
   name-required: "<red>Give it a name first."
+  name-taken: "<red>{name} <gray>is already used. Pick another name, or edit the one that exists."
 
 general:
   no-permission: "<red>You do not have permission to do that."
@@ -23,8 +24,13 @@ general:
   refresh-success: "<green>Refreshed {count} display(s) for you."
 
 command:
-  help-header: "<shadow:#000000:1><bold><gradient:#FFE3A8:#FFB01F:#FF7A00>HONEYCOMB</gradient></bold></shadow> <dark_gray>- <gray>v{version} <dark_gray>({mc})"
-  help-line: "<yellow>/{label} {usage}</yellow> <dark_gray>- <gray>{description}"
+  help-header: "<shadow:#000000:1><bold><gradient:#FFE3A8:#FFB01F:#FF7A00>HONEYCOMB</gradient></bold></shadow> <dark_gray>v{version} <dark_gray>| <gray>{mc}"
+  help-group: ""
+  help-title-displays: "<shadow:#000000:1><gold><bold>DISPLAYS"
+  help-title-server: "<shadow:#000000:1><gold><bold>SERVER"
+  help-title-moving: "<shadow:#000000:1><gold><bold>COMING FROM TAB"
+  help-title-other: "<shadow:#000000:1><gold><bold>OTHER"
+  help-line: "<dark_gray> /<white>{label}</white> <gray>{usage}<dark_gray>- <gray>{description}"
   version: "<gray>Honeycomb <white>{version}</white> <dark_gray>|</dark_gray> <gray>build <white>{range}</white> <dark_gray>|</dark_gray> <gray>server <white>{server}</white> <dark_gray>|</dark_gray> <gray>java <white>{java}</white>"
   status-header: "<dark_gray>-- <gray>Display status <dark_gray>--"
   status-line: "<gray>{name}: {state} <dark_gray>|</dark_gray> <dark_gray>{detail}"

@@ -57,6 +57,14 @@ Both answer `PlayerCount`, `GetServers` and `GetServer` on `honeycomb:network` u
 
 Sources live in `proxy/bungee` and `proxy/velocity`; build with `javac` against those two API jars and zip the classes with the manifest at the root.
 
+## Panel and command polish (same 1.1.0 build)
+
+- **Create closed the screen.** Opening a dialog from inside a button click was dropped by the client. `DialogKit.show` now schedules the screen two ticks later on the player's own thread (`Scheduling.forPlayerLater`), so create, save and every other button that opens a screen lands.
+- **Create reopened the editor** with the new layout loaded, refused names already in use (`panel.name-taken`), and survives a reload failure (`reloadQuietly`).
+- **Front page rewritten.** Four explained groups instead of unexplained headings: Displays, Server, Setup, Maintenance. The Displays screen spells out what tablist, sidebar, action bar, nametags and bossbars are.
+- **Help grouped and aligned.** `/hc` and `/hc help` print DISPLAYS, SERVER, COMING FROM TAB and OTHER, with the usage column padded so descriptions line up.
+- **`/hc panel debug`** still builds every screen and reports failures, from the console or in game.
+
 ## Verification (this build)
 
 Run on Folia 1.21.11-14 with Java 21, plugin `Honeycomb-1.1.0-mc1.21.9-1.21.11.jar`, a real 1.21.11 client and a stand-in proxy plugin that dispatches proxy payloads into the server:
