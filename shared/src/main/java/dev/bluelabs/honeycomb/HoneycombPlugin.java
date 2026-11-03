@@ -19,6 +19,7 @@ import dev.bluelabs.honeycomb.updates.UpdateLogCommand;
 import dev.bluelabs.honeycomb.updates.UpdateLogService;
 import dev.bluelabs.honeycomb.server.BrandService;
 import dev.bluelabs.honeycomb.server.CommandHider;
+import dev.bluelabs.honeycomb.server.ServerListService;
 import dev.bluelabs.honeycomb.display.WorldProfiles;
 import dev.bluelabs.honeycomb.display.belowname.BelowNameService;
 import dev.bluelabs.honeycomb.display.actionbar.ActionbarService;
@@ -99,6 +100,7 @@ public final class HoneycombPlugin extends JavaPlugin {
     private UpdateLogService updates;
     private ConfigPanel panel;
     private BrandService brand;
+    private ServerListService serverList;
     private CommandHider commandHider;
 
     /**
@@ -189,6 +191,8 @@ public final class HoneycombPlugin extends JavaPlugin {
             getCommand("updatelog").setExecutor(new UpdateLogCommand(this));
         }
 
+        serverList = new ServerListService(this);
+        Bukkit.getPluginManager().registerEvents(serverList, this);
         brand = new BrandService(this);
         commandHider = new CommandHider(this);
         commandHider.reload();
@@ -295,6 +299,7 @@ public final class HoneycombPlugin extends JavaPlugin {
         network.enable();
         coordinator.reloadAll();
         applyServerSettings();
+        serverList.reload();
         tasks.repeating("placeholder-cache", 200L, settings.cacheSweepInterval(), placeholderService::sweepCache);
 
         long millis = (System.nanoTime() - started) / 1_000_000L;
@@ -324,6 +329,13 @@ public final class HoneycombPlugin extends JavaPlugin {
      */
     public String minecraftRange() {
         return BuildInfo.minecraftRange();
+    }
+
+    /**
+     * @return the maintenance and MOTD service
+     */
+    public ServerListService serverList() {
+        return serverList;
     }
 
     /**

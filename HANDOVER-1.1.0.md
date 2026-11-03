@@ -57,6 +57,17 @@ Both answer `PlayerCount`, `GetServers` and `GetServer` on `honeycomb:network` u
 
 Sources live in `proxy/bungee` and `proxy/velocity`; build with `javac` against those two API jars and zip the classes with the manifest at the root.
 
+## Maintenance mode and server list (new in this build)
+
+`maintenance.yml` is new, and so is the `Server -> Maintenance & MOTD` screen.
+
+- **Maintenance mode:** `maintenance.enabled` blocks logins with the configured kick message. Anyone with `honeycomb.maintenance.bypass` still gets in.
+- **MOTD:** `motd.enabled` rewrites both server list lines with MiniMessage, `{online}` and `{max}`.
+- **Fake numbers:** `motd.online` and `motd.max` show a fixed count, `-1` keeps the real one.
+- **Software name:** `motd.fake-software` replaces the name other tools read, so mcstatus or a proxy ping no longer shows Paper. Blank keeps the real one.
+
+The counts and the software name are not on every server platform's ping event, so they are set through reflection and skipped quietly when the platform does not offer them. `ServerListService` caches the file and reloads with the rest of Honeycomb.
+
 ## Panel and command polish (same 1.1.0 build)
 
 - **Create closed the screen.** Opening a dialog from inside a button click was dropped by the client. `DialogKit.show` now schedules the screen two ticks later on the player's own thread (`Scheduling.forPlayerLater`), so create, save and every other button that opens a screen lands.

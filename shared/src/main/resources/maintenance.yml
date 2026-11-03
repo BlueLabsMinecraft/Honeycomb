@@ -1,0 +1,25 @@
+# Maintenance mode, the server list entry and the MOTD.
+#
+# Everything here can also be edited in game: /honeycomb panel -> Server -> Maintenance.
+
+maintenance:
+  enabled: false
+  # Shown to anyone who tries to join while maintenance is on.
+  kick-message:
+    - "<shadow:#000000:1><red><bold>MAINTENANCE"
+    - "<gray>We are updating the server."
+    - "<dark_gray>Try again in a few minutes."
+  # Players with this permission get in anyway.
+  bypass-permission: "honeycomb.maintenance.bypass"
+
+motd:
+  enabled: false
+  # {online} {max} are filled in below. MiniMessage colours work here too.
+  line-1: "<shadow:#000000:1><gradient:#FFE3A8:#FFB01F:#FF7A00><bold>HONEYCOMB</bold></gradient> <dark_gray>| <white>Survival"
+  line-2: "<gray>{online}<dark_gray>/<gray>{max} <dark_gray>| <green>1.21.9 - 26.3"
+  # -1 keeps the real number, anything else is shown instead.
+  online: -1
+  max: -1
+  # Replaces the software name other tools read, for example "Vanilla 1.21.11".
+  # Blank keeps the real one.
+  fake-software: ""

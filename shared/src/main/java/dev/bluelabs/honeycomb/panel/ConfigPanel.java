@@ -60,6 +60,7 @@ public final class ConfigPanel {
             case "server" -> server();
             case "setup" -> setup();
             case "maintenance" -> maintenance();
+            case "motd" -> motd();
             case "layouts", "tablists" -> ProfilesPanel.list(plugin, "tablist");
             case "boards" -> ProfilesPanel.list(plugin, "scoreboards");
             case "bars" -> ProfilesPanel.list(plugin, "bossbars");
@@ -97,7 +98,8 @@ public final class ConfigPanel {
                 new Case("displays", this::displays),
                 new Case("server", this::server),
                 new Case("setup", this::setup),
-                new Case("maintenance", this::maintenance));
+                new Case("maintenance", this::maintenance),
+                new Case("motd", this::motd));
         for (Case test : cases) {
             try {
                 Dialog dialog = test.supplier().get();
@@ -189,6 +191,7 @@ public final class ConfigPanel {
         buttons.add(button("Commands", "commands"));
         buttons.add(button("Messages", "messages"));
         buttons.add(button("Network", "network"));
+        buttons.add(button("Maintenance & MOTD", "motd"));
         buttons.add(button("Staff layouts", "staff"));
         buttons.add(DialogKit.run("Back", "honeycomb panel"));
         buttons.add(DialogKit.close());
@@ -228,6 +231,85 @@ public final class ConfigPanel {
         buttons.add(DialogKit.run("Back", "honeycomb panel"));
         buttons.add(DialogKit.close());
         return DialogKit.menu("Maintenance", body, buttons);
+    }
+
+    /** Maintenance mode, the MOTD and the numbers other tools read. */
+    private Dialog motd() {
+        var yaml = plugin.configManager().yaml(ConfigType.MAINTENANCE);
+        boolean on = yaml.getBoolean("maintenance.enabled", false);
+        boolean motdOn = yaml.getBoolean("motd.enabled", false);
+        List<DialogInput> inputs = new ArrayList<>();
+        inputs.add(DialogKit.toggle("enabled", "Maintenance mode on", on));
+        inputs.add(DialogKit.lines("kick", "Kick message while maintenance is on, one row per line",
+                String.join("\n", yaml.getStringList("maintenance.kick-message")), 6));
+        inputs.add(DialogKit.toggle("motd_enabled", "Rewrite the server list entry", motdOn));
+        inputs.add(DialogKit.text("line1", "MOTD line 1, {online} and {max} work", yaml.getString("motd.line-1", "")));
+        inputs.add(DialogKit.text("line2", "MOTD line 2", yaml.getString("motd.line-2", "")));
+        inputs.add(DialogKit.text("online", "Online count to show, -1 keeps the real one",
+                String.valueOf(yaml.getInt("motd.online", -1))));
+        inputs.add(DialogKit.text("max", "Max players to show, -1 keeps the real one",
+                String.valueOf(yaml.getInt("motd.max", -1))));
+        inputs.add(DialogKit.text("software", "Software name other tools see, blank keeps the real one",
+                yaml.getString("motd.fake-software", "")));
+        List<Component> body = List.of(
+                DialogKit.heading("MAINTENANCE & MOTD"),
+                DialogKit.styled("<shadow:#000000:1><white>Maintenance <dark_gray>- nobody without the bypass permission can join."),
+                DialogKit.styled("<shadow:#000000:1><white>Server list <dark_gray>- what the multiplayer list shows before anyone joins."),
+                DialogKit.shade("Counts and the software name are what other tools read, like mcstatus or a proxy ping."));
+        return DialogKit.form("Maintenance & MOTD", body, inputs,
+                List.of(DialogKit.save("Save", (who, response) -> saveMotd(who, response)),
+                        DialogKit.run("Back", "honeycomb panel server"),
+                        DialogKit.close()));
+    }
+
+    private void saveMotd(Player player, DialogResponseView response) {
+        var overrides = plugin.panelOverrides();
+        ConfigType type = ConfigType.MAINTENANCE;
+        overrides.set(type, "maintenance.enabled", response.getBoolean("enabled"));
+        String kick = response.getText("kick");
+        if (kick != null) {
+            List<String> lines = new ArrayList<>();
+            for (String part : kick.split("\n")) {
+                if (!part.isBlank()) {
+                    lines.add(part);
+                }
+            }
+            overrides.set(type, "maintenance.kick-message", lines);
+        }
+        overrides.set(type, "motd.enabled", response.getBoolean("motd_enabled"));
+        for (String field : List.of("line1", "line2", "software")) {
+            String value = response.getText(field);
+            if (value != null) {
+                overrides.set(type, "motd." + field.replace("line1", "line-1").replace("line2", "line-2"), value);
+            }
+        }
+        for (String field : List.of("online", "max")) {
+            String value = response.getText(field);
+            if (value == null || value.isBlank()) {
+                continue;
+            }
+            try {
+                overrides.set(type, "motd." + field, Integer.parseInt(value.trim()));
+            } catch (NumberFormatException invalid) {
+                player.sendMessage(Component.text("The " + field + " count must be a number, kept the old one.",
+                        NamedTextColor.YELLOW));
+            }
+        }
+        try {
+            overrides.save();
+        } catch (IOException error) {
+            player.sendMessage(plugin.messages().prefixed("panel.save-failed",
+                    Map.of("reason", String.valueOf(error.getMessage()))));
+            return;
+        }
+        try {
+            plugin.reload();
+        } catch (RuntimeException failure) {
+            plugin.getLogger().warning("Reload after saving maintenance settings failed: " + failure);
+        }
+        player.sendMessage(plugin.messages().prefixed("panel.saved",
+                Map.of("name", "maintenance", "kind", "settings")));
+        show(player, motd());
     }
 
     /** A navigation button that opens a section of this panel. */
