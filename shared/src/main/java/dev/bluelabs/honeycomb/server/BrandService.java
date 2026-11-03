@@ -46,11 +46,23 @@ public final class BrandService implements Listener {
     private static final String HANDLER = "honeycomb_brand";
 
     private final HoneycombPlugin plugin;
+    private final dev.bluelabs.honeycomb.text.RenderPipeline pipeline;
+    private volatile String template = "";
     private volatile String brand = "";
     private BrandHook brandHook;
 
-    public BrandService(HoneycombPlugin plugin) {
+    public BrandService(HoneycombPlugin plugin, dev.bluelabs.honeycomb.text.RenderPipeline pipeline) {
         this.plugin = plugin;
+        this.pipeline = pipeline;
+    }
+
+    /**
+     * @return how often the line is resent so animations move, in ticks
+     */
+    public int refreshTicks() {
+        return Math.max(0, plugin.configManager()
+                .yaml(dev.bluelabs.honeycomb.config.ConfigType.CONFIG)
+                .getInt("brand.refresh-ticks", 40));
     }
 
     /**
@@ -61,7 +73,8 @@ public final class BrandService implements Listener {
      * @param text    brand text, MiniMessage or legacy {@code &} codes
      */
     public void apply(boolean enabled, String text) {
-        String wanted = enabled ? translate(text) : "";
+        template = enabled ? (text == null ? "" : text) : "";
+        String wanted = enabled ? translate(render(template, null)) : "";
         if (wanted.equals(brand)) {
             return;
         }
@@ -102,7 +115,7 @@ public final class BrandService implements Listener {
                 plugin.getLogger().warning("The F3 brand could not be set: the packet channel was not reachable.");
                 return;
             }
-            Object packet = new BrandHandler().brandPacket(brand);
+            Object packet = new BrandHandler().brandPacket(translate(render(template, player)));
             if (netty.pipeline().get(HANDLER) == null) {
                 netty.pipeline().addBefore("packet_handler", HANDLER, new BrandHandler());
             }
@@ -112,6 +125,29 @@ public final class BrandService implements Listener {
             }
         } catch (Throwable failure) {
             plugin.getLogger().warning("The F3 brand could not be set on this server build: " + failure);
+        }
+    }
+
+    /**
+     * Renders the brand template for one player.
+     *
+     * <p>Placeholders and animations are expanded per player, so a line can greet the
+     * person looking at it and can move. A template that fails to render is sent as
+     * written rather than dropped.</p>
+     *
+     * @param text   template
+     * @param player player, or {@code null} for the global fallback
+     * @return rendered text
+     */
+    private String render(String text, Player player) {
+        if (text == null || text.isBlank() || pipeline == null) {
+            return text == null ? "" : text;
+        }
+        try {
+            return pipeline.prepare(text,
+                    dev.bluelabs.honeycomb.placeholder.PlaceholderContext.of(player));
+        } catch (RuntimeException failure) {
+            return text;
         }
     }
 

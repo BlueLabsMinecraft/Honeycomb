@@ -57,6 +57,10 @@ Both answer `PlayerCount`, `GetServers` and `GetServer` on `honeycomb:network` u
 
 Sources live in `proxy/bungee` and `proxy/velocity`; build with `javac` against those two API jars and zip the classes with the manifest at the root.
 
+## F3 brand line (extended)
+
+`brand.text` is now the whole line, rendered per player through the same pipeline as the displays, so placeholders (`%player_name%`, `%server_name%`, TPS, ping) and animations (`{honeycomb.<id>}`) work inside it. `brand.refresh-ticks` resends the line so an animation actually moves; `0` sends it once. The panel screen gained the refresh field and says plainly that the tx/rx counters under the brand are measured by the client and cannot be set by a server.
+
 ## Welcome and leave messages (new in this build)
 
 `welcome.yml` plus `Server -> Welcome & leave`, built the same way as the other displays.

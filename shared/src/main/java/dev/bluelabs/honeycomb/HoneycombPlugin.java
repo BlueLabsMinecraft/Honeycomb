@@ -197,7 +197,7 @@ public final class HoneycombPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(welcome, this);
         serverList = new ServerListService(this);
         Bukkit.getPluginManager().registerEvents(serverList, this);
-        brand = new BrandService(this);
+        brand = new BrandService(this, pipeline);
         commandHider = new CommandHider(this);
         commandHider.reload();
         Bukkit.getPluginManager().registerEvents(commandHider, this);
@@ -278,6 +278,16 @@ public final class HoneycombPlugin extends JavaPlugin {
         dev.bluelabs.honeycomb.config.ConfigType type = dev.bluelabs.honeycomb.config.ConfigType.CONFIG;
         brand.apply(configManager.yaml(type).getBoolean("brand.enabled", false),
                 configManager.yaml(type).getString("brand.text", ""));
+        int refresh = brand.refreshTicks();
+        if (refresh > 0 && configManager.yaml(type).getBoolean("brand.enabled", false)) {
+            // Brand packets are resent so an animated line actually moves in F3.
+            tasks.repeating("brand-refresh", refresh, refresh, () -> {
+                for (org.bukkit.entity.Player online : Bukkit.getOnlinePlayers()) {
+                    dev.bluelabs.honeycomb.scheduler.Scheduling.forPlayer(this, online,
+                            () -> brand.inject(online));
+                }
+            });
+        }
     }
 
     public ReloadResult reload() {

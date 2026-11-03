@@ -407,8 +407,10 @@ public final class ConfigPanel {
         YamlConfiguration yaml = plugin.configManager().yaml(ConfigType.CONFIG);
         List<DialogInput> inputs = List.of(
                 DialogKit.toggle("enabled", "Override the F3 brand", yaml.getBoolean("brand.enabled", false)),
-                DialogKit.text("text", "Brand text (shown in F3 and the server list)",
-                        yaml.getString("brand.text", "Honeycomb")));
+                DialogKit.text("text", "Brand line, placeholders and {honeycomb.id} work",
+                        yaml.getString("brand.text", "Honeycomb")),
+                DialogKit.text("refresh", "Resend every N ticks so animations move, 0 = once",
+                        String.valueOf(yaml.getInt("brand.refresh-ticks", 40))));
 
         List<ActionButton> buttons = List.of(
                 DialogKit.save("Save", this::saveBrand),
@@ -417,7 +419,9 @@ public final class ConfigPanel {
 
         // The hint only exists while ProtocolLib is missing.
         java.util.List<Component> body = new java.util.ArrayList<>();
-        body.add(DialogKit.hint("Controls the name the client shows in the F3 debug screen."));
+        body.add(DialogKit.hint("Controls the whole brand line in the F3 debug screen, not just the name."));
+        body.add(DialogKit.shade("Placeholders and animations are rendered per player, so the line can greet the person reading it."));
+        body.add(DialogKit.shade("The tx/rx counters below it are measured by the client and cannot be set by a server."));
         if (dev.bluelabs.honeycomb.server.BrandService.protocolLibPresent()) {
             body.add(DialogKit.good("ProtocolLib detected - the brand below replaces the server name."));
         } else {
@@ -748,6 +752,16 @@ public final class ConfigPanel {
         String text = response.getText("text");
         if (text != null && !text.isBlank()) {
             plugin.panelOverrides().set(ConfigType.CONFIG, "brand.text", text);
+        }
+        String refresh = response.getText("refresh");
+        if (refresh != null && !refresh.isBlank()) {
+            try {
+                int ticks = Integer.parseInt(refresh.trim());
+                plugin.panelOverrides().set(ConfigType.CONFIG, "brand.refresh-ticks", Math.max(0, ticks));
+            } catch (NumberFormatException invalid) {
+                player.sendMessage(Component.text("The refresh value must be a number of ticks, kept the old one.",
+                        NamedTextColor.YELLOW));
+            }
         }
         commit(player, "F3 brand", "brand");
     }

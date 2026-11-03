@@ -65,7 +65,12 @@ conflicts:
 # warning and leaves the stock brand alone.
 brand:
   enabled: false
+  # The whole brand line, so placeholders and animations work here too:
+  #   text: "<gradient:#FFE3A8:#FF7A00>%server_name%</gradient> <gray>| <white>%player_name%"
+  # Animations are written as {honeycomb.<id>} exactly like the displays.
   text: "Honeycomb"
+  # Re-send the brand line this often, in ticks, so animations move. 0 sends it once.
+  refresh-ticks: 40
 
 # Hide the plugin list and version dump from everyone without
 # honeycomb.commands.view (grant it to staff).
