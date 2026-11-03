@@ -92,6 +92,7 @@ public final class ConfigPanel {
                 new Case("commands", this::commands),
                 new Case("messages", this::messages),
                 new Case("animations", this::animations),
+                new Case("newanimation", this::newAnimation),
                 new Case("staff", this::staff),
                 new Case("presets", this::presets),
                 new Case("presetsave", this::presetsave),
@@ -649,34 +650,175 @@ public final class ConfigPanel {
     }
 
     private Dialog animations() {
-        List<Component> body = new ArrayList<>();
         YamlConfiguration yaml = plugin.configManager().yaml(ConfigType.ANIMATIONS);
         ConfigurationSection root = yaml.getConfigurationSection("animations");
+        long tick = System.currentTimeMillis() / 50L;
+        List<Component> body = new ArrayList<>();
+        body.add(DialogKit.heading("ANIMATIONS"));
+        body.add(DialogKit.styled("<shadow:#000000:1><gray>A list of frames that cycles. Use one anywhere text goes: <white>{honeycomb.id}"));
+        List<String> ids = new ArrayList<>();
         if (root != null) {
             for (String id : root.getKeys(false)) {
-                ConfigurationSection animation = root.getConfigurationSection(id);
-                if (animation != null) {
-                    body.add(Component.text(id + "  " + animation.getStringList("frames").size()
-                            + " frame(s), " + animation.getInt("interval", 10) + "t", NamedTextColor.WHITE));
+                ids.add(id);
+                var animation = plugin.animations().get(id);
+                if (animation == null) {
+                    body.add(DialogKit.styled("<shadow:#000000:1><white>" + id
+                            + " <dark_gray>- not loaded, check animations.yml"));
+                    continue;
                 }
+                String frame = animation.frameAt(tick);
+                body.add(DialogKit.styled("<shadow:#000000:1><white>" + id + " <dark_gray>("
+                        + animation.frameCount() + " frames, " + animation.interval() + "t) <gray>"
+                        + (frame == null ? "" : frame)));
             }
         }
-        if (body.isEmpty()) {
-            body.add(DialogKit.hint("No animations yet. Fill the fields below to make one."));
+        if (ids.isEmpty()) {
+            body.add(DialogKit.warn("No animations yet. Make one with the green button."));
         }
-        body.add(DialogKit.hint("Use any animation with {honeycomb.<id>} in the tablist, the"));
-        body.add(DialogKit.hint("scoreboard, the F3 brand or a boss bar."));
-        body.add(DialogKit.hint("Id: short name. Interval: ticks, 20 = one second."));
-        body.add(DialogKit.hint("Frames: one MiniMessage line each, they cycle in order."));
-        List<DialogInput> inputs = List.of(
-                DialogKit.text("id", "Animation id, for example honeycomb", ""),
-                DialogKit.text("interval", "Interval in ticks, for example 5", "5"),
-                DialogKit.lines("frames", "Frames, one line each", "", 18));
+        body.add(DialogKit.shade("The grey line above each name is its current frame, so it moves while you read it."));
+
         List<ActionButton> buttons = new ArrayList<>();
-        buttons.add(DialogKit.save("Create or replace", this::saveAnimation));
-        buttons.add(DialogKit.run("Back", BACK + " main"));
+        int shown = 0;
+        for (String id : ids) {
+            if (shown++ >= 8) {
+                break;
+            }
+            buttons.add(DialogKit.act(DialogKit.styled("<shadow:#000000:1><white>\u25B8 " + id),
+                    audience -> {
+                        if (audience instanceof Player who) {
+                            show(who, animationEditor(id));
+                        }
+                    }));
+        }
+        buttons.add(DialogKit.act(DialogKit.styled("<shadow:#000000:1><bold><green>+ New animation"),
+                audience -> {
+                    if (audience instanceof Player who) {
+                        show(who, newAnimation());
+                    }
+                }));
+        buttons.add(DialogKit.run("Back", BACK + " setup"));
         buttons.add(DialogKit.close());
-        return DialogKit.form("Animations", body, inputs, buttons);
+        return DialogKit.menu("Animations", body, buttons);
+    }
+
+    /** Asks for a name, then opens the editor for a fresh animation. */
+    private Dialog newAnimation() {
+        List<DialogInput> inputs = List.of(
+                DialogKit.text("id", "Animation name, for example glow", ""),
+                DialogKit.text("interval", "Frame speed in ticks, 20 = one second", "5"));
+        List<Component> body = List.of(
+                DialogKit.heading("NEW ANIMATION"),
+                DialogKit.shade("Lower case, no spaces. Use it as {honeycomb.<name>}."),
+                DialogKit.shade("You add the frames on the next screen."));
+        return DialogKit.form("New animation", body, inputs,
+                List.of(DialogKit.save("Create", (who, response) -> {
+                            String raw = response.getText("id");
+                            if (raw == null || raw.isBlank()) {
+                                who.sendMessage(plugin.messages().prefixed("panel.name-required", Map.of()));
+                                return;
+                            }
+                            String id = raw.trim().toLowerCase(java.util.Locale.ROOT)
+                                    .replaceAll("[^a-z0-9_-]", "-");
+                            if (plugin.animations().get(id) != null) {
+                                who.sendMessage(plugin.messages().prefixed("panel.name-taken",
+                                        Map.of("name", id)));
+                                return;
+                            }
+                            String interval = response.getText("interval");
+                            int ticks = 5;
+                            try {
+                                if (interval != null && !interval.isBlank()) {
+                                    ticks = Math.max(1, Integer.parseInt(interval.trim()));
+                                }
+                            } catch (NumberFormatException ignored) {
+                                who.sendMessage(Component.text("Interval must be a number, using 5.",
+                                        NamedTextColor.YELLOW));
+                            }
+                            var overrides = plugin.panelOverrides();
+                            overrides.set(ConfigType.ANIMATIONS, "animations." + id + ".interval", ticks);
+                            overrides.set(ConfigType.ANIMATIONS, "animations." + id + ".loop", true);
+                            overrides.set(ConfigType.ANIMATIONS, "animations." + id + ".frames",
+                                    List.of("<white>" + id));
+                            saveOverrides("animation", id);
+                            show(who, animationEditor(id));
+                        }),
+                        DialogKit.run("Back", BACK + " animations"),
+                        DialogKit.close()));
+    }
+
+    /** One animation: frames, speed and whether it loops. */
+    private Dialog animationEditor(String id) {
+        YamlConfiguration yaml = plugin.configManager().yaml(ConfigType.ANIMATIONS);
+        String base = "animations." + id;
+        var animation = plugin.animations().get(id);
+        String preview = animation == null ? "" : animation.frameAt(System.currentTimeMillis() / 50L);
+        List<DialogInput> inputs = new ArrayList<>();
+        inputs.add(DialogKit.lines("frames", "Frames, one MiniMessage line each",
+                String.join("\n", yaml.getStringList(base + ".frames")), 20));
+        inputs.add(DialogKit.text("interval", "Frame speed in ticks, 20 = one second",
+                String.valueOf(yaml.getInt(base + ".interval", 5))));
+        inputs.add(DialogKit.toggle("loop", "Repeat forever", yaml.getBoolean(base + ".loop", true)));
+        List<Component> body = List.of(
+                DialogKit.heading("ANIMATION \u00B7 " + id.toUpperCase(java.util.Locale.ROOT)),
+                DialogKit.styled("<shadow:#000000:1><gray>Now showing: <white>"
+                        + (preview == null || preview.isBlank() ? "-" : preview)),
+                DialogKit.shade("Frames cycle top to bottom. Colours, gradients and <sprite:...> icons all work."),
+                DialogKit.shade("Use it as {honeycomb." + id + "} in any display line."));
+        List<ActionButton> actions = new ArrayList<>();
+        actions.add(DialogKit.save("Save changes", (who, response) -> {
+            var overrides = plugin.panelOverrides();
+            String frames = response.getText("frames");
+            List<String> lines = new ArrayList<>();
+            if (frames != null) {
+                for (String part : frames.split("\n")) {
+                    if (!part.isBlank()) {
+                        lines.add(part);
+                    }
+                }
+            }
+            if (lines.isEmpty()) {
+                who.sendMessage(Component.text("An animation needs at least one frame.",
+                        NamedTextColor.RED));
+                return;
+            }
+            overrides.set(ConfigType.ANIMATIONS, base + ".frames", lines);
+            String interval = response.getText("interval");
+            if (interval != null && !interval.isBlank()) {
+                try {
+                    overrides.set(ConfigType.ANIMATIONS, base + ".interval",
+                            Math.max(1, Integer.parseInt(interval.trim())));
+                } catch (NumberFormatException invalid) {
+                    who.sendMessage(Component.text("Interval must be a number, kept the old one.",
+                            NamedTextColor.YELLOW));
+                }
+            }
+            overrides.set(ConfigType.ANIMATIONS, base + ".loop", response.getBoolean("loop"));
+            saveOverrides("animation", id);
+        }));
+        actions.add(DialogKit.act(DialogKit.styled("<shadow:#000000:1><white>Insert icon"),
+                audience -> {
+                    if (audience instanceof Player clicker) {
+                        IconPicker.open(clicker, plugin, "frames", BACK + " animations");
+                    }
+                }));
+        actions.add(DialogKit.run("Back", BACK + " animations"));
+        actions.add(DialogKit.close());
+        return DialogKit.form("Animation - " + id, body, inputs, actions);
+    }
+
+    /** Saves panel overrides and reloads, reporting whatever fails. */
+    private void saveOverrides(String kind, String id) {
+        try {
+            plugin.panelOverrides().save();
+        } catch (IOException error) {
+            plugin.getLogger().warning("Could not save " + kind + " " + id + ": " + error.getMessage());
+            return;
+        }
+        try {
+            plugin.reload();
+        } catch (RuntimeException failure) {
+            plugin.getLogger().warning("Reload after saving " + kind + " " + id + " failed: " + failure);
+        }
     }
 
     private Dialog presetsave() {
@@ -698,53 +840,6 @@ public final class ConfigPanel {
         }
         plugin.presets().save(name.trim(), player);
         open(player, "presets");
-    }
-
-    private void saveAnimation(Player player, DialogResponseView response) {
-        String id = response.getText("id");
-        if (id == null || id.isBlank()) {
-            player.sendMessage(Component.text("An animation needs an id.", NamedTextColor.RED));
-            return;
-        }
-        id = id.trim().toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9_\\-]", "");
-        if (id.isEmpty()) {
-            player.sendMessage(Component.text("Use letters, digits, dash or underscore for the id.",
-                    NamedTextColor.RED));
-            return;
-        }
-        List<String> frames = new ArrayList<>();
-        String raw = response.getText("frames");
-        if (raw != null) {
-            for (String line : raw.split("\\n")) {
-                if (!line.isBlank()) {
-                    frames.add(line);
-                }
-            }
-        }
-        if (frames.isEmpty()) {
-            player.sendMessage(Component.text("Add at least one frame.", NamedTextColor.RED));
-            return;
-        }
-        int interval = 5;
-        try {
-            interval = Math.max(1, Math.min(200, Integer.parseInt(response.getText("interval").trim())));
-        } catch (RuntimeException ignored) {
-            interval = 5;
-        }
-        plugin.panelOverrides().set(ConfigType.ANIMATIONS, "animations." + id + ".interval", interval);
-        plugin.panelOverrides().set(ConfigType.ANIMATIONS, "animations." + id + ".frames", frames);
-        plugin.panelOverrides().set(ConfigType.ANIMATIONS, "animations." + id + ".loop", true);
-        try {
-            plugin.panelOverrides().save();
-        } catch (java.io.IOException exception) {
-            player.sendMessage(Component.text("Could not save panel.yml: " + exception.getMessage(),
-                    NamedTextColor.RED));
-            return;
-        }
-        plugin.reload();
-        player.sendMessage(Component.text("Animation " + id + " saved. Use {honeycomb." + id + "}",
-                NamedTextColor.GREEN));
-        open(player, "animations");
     }
 
     private void saveBrand(Player player, DialogResponseView response) {

@@ -57,6 +57,15 @@ Both answer `PlayerCount`, `GetServers` and `GetServer` on `honeycomb:network` u
 
 Sources live in `proxy/bungee` and `proxy/velocity`; build with `javac` against those two API jars and zip the classes with the manifest at the root.
 
+## Animations page (rewritten)
+
+`Setup -> Animations` is a real design surface now:
+
+- The list shows each animation with its frame count, speed and a live preview of the frame it is on, so you can see it move while the dialog is open.
+- Picking one opens its editor: frames (one MiniMessage line each), frame speed in ticks, and whether it repeats. The current frame is shown at the top, and `Insert icon` drops a sprite into the frames.
+- `+ New animation` creates one, refuses a name already in use, and goes straight to the editor.
+- Every animation says how to use it: `{honeycomb.<id>}` in any display line, the F3 brand or a bossbar.
+
 ## Icons in text (new in this build)
 
 Minecraft 1.21.9 has a sprite component and MiniMessage 4.26 exposes it, so any item or block texture can sit inside a tablist line, a sidebar row, a bossbar title, an action bar text or a welcome message with no resource pack.
