@@ -57,6 +57,17 @@ Both answer `PlayerCount`, `GetServers` and `GetServer` on `honeycomb:network` u
 
 Sources live in `proxy/bungee` and `proxy/velocity`; build with `javac` against those two API jars and zip the classes with the manifest at the root.
 
+## Web editor (new in this build)
+
+The editor is a static page and the plugin is the only decoder, so there is no database, no account and nothing uploaded.
+
+- Format: `hc1-` + base64url(deflate-raw(JSON)). Raw deflate because the browser's `CompressionStream('deflate-raw')` and `java.util.zip.Deflater(nowrap=true)` speak the same thing with no headers to disagree about.
+- `dev.bluelabs.honeycomb.web.WebCodec` encodes, decodes and flattens sections into the dotted paths `panel.yml` uses. JSON is parsed with SnakeYAML's safe constructor, which already ships with the server, so no new dependency.
+- `/hc web <code>` decodes and opens the import screen: every section found is listed with a toggle, apply writes only the ticked ones into the overrides and reloads.
+- The page lives at `web-editor.html` and currently covers tablist, maintenance and MOTD, and the F3 brand.
+
+Interop is tested both ways: a code built by Python's raw deflate, and a code built by the page's own `CompressionStream`, both decode in the plugin.
+
 ## Animations page (rewritten)
 
 `Setup -> Animations` is a real design surface now:

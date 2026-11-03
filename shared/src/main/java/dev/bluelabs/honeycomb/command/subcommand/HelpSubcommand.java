@@ -34,6 +34,7 @@ public final class HelpSubcommand implements Subcommand {
         GROUPS.put("animations", server);
         GROUPS.put("preset", server);
         GROUPS.put("integrations", server);
+        GROUPS.put("web", server);
         GROUPS.put("migrate", moving);
         GROUPS.put("version", other);
         GROUPS.put("help", other);

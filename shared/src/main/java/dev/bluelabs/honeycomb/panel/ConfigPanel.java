@@ -2,6 +2,7 @@ package dev.bluelabs.honeycomb.panel;
 
 import dev.bluelabs.honeycomb.HoneycombPlugin;
 import dev.bluelabs.honeycomb.config.ConfigType;
+import dev.bluelabs.honeycomb.web.WebCodec;
 import io.papermc.paper.dialog.Dialog;
 import io.papermc.paper.dialog.DialogResponseView;
 import io.papermc.paper.registry.data.dialog.ActionButton;
@@ -818,6 +819,109 @@ public final class ConfigPanel {
             plugin.reload();
         } catch (RuntimeException failure) {
             plugin.getLogger().warning("Reload after saving " + kind + " " + id + " failed: " + failure);
+        }
+    }
+
+    /**
+     * Shows the sections a web code carries, so the admin picks what to apply.
+     *
+     * @param player   admin importing
+     * @param sections decoded payload
+     */
+    public void openWeb(Player player, Map<String, Object> sections) {
+        show(player, web(sections));
+    }
+
+    private Dialog web(Map<String, Object> sections) {
+        List<DialogInput> inputs = new ArrayList<>();
+        List<Component> body = new ArrayList<>();
+        body.add(DialogKit.heading("IMPORT FROM THE WEB"));
+        body.add(DialogKit.styled("<shadow:#000000:1><gray>Tick what you want written. Everything you leave"));
+        body.add(DialogKit.styled("<shadow:#000000:1><gray>unticked stays exactly as it is now."));
+        List<String> order = new ArrayList<>(List.of("tablist", "scoreboards", "bossbars", "nametags",
+                "actionbar", "welcome", "maintenance", "motd", "brand", "network", "animations"));
+        for (String name : sections.keySet()) {
+            if (!order.contains(name)) {
+                order.add(name);
+            }
+        }
+        List<String> present = new ArrayList<>();
+        for (String name : order) {
+            Object value = sections.get(name);
+            if (!(value instanceof Map<?, ?> map)) {
+                continue;
+            }
+            present.add(name);
+            body.add(DialogKit.styled("<shadow:#000000:1><white>" + name + " <dark_gray>- "
+                    + WebCodec.flatten(map).size() + " setting(s)"));
+            inputs.add(DialogKit.toggle("apply_" + name.replace('-', '_'),
+                    "Apply " + name, true));
+        }
+        if (present.isEmpty()) {
+            body.add(DialogKit.warn("That code carried no sections this plugin understands."));
+        }
+        List<Component> frozen = body;
+        return DialogKit.form("Import", frozen, inputs,
+                List.of(DialogKit.save("Apply ticked sections", (who, response) -> {
+                            var overrides = plugin.panelOverrides();
+                            int written = 0;
+                            List<String> touched = new ArrayList<>();
+                            for (String name : present) {
+                                if (!response.getBoolean("apply_" + name.replace('-', '_'))) {
+                                    continue;
+                                }
+                                Object value = sections.get(name);
+                                if (!(value instanceof Map<?, ?> map)) {
+                                    continue;
+                                }
+                                ConfigType type = webType(name);
+                                for (Map.Entry<String, Object> setting : WebCodec.flatten(map).entrySet()) {
+                                    overrides.set(type, setting.getKey(), setting.getValue());
+                                    written++;
+                                }
+                                touched.add(name);
+                            }
+                            if (written == 0) {
+                                who.sendMessage(Component.text("Nothing was ticked, so nothing changed.",
+                                        NamedTextColor.YELLOW));
+                                return;
+                            }
+                            try {
+                                overrides.save();
+                            } catch (IOException error) {
+                                who.sendMessage(plugin.messages().prefixed("panel.save-failed",
+                                        Map.of("reason", String.valueOf(error.getMessage()))));
+                                return;
+                            }
+                            reloadQuietly();
+                            who.sendMessage(Component.text("Imported " + written + " setting(s) from "
+                                    + String.join(", ", touched) + ".", NamedTextColor.GREEN));
+                            show(who, main());
+                        }),
+                        DialogKit.run("Back", BACK + " main"),
+                        DialogKit.close()));
+    }
+
+    /** Which file a web section writes into. */
+    private static ConfigType webType(String section) {
+        return switch (section) {
+            case "tablist" -> ConfigType.TABLIST;
+            case "scoreboards" -> ConfigType.SCOREBOARDS;
+            case "bossbars" -> ConfigType.BOSSBARS;
+            case "nametags" -> ConfigType.NAMETAGS;
+            case "welcome" -> ConfigType.WELCOME;
+            case "maintenance", "motd" -> ConfigType.MAINTENANCE;
+            case "animations" -> ConfigType.ANIMATIONS;
+            case "network" -> ConfigType.NETWORK;
+            default -> ConfigType.CONFIG;
+        };
+    }
+
+    private void reloadQuietly() {
+        try {
+            plugin.reload();
+        } catch (RuntimeException failure) {
+            plugin.getLogger().warning("Reload after a web import failed: " + failure);
         }
     }
 

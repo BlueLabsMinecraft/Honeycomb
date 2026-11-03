@@ -5,6 +5,7 @@ import dev.bluelabs.honeycomb.command.subcommand.AnimationsSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.HelpSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.IntegrationsSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.PanelSubcommand;
+import dev.bluelabs.honeycomb.command.subcommand.WebSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.PlaceholdersSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.MigrateSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.PresetSubcommand;
@@ -49,7 +50,8 @@ public final class HoneycombCommand implements TabExecutor {
                 new RefreshSubcommand(plugin),
                 new PresetSubcommand(plugin),
                 new MigrateSubcommand(plugin),
-                new PanelSubcommand(plugin)
+                new PanelSubcommand(plugin),
+                new WebSubcommand(plugin)
         );
         for (Subcommand subcommand : registered) {
             subcommands.put(subcommand.name().toLowerCase(Locale.ROOT), subcommand);
