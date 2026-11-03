@@ -57,6 +57,15 @@ Both answer `PlayerCount`, `GetServers` and `GetServer` on `honeycomb:network` u
 
 Sources live in `proxy/bungee` and `proxy/velocity`; build with `javac` against those two API jars and zip the classes with the manifest at the root.
 
+## Icons in text (new in this build)
+
+Minecraft 1.21.9 has a sprite component and MiniMessage 4.26 exposes it, so any item or block texture can sit inside a tablist line, a sidebar row, a bossbar title, an action bar text or a welcome message with no resource pack.
+
+- Tag form: `<sprite:"minecraft:items":"minecraft:item/diamond">`.
+- `Insert icon` sits on every editor: tablist (header), sidebar and welcome (lines), bossbars (title), action bar (text). It opens a picker with 30 common items plus a field for any item name.
+- Dialogs have no cursor, so the icon is appended to the end of that field when the editor reopens.
+- `dev.bluelabs.honeycomb.text.Icons` builds the tags, and `IconsTest` proves they parse into an object component with the markup stripped.
+
 ## F3 brand line (extended)
 
 `brand.text` is now the whole line, rendered per player through the same pipeline as the displays, so placeholders (`%player_name%`, `%server_name%`, TPS, ping) and animations (`{honeycomb.<id>}`) work inside it. `brand.refresh-ticks` resends the line so an animation actually moves; `0` sends it once. The panel screen gained the refresh field and says plainly that the tx/rx counters under the brand are measured by the client and cannot be set by a server.

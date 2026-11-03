@@ -11,6 +11,7 @@ panel:
   saved: "<green>Saved {kind} <white>{name}</white> and applied it."
   save-failed: "<red>Could not save: <white>{reason}"
   name-required: "<red>Give it a name first."
+  icon-invalid: "<red>That item name does not look right. Try diamond, oak_log or bread."
   name-taken: "<red>{name} <gray>is already used. Pick another name, or edit the one that exists."
 
 general:

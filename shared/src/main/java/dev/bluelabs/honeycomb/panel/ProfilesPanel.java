@@ -142,37 +142,38 @@ public final class ProfilesPanel {
         switch (kind) {
             case "tablist" -> {
                 inputs.add(DialogKit.lines("header", "Header, one row per line",
-                        join(yaml.getStringList(base + ".header")), 12));
+                        withIcon(player, "header", join(yaml.getStringList(base + ".header"))), 12));
                 inputs.add(DialogKit.lines("footer", "Footer, one row per line",
-                        join(yaml.getStringList(base + ".footer")), 8));
+                        withIcon(player, "footer", join(yaml.getStringList(base + ".footer"))), 8));
                 inputs.add(DialogKit.text("list_name", "Player list name",
                         yaml.getString(base + ".player-list-name", "<white>%player_name%")));
             }
             case "scoreboards" -> {
                 inputs.add(DialogKit.text("title", "Title", yaml.getString(base + ".title", "")));
                 inputs.add(DialogKit.lines("lines", "Lines, one per row",
-                        join(yaml.getStringList(base + ".lines")), 18));
+                        withIcon(player, "lines", join(yaml.getStringList(base + ".lines"))), 18));
                 inputs.add(DialogKit.text("interval", "Update interval in ticks",
                         String.valueOf(yaml.getInt(base + ".update-interval", 20))));
                 inputs.add(DialogKit.toggle("hide_numbers", "Hide numbers",
                         yaml.getBoolean(base + ".hide-numbers", true)));
             }
             case "bossbars" -> {
-                inputs.add(DialogKit.text("title", "Title", yaml.getString(base + ".title", "")));
+                inputs.add(DialogKit.text("title", "Title",
+                        withIcon(player, "title", yaml.getString(base + ".title", ""))));
                 inputs.add(DialogKit.text("color", "Colour", yaml.getString(base + ".color", "YELLOW")));
                 inputs.add(DialogKit.text("style", "Style", yaml.getString(base + ".style", "SOLID")));
                 inputs.add(DialogKit.text("progress", "Progress 0 to 1",
                         String.valueOf(yaml.getDouble(base + ".progress", 1.0D))));
             }
             case "actionbar" -> inputs.add(DialogKit.text("template", "Text above the hotbar",
-                    yaml.getString(base + ".template", "")));
+                    withIcon(player, "template", yaml.getString(base + ".template", ""))));
             case "welcome" -> {
                 inputs.add(DialogKit.text("scope", "Who sees it: private or broadcast",
                         yaml.getString(base + ".scope", "private")));
                 inputs.add(DialogKit.text("trigger", "When: join or leave",
                         yaml.getString(base + ".trigger", "join")));
                 inputs.add(DialogKit.lines("lines", "Message, one row per line",
-                        join(yaml.getStringList(base + ".lines")), 12));
+                        withIcon(player, "lines", join(yaml.getStringList(base + ".lines"))), 12));
             }
             default -> {
                 inputs.add(DialogKit.text("prefix", "Prefix", yaml.getString(base + ".prefix", "")));
@@ -189,11 +190,21 @@ public final class ProfilesPanel {
                         + (who.startsWith("none") ? "<green>everyone" : "<gold>" + who)),
                 DialogKit.shade("Text takes MiniMessage colours. One row per line."),
                 DialogKit.shade("Leave a field empty to keep that rule out."));
-        var dialog = DialogKit.form(title(kind) + " - " + id, body, inputs,
-                List.of(DialogKit.save(fresh ? "Create layout" : "Save changes",
-                                (saved, response) -> save(saved, plugin, kind, id, response)),
-                        DialogKit.run("Back", "honeycomb panel " + section(kind)),
-                        DialogKit.close()));
+        List<ActionButton> actions = new ArrayList<>();
+        actions.add(DialogKit.save(fresh ? "Create layout" : "Save changes",
+                (saved, response) -> save(saved, plugin, kind, id, response)));
+        String iconField = iconField(kind);
+        actions.add(DialogKit.act(
+                DialogKit.styled("<shadow:#000000:1><white>Insert icon"),
+                audience -> {
+                    if (audience instanceof Player clicker) {
+                        IconPicker.open(clicker, plugin, iconField(kind),
+                                "honeycomb panel " + screenOf(kind));
+                    }
+                }));
+        actions.add(DialogKit.run("Back", "honeycomb panel " + section(kind)));
+        actions.add(DialogKit.close());
+        var dialog = DialogKit.form(title(kind) + " - " + id, body, inputs, actions);
         DialogKit.show(player, plugin, dialog);
     }
 
@@ -323,6 +334,30 @@ public final class ProfilesPanel {
         } catch (RuntimeException error) {
             plugin.getLogger().warning("Reload after a panel save failed: " + error);
         }
+    }
+
+    /**
+     * @param kind entry kind
+     * @return the field the icon button feeds, the first text field of that kind
+     */
+    private static String iconField(String kind) {
+        return switch (kind) {
+            case "tablist" -> "header";
+            case "scoreboards", "welcome" -> "lines";
+            case "bossbars" -> "title";
+            case "actionbar" -> "template";
+            default -> "suffix";
+        };
+    }
+
+    /** Appends an icon the picker handed back to this field. */
+    private static String withIcon(Player player, String field, String current) {
+        String tag = IconPicker.take(player, field);
+        if (tag == null) {
+            return current;
+        }
+        String base = current == null ? "" : current;
+        return base.isEmpty() ? tag : base + (base.endsWith("\n") ? "" : " ") + tag;
     }
 
     private static void setLines(dev.bluelabs.honeycomb.config.PanelOverrides overrides, ConfigType type,
