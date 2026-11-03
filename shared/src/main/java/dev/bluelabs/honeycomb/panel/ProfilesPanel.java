@@ -166,6 +166,14 @@ public final class ProfilesPanel {
             }
             case "actionbar" -> inputs.add(DialogKit.text("template", "Text above the hotbar",
                     yaml.getString(base + ".template", "")));
+            case "welcome" -> {
+                inputs.add(DialogKit.text("scope", "Who sees it: private or broadcast",
+                        yaml.getString(base + ".scope", "private")));
+                inputs.add(DialogKit.text("trigger", "When: join or leave",
+                        yaml.getString(base + ".trigger", "join")));
+                inputs.add(DialogKit.lines("lines", "Message, one row per line",
+                        join(yaml.getStringList(base + ".lines")), 12));
+            }
             default -> {
                 inputs.add(DialogKit.text("prefix", "Prefix", yaml.getString(base + ".prefix", "")));
                 inputs.add(DialogKit.text("suffix", "Suffix", yaml.getString(base + ".suffix", "")));
@@ -255,6 +263,20 @@ public final class ProfilesPanel {
                     }
                 }
             }
+            case "welcome" -> {
+                String scope = response.getText("scope");
+                if (scope != null && !scope.isBlank()) {
+                    String clean = scope.trim().toLowerCase(java.util.Locale.ROOT);
+                    overrides.set(type, base + ".scope",
+                            clean.startsWith("b") ? "broadcast" : "private");
+                }
+                String trigger = response.getText("trigger");
+                if (trigger != null && !trigger.isBlank()) {
+                    String clean = trigger.trim().toLowerCase(java.util.Locale.ROOT);
+                    overrides.set(type, base + ".trigger", clean.startsWith("l") ? "leave" : "join");
+                }
+                setLines(overrides, type, base + ".lines", response.getText("lines"));
+            }
             case "actionbar" -> {
                 String template = response.getText("template");
                 if (template != null && !template.isBlank()) {
@@ -338,6 +360,7 @@ public final class ProfilesPanel {
             case "scoreboards" -> yaml.getConfigurationSection("scoreboards");
             case "bossbars" -> yaml.getConfigurationSection("bossbars");
             case "actionbar" -> yaml.getConfigurationSection("actionbar.profiles");
+            case "welcome" -> yaml.getConfigurationSection("welcome");
             default -> yaml.getConfigurationSection("nametags.groups");
         };
         List<String> ids = new ArrayList<>();
@@ -410,6 +433,7 @@ public final class ProfilesPanel {
             case "scoreboards" -> "scoreboards." + id;
             case "bossbars" -> "bossbars." + id;
             case "actionbar" -> "actionbar.profiles." + id;
+            case "welcome" -> "welcome." + id;
             default -> "nametags.groups." + id;
         };
     }
@@ -420,6 +444,7 @@ public final class ProfilesPanel {
             case "scoreboards" -> "scoreboard";
             case "bossbars" -> "bossbars";
             case "actionbar" -> "actionbar";
+            case "welcome" -> "welcome";
             default -> "nametags";
         };
     }
@@ -430,6 +455,7 @@ public final class ProfilesPanel {
             case "scoreboards" -> "boards";
             case "bossbars" -> "bars";
             case "actionbar" -> "actionbar-entries";
+            case "welcome" -> "welcome";
             default -> "groups";
         };
     }
@@ -440,6 +466,7 @@ public final class ProfilesPanel {
             case "scoreboards" -> "scoreboard";
             case "bossbars" -> "bossbar";
             case "actionbar" -> "text";
+            case "welcome" -> "message";
             default -> "group";
         };
     }
@@ -450,6 +477,7 @@ public final class ProfilesPanel {
             case "scoreboards" -> "Scoreboards";
             case "bossbars" -> "Bossbars";
             case "actionbar" -> "Action bar texts";
+            case "welcome" -> "Welcome and leave messages";
             default -> "Nametag groups";
         };
     }
@@ -460,6 +488,7 @@ public final class ProfilesPanel {
             case "scoreboards" -> ConfigType.SCOREBOARDS;
             case "bossbars" -> ConfigType.BOSSBARS;
             case "actionbar" -> ConfigType.CONFIG;
+            case "welcome" -> ConfigType.WELCOME;
             default -> ConfigType.NAMETAGS;
         };
     }

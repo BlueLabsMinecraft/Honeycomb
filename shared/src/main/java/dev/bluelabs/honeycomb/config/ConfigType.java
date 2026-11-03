@@ -20,6 +20,7 @@ public enum ConfigType {
     PLACEHOLDERS("placeholders.yml", "Placeholder engine settings", "placeholders"),
     INTEGRATIONS("integrations.yml", "Optional plugin integrations", "integrations"),
     NETWORK("network.yml", "Proxy and network synchronisation", "network"),
+    WELCOME("welcome.yml", "Welcome and leave messages", "welcome"),
     MAINTENANCE("maintenance.yml", "Maintenance mode, MOTD and server list", null),
     MESSAGES("messages.yml", "Command and console messages", "messages");
 

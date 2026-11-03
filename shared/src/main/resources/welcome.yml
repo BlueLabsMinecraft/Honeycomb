@@ -1,0 +1,42 @@
+# Welcome and leave messages.
+#
+# Each entry has a scope and a trigger:
+#   scope: private    only the player sees it
+#   scope: broadcast  everyone sees it, replacing the vanilla join or leave line
+#   trigger: join or leave
+#
+# Conditions work exactly like the other displays: groups, worlds, permissions and
+# placeholder rules. The highest priority match wins, so a staff greeting can sit on
+# top of a default one.
+
+welcome:
+  join:
+    enabled: true
+    priority: 0
+    scope: private
+    trigger: join
+    conditions:
+      groups: []
+      worlds: []
+      permissions: []
+    lines:
+      - "<shadow:#000000:1><gradient:#FFE3A8:#FFB01F:#FF7A00><bold>Welcome, %player_name%!"
+      - "<gray>Read the rules, then have fun."
+  join-announce:
+    enabled: false
+    priority: 0
+    scope: broadcast
+    trigger: join
+    conditions:
+      groups: []
+    lines:
+      - "<dark_gray>[<green>+<dark_gray>] <white>%player_name% <gray>joined the server"
+  leave-announce:
+    enabled: false
+    priority: 0
+    scope: broadcast
+    trigger: leave
+    conditions:
+      groups: []
+    lines:
+      - "<dark_gray>[<red>-<dark_gray>] <white>%player_name% <gray>left the server"

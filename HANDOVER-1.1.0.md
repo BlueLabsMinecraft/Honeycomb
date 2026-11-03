@@ -57,6 +57,15 @@ Both answer `PlayerCount`, `GetServers` and `GetServer` on `honeycomb:network` u
 
 Sources live in `proxy/bungee` and `proxy/velocity`; build with `javac` against those two API jars and zip the classes with the manifest at the root.
 
+## Welcome and leave messages (new in this build)
+
+`welcome.yml` plus `Server -> Welcome & leave`, built the same way as the other displays.
+
+- Each entry has `scope: private` (only that player) or `scope: broadcast` (everyone, replacing the vanilla join or leave line) and `trigger: join` or `trigger: leave`.
+- Conditions are the same as everywhere else: `groups`, `worlds`, `permissions` and `placeholders`, with the highest priority match winning. A staff greeting can sit above the default one.
+- Lines take MiniMessage, `%placeholders%` and animations, and render through the same pipeline as the displays.
+- The panel list and editor use the shared layout screen, so creating a message is the same flow as creating a scoreboard.
+
 ## Maintenance mode and server list (new in this build)
 
 `maintenance.yml` is new, and so is the `Server -> Maintenance & MOTD` screen.

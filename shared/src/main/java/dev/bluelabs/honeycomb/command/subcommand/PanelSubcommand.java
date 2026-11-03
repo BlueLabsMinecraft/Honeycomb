@@ -20,7 +20,7 @@ import java.util.Locale;
 public final class PanelSubcommand implements Subcommand {
 
     private static final List<String> SECTIONS = List.of("displays", "server", "setup", "maintenance",
-            "tablist", "scoreboard", "actionbar", "nametags", "bossbars", "brand", "commands",
+            "tablist", "scoreboard", "actionbar", "nametags", "bossbars", "welcome", "brand", "commands",
             "messages", "network", "animations", "staff", "presets", "updates", "debug");
 
     private final HoneycombPlugin plugin;

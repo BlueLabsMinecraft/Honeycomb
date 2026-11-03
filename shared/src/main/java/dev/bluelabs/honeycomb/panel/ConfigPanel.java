@@ -61,6 +61,7 @@ public final class ConfigPanel {
             case "setup" -> setup();
             case "maintenance" -> maintenance();
             case "motd" -> motd();
+            case "welcome" -> ProfilesPanel.list(plugin, "welcome");
             case "layouts", "tablists" -> ProfilesPanel.list(plugin, "tablist");
             case "boards" -> ProfilesPanel.list(plugin, "scoreboards");
             case "bars" -> ProfilesPanel.list(plugin, "bossbars");
@@ -99,7 +100,8 @@ public final class ConfigPanel {
                 new Case("server", this::server),
                 new Case("setup", this::setup),
                 new Case("maintenance", this::maintenance),
-                new Case("motd", this::motd));
+                new Case("motd", this::motd),
+                new Case("welcome", () -> ProfilesPanel.list(plugin, "welcome")));
         for (Case test : cases) {
             try {
                 Dialog dialog = test.supplier().get();
@@ -183,6 +185,7 @@ public final class ConfigPanel {
                 DialogKit.styled("<shadow:#000000:1><white>F3 brand <dark_gray>- the text in the debug screen brand line."),
                 DialogKit.styled("<shadow:#000000:1><white>Commands <dark_gray>- hide the plugin version from /pl and /plugins."),
                 DialogKit.styled("<shadow:#000000:1><white>Messages <dark_gray>- the wording Honeycomb sends to players."),
+                DialogKit.styled("<shadow:#000000:1><white>Welcome & leave <dark_gray>- join and leave lines, per group."),
                 DialogKit.styled("<shadow:#000000:1><white>Network <dark_gray>- Proxy counts across your server group."),
                 DialogKit.styled("<shadow:#000000:1><white>Staff layouts <dark_gray>- who gets the staff tablist and sidebar."),
                 DialogKit.shade("Network is " + state + "."));
@@ -191,6 +194,7 @@ public final class ConfigPanel {
         buttons.add(button("Commands", "commands"));
         buttons.add(button("Messages", "messages"));
         buttons.add(button("Network", "network"));
+        buttons.add(button("Welcome & leave", "welcome"));
         buttons.add(button("Maintenance & MOTD", "motd"));
         buttons.add(button("Staff layouts", "staff"));
         buttons.add(DialogKit.run("Back", "honeycomb panel"));

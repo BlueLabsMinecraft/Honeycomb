@@ -20,6 +20,7 @@ import dev.bluelabs.honeycomb.updates.UpdateLogService;
 import dev.bluelabs.honeycomb.server.BrandService;
 import dev.bluelabs.honeycomb.server.CommandHider;
 import dev.bluelabs.honeycomb.server.ServerListService;
+import dev.bluelabs.honeycomb.welcome.WelcomeService;
 import dev.bluelabs.honeycomb.display.WorldProfiles;
 import dev.bluelabs.honeycomb.display.belowname.BelowNameService;
 import dev.bluelabs.honeycomb.display.actionbar.ActionbarService;
@@ -101,6 +102,7 @@ public final class HoneycombPlugin extends JavaPlugin {
     private ConfigPanel panel;
     private BrandService brand;
     private ServerListService serverList;
+    private WelcomeService welcome;
     private CommandHider commandHider;
 
     /**
@@ -191,6 +193,8 @@ public final class HoneycombPlugin extends JavaPlugin {
             getCommand("updatelog").setExecutor(new UpdateLogCommand(this));
         }
 
+        welcome = new WelcomeService(this, pipeline);
+        Bukkit.getPluginManager().registerEvents(welcome, this);
         serverList = new ServerListService(this);
         Bukkit.getPluginManager().registerEvents(serverList, this);
         brand = new BrandService(this);
@@ -300,6 +304,7 @@ public final class HoneycombPlugin extends JavaPlugin {
         coordinator.reloadAll();
         applyServerSettings();
         serverList.reload();
+        welcome.reload();
         tasks.repeating("placeholder-cache", 200L, settings.cacheSweepInterval(), placeholderService::sweepCache);
 
         long millis = (System.nanoTime() - started) / 1_000_000L;
@@ -329,6 +334,13 @@ public final class HoneycombPlugin extends JavaPlugin {
      */
     public String minecraftRange() {
         return BuildInfo.minecraftRange();
+    }
+
+    /**
+     * @return welcome and leave messages
+     */
+    public WelcomeService welcome() {
+        return welcome;
     }
 
     /**
