@@ -90,6 +90,22 @@ Minecraft 1.21.9 has a sprite component and MiniMessage 4.26 exposes it, so any 
 
 `brand.text` is now the whole line, rendered per player through the same pipeline as the displays, so placeholders (`%player_name%`, `%server_name%`, TPS, ping) and animations (`{honeycomb.<id>}`) work inside it. `brand.refresh-ticks` resends the line so an animation actually moves; `0` sends it once. The panel screen gained the refresh field and says plainly that the tx/rx counters under the brand are measured by the client and cannot be set by a server.
 
+## Ping spoofer (new in this build)
+
+`%player_ping%` can report a number Honeycomb chooses instead of the measured one, in `config.yml`:
+
+```yaml
+ping:
+  spoof:
+    enabled: true
+    mode: fixed      # fixed | range | jitter
+    value: 24        # fixed
+    min: 15          # range and jitter
+    max: 45
+```
+
+`fixed` gives everyone the same number, `range` gives each player a stable value derived from their UUID, `jitter` picks a new number inside the range on every refresh. It feeds the tablist column, the sidebar and the action bar, since they all read the same placeholder. The number in F3 is measured by the client and is out of the server's reach, so say that plainly if anyone asks.
+
 ## Welcome and leave messages (new in this build)
 
 `welcome.yml` plus `Server -> Welcome & leave`, built the same way as the other displays.

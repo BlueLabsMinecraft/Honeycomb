@@ -74,6 +74,18 @@ brand:
 
 # Hide the plugin list and version dump from everyone without
 # honeycomb.commands.view (grant it to staff).
+ping:
+  # What Honeycomb shows as a player's ping. The number in F3 is measured by the
+  # client and cannot be changed by a server, but every ping the plugin draws can.
+  spoof:
+    enabled: false
+    # fixed: everyone shows value. range: stable per player between min and max.
+    # jitter: a new number from the range on every refresh.
+    mode: fixed
+    value: 24
+    min: 15
+    max: 45
+
 commands:
   # Hides /pl, /plugins, /version, /ver, /about and /icanhasbukkit.
   hide-pl-version: true

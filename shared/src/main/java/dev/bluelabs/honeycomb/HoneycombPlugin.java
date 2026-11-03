@@ -103,6 +103,7 @@ public final class HoneycombPlugin extends JavaPlugin {
     private BrandService brand;
     private ServerListService serverList;
     private WelcomeService welcome;
+    private dev.bluelabs.honeycomb.server.PingSpoofer pingSpoofer;
     private CommandHider commandHider;
 
     /**
@@ -195,6 +196,7 @@ public final class HoneycombPlugin extends JavaPlugin {
 
         welcome = new WelcomeService(this, pipeline);
         Bukkit.getPluginManager().registerEvents(welcome, this);
+        pingSpoofer = new dev.bluelabs.honeycomb.server.PingSpoofer(configManager);
         serverList = new ServerListService(this);
         Bukkit.getPluginManager().registerEvents(serverList, this);
         brand = new BrandService(this, pipeline);
@@ -211,7 +213,7 @@ public final class HoneycombPlugin extends JavaPlugin {
     private void createPlaceholderEngine() {
         internalPlaceholders = new InternalPlaceholders(placeholderRegistry, configManager,
                 integrations.groups(), integrations.states(), integrations.economy(), network,
-                startMillis, report);
+                pingSpoofer, startMillis, report);
         int ttl = configManager.yaml(dev.bluelabs.honeycomb.config.ConfigType.PLACEHOLDERS)
                 .getInt("cache-ttl-ticks", 10);
         placeholderService.configure(ttl, settings.warnUnknownPlaceholders());
@@ -314,6 +316,7 @@ public final class HoneycombPlugin extends JavaPlugin {
         coordinator.reloadAll();
         applyServerSettings();
         serverList.reload();
+        pingSpoofer.reload();
         welcome.reload();
         tasks.repeating("placeholder-cache", 200L, settings.cacheSweepInterval(), placeholderService::sweepCache);
 

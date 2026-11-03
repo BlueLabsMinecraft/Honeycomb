@@ -41,6 +41,7 @@ public final class InternalPlaceholders {
     private final PlayerStateProvider states;
     private final EconomyProvider economy;
     private final NetworkCounts network;
+    private final dev.bluelabs.honeycomb.server.PingSpoofer ping;
     private final long startMillis;
 
     private String serverName;
@@ -64,6 +65,7 @@ public final class InternalPlaceholders {
                                 PlayerStateProvider states,
                                 EconomyProvider economy,
                                 NetworkCounts network,
+                                dev.bluelabs.honeycomb.server.PingSpoofer ping,
                                 long startMillis,
                                 ValidationReport report) {
         this.registry = registry;
@@ -72,6 +74,7 @@ public final class InternalPlaceholders {
         this.states = states;
         this.economy = economy;
         this.network = network;
+        this.ping = ping;
         this.startMillis = startMillis;
         reload(report);
         registerAll();
@@ -139,7 +142,7 @@ public final class InternalPlaceholders {
         });
         registry.register("player_ping", context -> {
             Player player = context.player();
-            return player == null ? null : Integer.toString(player.getPing());
+            return player == null ? null : Integer.toString(ping.display(player, player.getPing()));
         });
         registry.register("player_health", context -> {
             Player player = context.player();
