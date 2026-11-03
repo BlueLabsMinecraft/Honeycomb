@@ -10,6 +10,25 @@ Tablist. Scoreboard. Nametags. Bossbars. Below name. Action bar. Same conditions
 - **Coming from TAB is one dialog.** Tick tablist, scoreboards, nametags, bossbars and animations, choose merge or replace, done. Backup first.
 - **Velocity, BungeeCord, Paper, Purpur, Spigot, Folia.** One plugin, one file per Java version.
 
+## Design in the browser
+
+The web editor is a page on the site, no account, no upload, no database. Build a
+tablist, a MOTD or a brand line, press generate, and the page prints a short code
+starting with `hc1-`. Paste that into the server:
+
+```
+/hc web hc1-bY5Na4NAEIb...
+```
+
+Honeycomb decodes it, shows every section it contains with a toggle, and writes only
+the parts you tick. Nothing else is touched, so a single tablist line can be imported
+without disturbing the scoreboard, the MOTD or anything else. The page itself is at
+https://honey.gamer.gd/web-editor.html and it keeps working offline.
+
+- Icons are first class: `<sprite:"minecraft:items":"minecraft:item/diamond">` works in every display.
+- Animations, conditions and per group layouts are all writable from the panel or from the editor.
+- The code is plain deflate plus base64url, so it survives chat, Discord and a copy and paste.
+
 ## Network aware
 
 Behind Velocity or BungeeCord, Honeycomb asks the proxy for real numbers and shows them anywhere placeholders work:
