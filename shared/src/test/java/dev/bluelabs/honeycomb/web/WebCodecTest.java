@@ -85,6 +85,27 @@ class WebCodecTest {
         assertEquals(true, asMap(asMap(decoded.get("brand")).get("brand")).get("enabled"));
     }
 
+    /** The full editor payload: every section the page can build, decoded by the plugin. */
+    @Test
+    void everySectionTheEditorCanBuildArrivesIntact() {
+        Map<String, Object> decoded = WebCodec.decode("hc1-jVPva9swEP1Xshv5NDuNu5UNEQxZl9JCmsC6tZQ2lLN1SbRYkjkpbULw_z5ku1v6g9Ivtu5Zd_fuvfMOPGaFch7EDiTNcV3URzKYFSRBeF5TBEtCSQziBgYLW8h0kIXn6XQyuj6enn-HCAauZOVJ3IJWhnLGuRfKk3a38AI7kAq1NfIW0s7gYak8pRdLW8Isgrm1_rER4zaVyuWWZY82qMuCeoZ8uFYWuCWOA_HYoCYQ0G2wuxB2oaoiCJmUWWTp3p7OK1-EEs1sF79_Xp5dDscQQaEMuZpMw3JqAiI6gwUTmbTriO-J72wNdwOxpZIUm7XOiF1TPjDJrHMZ8rtpMEpFxouPJyejz8Nv4f112O-nV1TkVhNEkNvCMgi4Ho3H0yuIwPltnXwxHZ_9gAhKtgsm50AkgcFDmyl28Mcq80r3kpVl5bcg-rV0ZahWsrpHHxp6VotFcKbJ39emVq2lFnWe-PABZlVUZ8RojF2bnN7bOmOLMkfn324ukVd39arctK582sNmj_v1dDtmQRKNyngy2HLaC3vP-Gnr5atYoBEnwbIX_8P_74etpdt01yxKdbDTuKkeLzUgiDhpAY0bEEf9fhvOcUWxs3P_gByEuUSjigI7Se8w6SUJPJmkt1L5KtbkHC6oFohJpufDs8mv0WQ4OR7VhmSMRoah_x2eryJtPAg4tYa2udUZRMA0Z3LL2Kt85UB86VdV9Rc");
+        assertEquals(List.of("tablist", "scoreboards", "bossbars", "welcome", "maintenance", "brand"),
+                List.copyOf(decoded.keySet()));
+        Map<String, Object> tablist = WebCodec.flatten(asMap(decoded.get("tablist")));
+        assertEquals(true, tablist.get("default.enabled"));
+        assertEquals("%player_name%", tablist.get("default.player-list-name"));
+        Map<String, Object> maintenance = WebCodec.flatten(asMap(decoded.get("maintenance")));
+        assertEquals(true, maintenance.get("maintenance.enabled"));
+        assertEquals(500, maintenance.get("motd.max"));
+        assertEquals("Vanilla 1.21.11", maintenance.get("motd.fake-software"));
+        assertTrue(maintenance.containsKey("maintenance.kick-message"));
+        Map<String, Object> welcome = WebCodec.flatten(asMap(decoded.get("welcome")));
+        assertEquals("private", welcome.get("join.scope"));
+        assertEquals("broadcast", welcome.get("join-announce.scope"));
+        Map<String, Object> brand = WebCodec.flatten(asMap(decoded.get("brand")));
+        assertEquals(40, brand.get("brand.refresh-ticks"));
+    }
+
     @SuppressWarnings("unchecked")
     private static Map<String, Object> asMap(Object value) {
         return (Map<String, Object>) value;
