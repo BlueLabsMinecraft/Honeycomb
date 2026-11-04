@@ -46,12 +46,12 @@ public final class WebSubcommand implements Subcommand {
 
     @Override
     public String usage() {
-        return "web <code>";
+        return "web [code]";
     }
 
     @Override
     public String description() {
-        return "Import a setup made in the web editor";
+        return "Import a setup made in the web editor, with or without the code";
     }
 
     @Override
@@ -62,13 +62,20 @@ public final class WebSubcommand implements Subcommand {
             return;
         }
         if (args.length == 0) {
-            player.sendMessage(Component.text("Paste the code after the command: /hc web hc1-...",
-                    NamedTextColor.YELLOW));
-            player.sendMessage(Component.text("Make one at honey.gamer.gd/web-editor",
-                    NamedTextColor.GRAY));
+            if (plugin.panel() == null) {
+                player.sendMessage(Component.text("The import screen needs Paper 1.21.9 or newer.",
+                        NamedTextColor.RED));
+                return;
+            }
+            plugin.panel().openWebPaste(player);
             return;
         }
         String code = String.join("", args);
+        if (code.length() > 250) {
+            player.sendMessage(Component.text("That is too long for chat. Run /hc web with no code "
+                    + "and paste it into the box instead.", NamedTextColor.YELLOW));
+            return;
+        }
         Map<String, Object> sections;
         try {
             sections = WebCodec.decode(code);

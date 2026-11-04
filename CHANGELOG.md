@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.1
+
+- Fixed a crash that stopped the sidebar from drawing on a live server. The ping spoofer
+  was created after the placeholder engine that reads it, so every scoreboard render threw
+  a NullPointerException and the display was dropped. It is now created first, and
+  `%player_ping%` falls back to the real measured ping if a spoofer is ever absent.
+- `/hc web` no longer needs a typed code. Run it with no argument and a paste box opens,
+  which takes up to 16384 characters, so a 700 character setup is copied and pasted rather
+  than typed. Chat commands stop at 256 characters, so a code pasted after the command is
+  now rejected with a clear message that points at the box instead of being cut in half.
+- `/hc web` usage shows `web [code]`, and the help entry explains both ways in.
+- Added ping spoofer tests covering off, fixed, range, jitter, reversed bounds and an
+  unknown mode, which pins the numbers the tablist and sidebar draw.
+
 ## 0.12.0
 
 - Closing tags now work across a whole layout. A design that opens <yellow> on the first

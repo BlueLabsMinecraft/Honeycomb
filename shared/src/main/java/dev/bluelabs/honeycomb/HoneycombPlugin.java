@@ -134,6 +134,7 @@ public final class HoneycombPlugin extends JavaPlugin {
         integrations = new IntegrationManager(this, configManager, report);
         integrations.detect();
         network = new NetworkService(this, configManager, report, tasks);
+        pingSpoofer = new dev.bluelabs.honeycomb.server.PingSpoofer(configManager);
         createPlaceholderEngine();
 
         pipeline = new RenderPipeline(placeholderService, animations, clock);
@@ -196,7 +197,6 @@ public final class HoneycombPlugin extends JavaPlugin {
 
         welcome = new WelcomeService(this, pipeline);
         Bukkit.getPluginManager().registerEvents(welcome, this);
-        pingSpoofer = new dev.bluelabs.honeycomb.server.PingSpoofer(configManager);
         serverList = new ServerListService(this);
         Bukkit.getPluginManager().registerEvents(serverList, this);
         brand = new BrandService(this, pipeline);

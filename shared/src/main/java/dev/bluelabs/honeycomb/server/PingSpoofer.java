@@ -35,6 +35,24 @@ public final class PingSpoofer {
     }
 
     /**
+     * Fixed values, used by tests so the ping maths can be checked without a server.
+     *
+     * @param enabled whether the spoof is on
+     * @param mode    fixed, range or jitter
+     * @param value   value used by fixed
+     * @param min     lowest value in a range
+     * @param max     highest value in a range
+     */
+    PingSpoofer(boolean enabled, String mode, int value, int min, int max) {
+        this.configManager = null;
+        this.enabled = enabled;
+        this.mode = mode;
+        this.value = value;
+        this.min = Math.min(min, max);
+        this.max = Math.max(min, max);
+    }
+
+    /**
      * Re-reads the ping section of config.yml.
      */
     public void reload() {

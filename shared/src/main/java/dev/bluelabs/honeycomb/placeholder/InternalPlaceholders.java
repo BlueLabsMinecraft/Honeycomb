@@ -142,7 +142,11 @@ public final class InternalPlaceholders {
         });
         registry.register("player_ping", context -> {
             Player player = context.player();
-            return player == null ? null : Integer.toString(ping.display(player, player.getPing()));
+            if (player == null) {
+                return null;
+            }
+            int measured = player.getPing();
+            return Integer.toString(ping == null ? measured : ping.display(player, measured));
         });
         registry.register("player_health", context -> {
             Player player = context.player();

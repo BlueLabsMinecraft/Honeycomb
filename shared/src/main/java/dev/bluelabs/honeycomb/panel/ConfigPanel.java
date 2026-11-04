@@ -832,6 +832,62 @@ public final class ConfigPanel {
         show(player, web(sections));
     }
 
+    /**
+     * Asks for a code in a text box instead of on the command line.
+     *
+     * <p>A real layout code runs to hundreds of characters and chat only carries 256,
+     * so the command line is the wrong place for it. This screen takes the paste and
+     * hands the sections straight to {@link #openWeb(Player, Map)}.</p>
+     *
+     * @param player admin importing
+     */
+    public void openWebPaste(Player player) {
+        show(player, webPaste());
+    }
+
+    private Dialog webPaste() {
+        List<Component> body = List.of(
+                DialogKit.heading("PASTE A CODE"),
+                DialogKit.styled("<shadow:#000000:1><gray>Copy the code on the web editor, click the box"),
+                DialogKit.styled("<shadow:#000000:1><gray>below and paste with Ctrl+V. Length does not matter."),
+                DialogKit.shade("honey.gamer.gd/web-editor")
+        );
+        return DialogKit.form("Paste a code", body,
+                List.of(DialogKit.multiline("code", "Code", "", 6)),
+                List.of(DialogKit.save("Read the code", (who, response) -> {
+                            String raw = response.getText("code");
+                            if (raw == null || raw.isBlank()) {
+                                who.sendMessage(Component.text("Nothing was pasted.",
+                                        NamedTextColor.YELLOW));
+                                return;
+                            }
+                            Map<String, Object> sections;
+                            try {
+                                sections = WebCodec.decode(raw);
+                            } catch (IllegalArgumentException broken) {
+                                show(who, webPasteFailed(broken.getMessage()));
+                                return;
+                            }
+                            if (sections.isEmpty()) {
+                                show(who, webPasteFailed("the code carried no settings"));
+                                return;
+                            }
+                            openWeb(who, sections);
+                        }),
+                        DialogKit.close()));
+    }
+
+    private Dialog webPasteFailed(String reason) {
+        List<Component> body = List.of(
+                DialogKit.heading("THAT CODE DID NOT READ"),
+                DialogKit.warn(reason == null ? "unknown problem" : reason),
+                DialogKit.styled("<shadow:#000000:1><gray>Copy the whole code, starting with <white>hc1-")
+        );
+        return DialogKit.form("Paste a code", body, List.of(),
+                List.of(DialogKit.run("Try again", BACK + " web"),
+                        DialogKit.close()));
+    }
+
     private Dialog web(Map<String, Object> sections) {
         List<DialogInput> inputs = new ArrayList<>();
         List<Component> body = new ArrayList<>();

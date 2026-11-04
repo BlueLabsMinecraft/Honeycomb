@@ -10,7 +10,7 @@ Purpur and Pufferfish.
 
 <img src="docs/banner.png" alt="Honeycomb, the TAB alternative for Minecraft 1.21.9 to 26.3" width="100%" />
 
-[![Release](https://img.shields.io/badge/release-1.1.0-FFB01F?style=flat-square)](https://github.com/BlueLabsMinecraft/Honeycomb/releases)
+[![Release](https://img.shields.io/badge/release-1.1.1-FFB01F?style=flat-square)](https://github.com/BlueLabsMinecraft/Honeycomb/releases)
 [![License](https://img.shields.io/badge/license-MIT-4ade80?style=flat-square)](LICENSE)
 [![Java](https://img.shields.io/badge/java-21%20%7C%2025-2563EB?style=flat-square)](https://adoptium.net)
 [![Paper](https://img.shields.io/badge/paper-1.21.9%20%E2%80%93%2026.3-38BDF8?style=flat-square)](https://papermc.io)
@@ -94,6 +94,7 @@ whether the condition language covers what you need before switching.
 | **Sorting** | Weight based order in the player list, plus teams that keep colours consistent |
 | **Animations** | Frame based motion with easing, created in the panel, usable as `{honeycomb.<id>}` |
 | **Admin panel** | Native Minecraft dialogs on 1.21.9 and newer, edit and save without a restart |
+| **Web editor** | Design the tablist, sidebar, bossbar and MOTD in a browser, import the code in game |
 | **Presets** | Nine looks that mirror common server styles, load, edit, save your own |
 | **Update log** | Entries written by staff, read by players with `/updatelog` |
 | **Conditions** | World, group, permission and placeholder comparisons pick the layout, like TAB |
@@ -107,8 +108,8 @@ Two optional companion jars carry the proxy side, so Honeycomb is a real Velocit
 
 | File | Goes in |
 |---|---|
-| `HoneycombProxy-1.1.0-velocity.jar` | `plugins/` on the Velocity proxy |
-| `HoneycombProxy-1.1.0-bungeecord.jar` | `plugins/` on the BungeeCord or Waterfall proxy |
+| `HoneycombProxy-1.1.1-velocity.jar` | `plugins/` on the Velocity proxy |
+| `HoneycombProxy-1.1.1-bungeecord.jar` | `plugins/` on the BungeeCord or Waterfall proxy |
 
 The game server keeps the normal Honeycomb jar. The bridge answers with the proxy's own numbers over `honeycomb:network`, so counts stay correct even when the proxy's legacy bungee channel is off.
 
@@ -119,8 +120,8 @@ not share a Java runtime:
 
 | Jar | Server | Versions | Java |
 |---|---|---|---|
-| `Honeycomb-0.9.0-java21.jar` | Paper, Spigot, Bukkit, Folia, Purpur, Pufferfish | 1.21.9 to 1.21.11 | 21 |
-| `Honeycomb-0.9.0-java25.jar` | Paper, Spigot, Bukkit, Folia, Purpur, Pufferfish | 26.1 to 26.3 | 25 |
+| `Honeycomb-1.1.1-mc1.21.9-1.21.11.jar` | Paper, Spigot, Bukkit, Folia, Purpur, Pufferfish | 1.21.9 to 1.21.11 | 21 |
+| `Honeycomb-1.1.1-mc26.1-26.3.jar` | Paper, Spigot, Bukkit, Folia, Purpur, Pufferfish | 26.1 to 26.3 | 25 |
 
 The same jar handles Folia: each display is scheduled on the thread that owns the
 player, which is what the region scheduler requires. On Spigot and Bukkit every
@@ -138,11 +139,17 @@ you want the F3 brand line replaced; everything else works without it.
 | Command | Description | Permission |
 |---|---|---|
 | `/honeycomb panel` | Opens the in game editor | `honeycomb.admin` |
+| `/honeycomb web [code]` | Imports a design made in the web editor, with or without the code | `honeycomb.admin` |
+| `/honeycomb test` | Sends a test display through every system, plus a test bossbar | `honeycomb.test` |
+| `/honeycomb refresh [player]` | Re-applies displays to you or to another player | `honeycomb.admin` |
 | `/honeycomb reload` | Reloads every file, keeps sessions | `honeycomb.reload` |
-| `/honeycomb preset list` | Lists bundled and saved presets | `honeycomb.admin` |
-| `/honeycomb preset load <name>` | Applies a preset over the current layout | `honeycomb.admin` |
-| `/honeycomb preset save <name>` | Captures the live layout as a preset | `honeycomb.admin` |
-| `/honeycomb debug` | Render and packet diagnostics | `honeycomb.debug` |
+| `/honeycomb animations` | Lists animations and previews the current frame | `honeycomb.animations` |
+| `/honeycomb placeholders` | Shows resolved placeholder values for you | `honeycomb.placeholders` |
+| `/honeycomb integrations` | Lists the optional plugins it found | `honeycomb.admin` |
+| `/honeycomb preset [name]` | Lists, loads or saves presets | `honeycomb.admin` |
+| `/honeycomb migrate [apply] [folder]` | Copies a TAB setup into Honeycomb | `honeycomb.admin` |
+| `/honeycomb version` | Plugin, build and server versions | `honeycomb.use` |
+| `/honeycomb help` | The command list in game | `honeycomb.use` |
 | `/updatelog`, `/changelog`, `/updates` | Shows the update log to players | everyone |
 
 All nodes follow one shape: `honeycomb.<area>`, plus `honeycomb.group.<name>` for rank
@@ -261,3 +268,14 @@ MIT, see [LICENSE](LICENSE). Copyright (c) 2026 Blue Labs.
 
 Honeycomb is not affiliated with Mojang or Microsoft. The honeycomb icon is the item
 texture from the Minecraft Wiki.
+
+## Web editor
+
+`honey.gamer.gd/web-editor` is a static page that designs the same layouts the plugin
+draws: tablist header and footer, sidebar, bossbars, MOTD. It shows one live Minecraft
+preview of whatever section you are editing, then packs the result into an `hc1-` code.
+
+Run `/honeycomb web` in game and paste the code into the box that opens. The box takes
+up to 16384 characters, because a full setup is far longer than the 256 character chat
+limit, and nothing has to be typed by hand. The import screen then lists every section the
+code carries so you tick only what you want applied over your live configuration.
