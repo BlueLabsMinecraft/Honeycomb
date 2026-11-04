@@ -350,7 +350,8 @@ public final class InternalPlaceholders {
                 network.available() ? Integer.toString(Math.max(0, network.onlineHere())) : null);
         registry.register("network_servers", context ->
                 network.available() ? Integer.toString(network.servers().size()) : null);
-        registry.register("network_proxy", context -> network.proxyName());
+        registry.register("network_proxy", context ->
+                network.available() ? network.proxyName() : null);
     }
 
     /**

@@ -91,6 +91,11 @@ commands:
   hide-pl-version: true
   # Also removes hidden commands from tab completion for those players.
   hide-from-tab: true
+  # Leave Honeycomb, or any name below, out of /plugins and its tab completion
+  # so other tools and curious players cannot read the server setup.
+  hide-plugins: true
+  hide-plugin-names:
+    - Honeycomb
   # Any other command to hide, for example "help" or "bukkit:help".
   hidden: []
   # What the player sees instead. MiniMessage is supported.

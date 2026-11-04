@@ -81,40 +81,106 @@ public final class ProfilesPanel {
                         DialogKit.shade("Lower case, no spaces. Example: nether, staff, pvp.")),
                 List.of(DialogKit.text("id", "Name", "")),
                 List.of(DialogKit.save("Create", (who, response) -> {
-                    String raw = response.getText("id");
-                    if (raw == null || raw.isBlank()) {
-                        who.sendMessage(plugin.messages().prefixed("panel.name-required",
-                                java.util.Map.of()));
-                        return;
-                    }
-                    String id = raw.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_-]", "-");
-                    if (id.isEmpty()) {
-                        who.sendMessage(plugin.messages().prefixed("panel.name-required",
-                                java.util.Map.of()));
-                        return;
-                    }
-                    // A duplicate id would silently reopen and overwrite someone else's layout.
-                    if (plugin.configManager().yaml(type(kind))
-                            .getConfigurationSection(base(kind, id)) != null) {
-                        who.sendMessage(plugin.messages().prefixed("panel.name-taken",
-                                java.util.Map.of("name", id)));
-                        return;
-                    }
-                    var overrides = plugin.panelOverrides();
-                    overrides.set(type(kind), base(kind, id) + ".enabled", true);
+                    String raw = firstText(response, "id", "name");
                     try {
-                        overrides.save();
-                    } catch (java.io.IOException error) {
+                        String id = create(plugin, kind, raw);
+                        if (id == null) {
+                            who.sendMessage(plugin.messages().prefixed("panel.name-required",
+                                    java.util.Map.of()));
+                            return;
+                        }
+                        if (id.startsWith("=")) {
+                            String taken = id.substring(1);
+                            who.sendMessage(plugin.messages().prefixed("panel.name-taken",
+                                    java.util.Map.of("name", taken)));
+                            open(who, plugin, kind, taken);
+                            return;
+                        }
+                        who.sendMessage(plugin.messages().prefixed("panel.created",
+                                java.util.Map.of("kind", noun(kind), "name", id)));
+                        open(who, plugin, kind, id);
+                    } catch (RuntimeException failure) {
+                        plugin.getLogger().warning("Creating a " + kind + " from the panel failed: " + failure);
                         who.sendMessage(plugin.messages().prefixed("panel.save-failed",
-                                java.util.Map.of("reason", String.valueOf(error.getMessage()))));
-                        return;
+                                java.util.Map.of("reason", String.valueOf(failure.getMessage()))));
                     }
-                    reloadQuietly(plugin);
-                    open(who, plugin, kind, id);
                 }), DialogKit.close()));
         DialogKit.show(player, plugin, dialog);
     }
 
+
+
+    /**
+     * Turns whatever was typed into a usable id.
+     *
+     * @param raw typed name
+     * @return lower case letters, digits, dashes and underscores, or {@code ""}
+     */
+    static String sanitiseId(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        return raw.trim().toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9_-]", "-")
+                .replaceAll("-{2,}", "-")
+                .replaceAll("^-+|-+$", "");
+    }
+
+    /**
+     * Creates an entry and returns the id it was given.
+     *
+     * <p>Kept separate from the dialog so the naming rules can be tested without a
+     * client: a blank answer, a duplicate and a name full of symbols all have to end
+     * somewhere sensible instead of closing the screen with nothing to show.</p>
+     *
+     * @param plugin plugin instance
+     * @param kind   entry kind
+     * @param raw    what the admin typed
+     * @return the new id, {@code null} when the answer was blank, or {@code =id} when
+     *         that name already exists and the editor should open instead
+     */
+    static String create(HoneycombPlugin plugin, String kind, String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        String id = sanitiseId(raw);
+        if (id.isEmpty()) {
+            return null;
+        }
+        if (plugin.configManager().yaml(type(kind)).getConfigurationSection(base(kind, id)) != null) {
+            return "=" + id;
+        }
+        var overrides = plugin.panelOverrides();
+        overrides.set(type(kind), base(kind, id) + ".enabled", true);
+        try {
+            overrides.save();
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("could not write panel.yml: " + error.getMessage(), error);
+        }
+        reloadQuietly(plugin);
+        return id;
+    }
+
+    /**
+     * Reads the first non blank text input out of a dialog response.
+     *
+     * @param response dialog response
+     * @param keys     input names to try, in order
+     * @return the value, or {@code null}
+     */
+    private static String firstText(io.papermc.paper.dialog.DialogResponseView response, String... keys) {
+        for (String key : keys) {
+            try {
+                String value = response.getText(key);
+                if (value != null && !value.isBlank()) {
+                    return value;
+                }
+            } catch (RuntimeException absent) {
+                // The key was not part of this dialog, keep looking.
+            }
+        }
+        return null;
+    }
     /**
      * Opens the editor for one entry.
      *
@@ -399,7 +465,8 @@ public final class ProfilesPanel {
             default -> yaml.getConfigurationSection("nametags.groups");
         };
         List<String> ids = new ArrayList<>();
-        if (kind.equals("tablist") || kind.equals("scoreboards")) {
+        if (kind.equals("tablist") || kind.equals("scoreboards")
+                || kind.equals("actionbar") || kind.equals("welcome")) {
             ids.add("default");
         }
         if (section != null) {
@@ -467,8 +534,8 @@ public final class ProfilesPanel {
             case "tablist" -> id.equals("default") ? "tablist" : "tablist.profiles." + id;
             case "scoreboards" -> "scoreboards." + id;
             case "bossbars" -> "bossbars." + id;
-            case "actionbar" -> "actionbar.profiles." + id;
-            case "welcome" -> "welcome." + id;
+            case "actionbar" -> id.equals("default") ? "actionbar" : "actionbar.profiles." + id;
+            case "welcome" -> id.equals("default") ? "welcome" : "welcome." + id;
             default -> "nametags.groups." + id;
         };
     }

@@ -60,6 +60,7 @@ public final class NametagService implements DisplaySystem {
     private List<NametagGroup> nametagGroups = new ArrayList<>();
     private final Map<String, NametagGroup> apiGroups = new HashMap<>();
     private boolean enabled;
+    private boolean debug;
     private boolean seeFriendlyInvisibles;
     private int serviceInterval = 40;
 
@@ -116,6 +117,7 @@ public final class NametagService implements DisplaySystem {
         this.nametagGroups = NametagGroup.loadAll(root, report);
         this.serviceInterval = Math.max(1, root.getInt("update-interval", 40));
         this.seeFriendlyInvisibles = root.getBoolean("see-friendly-invisibles", false);
+        this.debug = root.getBoolean("debug-apply", false);
     }
 
     @Override
@@ -190,6 +192,7 @@ public final class NametagService implements DisplaySystem {
             session.nametag.lastBoard = board;
         }
         int touched = 0;
+        int decorated = 0;
         for (Player target : Bukkit.getOnlinePlayers()) {
             if (target.getUniqueId().equals(viewer.getUniqueId())) {
                 continue;
@@ -201,6 +204,7 @@ public final class NametagService implements DisplaySystem {
             if (decoration == null) {
                 continue;
             }
+            decorated++;
             Long applied = session.nametag.appliedVersions.get(target.getUniqueId());
             if (applied != null && applied == decoration.version()) {
                 continue;
@@ -208,6 +212,12 @@ public final class NametagService implements DisplaySystem {
             applyTeam(board, target, decoration);
             session.nametag.appliedVersions.put(target.getUniqueId(), decoration.version());
             touched++;
+        }
+        if (debug && warnedGroups.add(viewer.getUniqueId())) {
+            Bukkit.getLogger().info("Honeycomb nametags debug: viewer=" + viewer.getName()
+                    + " groups=" + nametagGroups.size() + " decorated=" + decorated
+                    + " teams=" + touched + " board=" + board.getClass().getSimpleName()
+                    + " online=" + Bukkit.getOnlinePlayers().size());
         }
         if (touched == 0 && nametagGroups.isEmpty() && warnedGroups.add(viewer.getUniqueId())) {
             Bukkit.getLogger().warning("Honeycomb nametags: enabled, but nametags.yml has no groups, "
@@ -271,6 +281,33 @@ public final class NametagService implements DisplaySystem {
         Decoration decoration = new Decoration(prefix, suffix, group.name(), ++versionCounter);
         decorations.put(id, decoration);
         return decoration;
+    }
+
+
+    /**
+     * Describes what a player's name tag will look like, for {@code /honeycomb nametags}.
+     *
+     * <p>This answers the question a server owner actually asks when nothing appears:
+     * which group was picked, and what text that group renders to.</p>
+     *
+     * @param target player to inspect
+     * @return one readable line
+     */
+    public String describe(Player target) {
+        if (!enabled) {
+            return target.getName() + ": nametags are disabled in nametags.yml";
+        }
+        Decoration decoration = decorationFor(target);
+        if (decoration == null) {
+            return target.getName() + ": no group matched, so nothing is drawn. Give the player"
+                    + " honeycomb.group.<name>, set their LuckPerms group, or keep a group called"
+                    + " 'default'.";
+        }
+        String plainPrefix = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+                .plainText().serialize(decoration.prefix());
+        return target.getName() + ": group '" + decoration.groupKey()
+                + "', prefix '" + plainPrefix + "'"
+                + (plainPrefix.isBlank() ? " (blank, so the name looks unchanged)" : "");
     }
 
     /**

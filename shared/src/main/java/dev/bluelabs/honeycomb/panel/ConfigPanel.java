@@ -61,6 +61,7 @@ public final class ConfigPanel {
             case "server" -> server();
             case "setup" -> setup();
             case "maintenance" -> maintenance();
+            case "tools" -> tools();
             case "motd" -> motd();
             case "welcome" -> ProfilesPanel.list(plugin, "welcome");
             case "layouts", "tablists" -> ProfilesPanel.list(plugin, "tablist");
@@ -103,6 +104,7 @@ public final class ConfigPanel {
                 new Case("setup", this::setup),
                 new Case("maintenance", this::maintenance),
                 new Case("motd", this::motd),
+                new Case("maintenance", this::maintenance),
                 new Case("welcome", () -> ProfilesPanel.list(plugin, "welcome")));
         for (Case test : cases) {
             try {
@@ -197,7 +199,8 @@ public final class ConfigPanel {
         buttons.add(button("Messages", "messages"));
         buttons.add(button("Network", "network"));
         buttons.add(button("Welcome & leave", "welcome"));
-        buttons.add(button("Maintenance & MOTD", "motd"));
+        buttons.add(button("Maintenance", "maintenance"));
+        buttons.add(button("MOTD", "motd"));
         buttons.add(button("Staff layouts", "staff"));
         buttons.add(DialogKit.run("Back", "honeycomb panel"));
         buttons.add(DialogKit.close());
@@ -222,7 +225,7 @@ public final class ConfigPanel {
     }
 
     /** Reload, the update log and a self check of every screen. */
-    private Dialog maintenance() {
+    private Dialog tools() {
         List<Component> body = List.of(
                 DialogKit.heading("MAINTENANCE"),
                 DialogKit.styled("<shadow:#000000:1><white>Apply changes <dark_gray>- reloads every file, no restart needed."),
@@ -236,18 +239,35 @@ public final class ConfigPanel {
         buttons.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Command list"), "honeycomb help"));
         buttons.add(DialogKit.run("Back", "honeycomb panel"));
         buttons.add(DialogKit.close());
-        return DialogKit.menu("Maintenance", body, buttons);
+        return DialogKit.menu("Tools", body, buttons);
     }
 
-    /** Maintenance mode, the MOTD and the numbers other tools read. */
-    private Dialog motd() {
+    /** Maintenance mode on its own: the switch, the kick text and who gets in. */
+    private Dialog maintenance() {
         var yaml = plugin.configManager().yaml(ConfigType.MAINTENANCE);
         boolean on = yaml.getBoolean("maintenance.enabled", false);
-        boolean motdOn = yaml.getBoolean("motd.enabled", false);
         List<DialogInput> inputs = new ArrayList<>();
         inputs.add(DialogKit.toggle("enabled", "Maintenance mode on", on));
         inputs.add(DialogKit.lines("kick", "Kick message while maintenance is on, one row per line",
                 String.join("\n", yaml.getStringList("maintenance.kick-message")), 6));
+        inputs.add(DialogKit.text("bypass", "Permission that still gets in",
+                yaml.getString("maintenance.bypass-permission", "honeycomb.maintenance.bypass")));
+        List<Component> body = List.of(
+                DialogKit.heading("MAINTENANCE"),
+                DialogKit.styled("<shadow:#000000:1><white>On <dark_gray>- nobody without the bypass permission can join."),
+                DialogKit.styled("<shadow:#000000:1><white>Off <dark_gray>- everyone joins as usual."),
+                DialogKit.shade(on ? "Currently on." : "Currently off."));
+        return DialogKit.form("Maintenance", body, inputs,
+                List.of(DialogKit.save("Save", (who, response) -> saveMaintenance(who, response)),
+                        DialogKit.run("Back", "honeycomb panel server"),
+                        DialogKit.close()));
+    }
+
+    /** The server list entry and the numbers other tools read. */
+    private Dialog motd() {
+        var yaml = plugin.configManager().yaml(ConfigType.MAINTENANCE);
+        boolean motdOn = yaml.getBoolean("motd.enabled", false);
+        List<DialogInput> inputs = new ArrayList<>();
         inputs.add(DialogKit.toggle("motd_enabled", "Rewrite the server list entry", motdOn));
         inputs.add(DialogKit.text("line1", "MOTD line 1, {online} and {max} work", yaml.getString("motd.line-1", "")));
         inputs.add(DialogKit.text("line2", "MOTD line 2", yaml.getString("motd.line-2", "")));
@@ -258,21 +278,25 @@ public final class ConfigPanel {
         inputs.add(DialogKit.text("software", "Software name other tools see, blank keeps the real one",
                 yaml.getString("motd.fake-software", "")));
         List<Component> body = List.of(
-                DialogKit.heading("MAINTENANCE & MOTD"),
-                DialogKit.styled("<shadow:#000000:1><white>Maintenance <dark_gray>- nobody without the bypass permission can join."),
+                DialogKit.heading("MOTD"),
                 DialogKit.styled("<shadow:#000000:1><white>Server list <dark_gray>- what the multiplayer list shows before anyone joins."),
                 DialogKit.shade("Counts and the software name are what other tools read, like mcstatus or a proxy ping."));
-        return DialogKit.form("Maintenance & MOTD", body, inputs,
+        return DialogKit.form("MOTD", body, inputs,
                 List.of(DialogKit.save("Save", (who, response) -> saveMotd(who, response)),
                         DialogKit.run("Back", "honeycomb panel server"),
                         DialogKit.close()));
     }
 
-    private void saveMotd(Player player, DialogResponseView response) {
+    private void saveMaintenance(Player player, DialogResponseView response) {
         var overrides = plugin.panelOverrides();
         ConfigType type = ConfigType.MAINTENANCE;
         overrides.set(type, "maintenance.enabled", response.getBoolean("enabled"));
-        String kick = response.getText("kick");
+        String kick = null;
+        try {
+            kick = response.getText("kick");
+        } catch (RuntimeException absent) {
+            kick = null;
+        }
         if (kick != null) {
             List<String> lines = new ArrayList<>();
             for (String part : kick.split("\n")) {
@@ -282,11 +306,38 @@ public final class ConfigPanel {
             }
             overrides.set(type, "maintenance.kick-message", lines);
         }
+        String bypass = null;
+        try {
+            bypass = response.getText("bypass");
+        } catch (RuntimeException absent) {
+            bypass = null;
+        }
+        if (bypass != null && !bypass.isBlank()) {
+            overrides.set(type, "maintenance.bypass-permission", bypass.trim());
+        }
+        try {
+            overrides.save();
+        } catch (java.io.IOException error) {
+            player.sendMessage(plugin.messages().prefixed("panel.save-failed",
+                    java.util.Map.of("reason", String.valueOf(error.getMessage()))));
+            return;
+        }
+        reloadQuietly();
+        boolean now = plugin.serverList().maintenance();
+        player.sendMessage(Component.text("Maintenance is now " + (now ? "ON" : "OFF") + ".",
+                now ? NamedTextColor.GREEN : NamedTextColor.GRAY));
+    }
+
+    private void saveMotd(Player player, DialogResponseView response) {
+        var overrides = plugin.panelOverrides();
+        ConfigType type = ConfigType.MAINTENANCE;
         overrides.set(type, "motd.enabled", response.getBoolean("motd_enabled"));
-        for (String field : List.of("line1", "line2", "software")) {
-            String value = response.getText(field);
+        java.util.Map<String, String> keys = java.util.Map.of(
+                "line1", "motd.line-1", "line2", "motd.line-2", "software", "motd.fake-software");
+        for (java.util.Map.Entry<String, String> field : keys.entrySet()) {
+            String value = response.getText(field.getKey());
             if (value != null) {
-                overrides.set(type, "motd." + field.replace("line1", "line-1").replace("line2", "line-2"), value);
+                overrides.set(type, field.getValue(), value);
             }
         }
         for (String field : List.of("online", "max")) {

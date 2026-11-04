@@ -11,6 +11,8 @@ import dev.bluelabs.honeycomb.command.subcommand.MigrateSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.PresetSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.RefreshSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.ReloadSubcommand;
+import dev.bluelabs.honeycomb.command.subcommand.MaintenanceSubcommand;
+import dev.bluelabs.honeycomb.command.subcommand.NametagsSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.TestSubcommand;
 import dev.bluelabs.honeycomb.command.subcommand.VersionSubcommand;
 import org.bukkit.command.Command;
@@ -42,6 +44,8 @@ public final class HoneycombCommand implements TabExecutor {
         List<Subcommand> registered = List.of(
                 new HelpSubcommand(plugin),
                 new ReloadSubcommand(plugin),
+                new MaintenanceSubcommand(plugin),
+                new NametagsSubcommand(plugin),
                 new VersionSubcommand(plugin),
                 new TestSubcommand(plugin),
                 new AnimationsSubcommand(plugin),

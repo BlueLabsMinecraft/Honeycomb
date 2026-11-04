@@ -12,6 +12,7 @@ panel:
   save-failed: "<red>Could not save: <white>{reason}"
   name-required: "<red>Give it a name first."
   icon-invalid: "<red>That item name does not look right. Try diamond, oak_log or bread."
+  created: "<green>Created {kind} <white>{name}</white>. Opening it now."
   name-taken: "<red>{name} <gray>is already used. Pick another name, or edit the one that exists."
 
 general:
@@ -19,6 +20,7 @@ general:
   player-only: "<red>That can only be used by a player."
   unknown-subcommand: "<red>'<white>{input}</white>' is not a subcommand. <gray>Did you mean <yellow>/honeycomb {suggestion}</yellow>? Everything is listed in <yellow>/honeycomb help</yellow>."
   invalid-usage: "<red>Usage: <white>{usage}"
+  maintenance-status: "<gray>Maintenance is"
   reloading: "<gray>Reloading configuration..."
   reload-success: "<green>Reloaded in <white>{time}ms</white>. <gray>{summary}"
   reload-failed: "<red>Reload finished with problems: <white>{summary}</white>. See the console for details."

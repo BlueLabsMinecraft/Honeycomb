@@ -11,6 +11,7 @@ import io.papermc.paper.registry.data.dialog.input.TextDialogInput;
 import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.entity.Player;
 import net.kyori.adventure.text.event.ClickCallback;
@@ -90,6 +91,29 @@ final class DialogKit {
                 .type(DialogType.multiAction(buttons).build()));
     }
 
+
+    /**
+     * Runs a button handler so a failure is reported instead of swallowed.
+     *
+     * <p>Paper drops an exception thrown inside a click callback, which used to look
+     * like a button that closes the screen and does nothing. The player now gets the
+     * reason in chat and the console keeps the stack trace.</p>
+     *
+     * @param player  player who clicked
+     * @param handler the work
+     */
+    private static void guard(Player player, Runnable handler) {
+        try {
+            handler.run();
+        } catch (RuntimeException | LinkageError failure) {
+            Bukkit.getLogger().warning("Honeycomb panel action failed: " + failure);
+            player.sendMessage(Component.text("Honeycomb: that did not save ("
+                    + failure.getClass().getSimpleName()
+                    + (failure.getMessage() == null ? "" : ": " + failure.getMessage())
+                    + "). The console has the details.", NamedTextColor.RED));
+        }
+    }
+
     /** A one line text field. */
     static TextDialogInput text(String key, String label, String initial) {
         return DialogInput.text(key, Component.text(label))
@@ -154,7 +178,7 @@ final class DialogKit {
                 .width(150)
                 .action(DialogAction.customClick((response, audience) -> {
                     if (audience instanceof org.bukkit.entity.Player player) {
-                        handler.accept(player, response);
+                        guard(player, () -> handler.accept(player, response));
                     }
                 }, ClickCallback.Options.builder().uses(500).lifetime(Duration.ofHours(6)).build()))
                 .build();
@@ -174,7 +198,7 @@ final class DialogKit {
                 .width(150)
                 .action(DialogAction.customClick((response, audience) -> {
                     if (audience instanceof org.bukkit.entity.Player player) {
-                        handler.accept(player, response);
+                        guard(player, () -> handler.accept(player, response));
                     }
                 }, ClickCallback.Options.builder().uses(500).lifetime(Duration.ofHours(6)).build()))
                 .build();
@@ -182,7 +206,11 @@ final class DialogKit {
 
     /** A close button. */
     static ActionButton close() {
-        return act("Close", Audience::closeDialog);
+        return ActionButton.builder(styled("<red><bold>\u2715"))
+                .width(34)
+                .action(DialogAction.customClick((response, audience) -> audience.closeDialog(),
+                        ClickCallback.Options.builder().uses(64).build()))
+                .build();
     }
 
     /** Bold orange heading used by every panel screen. */

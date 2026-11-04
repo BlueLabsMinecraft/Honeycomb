@@ -103,9 +103,33 @@ public final class ServerListService implements Listener {
             }
             setIfPresent(event, "setNumPlayers", online);
         }
-        if (!fakeSoftware.isBlank()) {
-            setIfPresent(event, "setVersion", Text.plain(fill(fakeSoftware, event.getNumPlayers(),
-                    event.getMaxPlayers())));
+        String software = fill(fakeSoftware, event.getNumPlayers(), event.getMaxPlayers());
+        if (!software.isBlank()) {
+            applySoftware(event, software);
+        }
+    }
+
+    /**
+     * Sets the software name other tools read.
+     *
+     * <p>Paper exposes {@code setVersion} on its own ping event; plain Bukkit does not,
+     * so the typed call is tried first and the reflective one is kept as a fallback.</p>
+     *
+     * @param event    ping event
+     * @param software name to show
+     */
+    private void applySoftware(ServerListPingEvent event, String software) {
+        String plain = Text.plain(software);
+        if (event instanceof com.destroystokyo.paper.event.server.PaperServerListPingEvent paper) {
+            try {
+                paper.setVersion(plain);
+                return;
+            } catch (RuntimeException unsupported) {
+                plugin.getLogger().warning("Could not set the software name: " + unsupported);
+            }
+        }
+        if (!setIfPresent(event, "setVersion", plain)) {
+            plugin.getLogger().warning("This server cannot rename the software other tools see.");
         }
     }
 
@@ -136,12 +160,13 @@ public final class ServerListService implements Listener {
     }
 
     /** Calls an event setter that only some server platforms provide. */
-    private static void setIfPresent(ServerListPingEvent event, String method, Object value) {
+    private static boolean setIfPresent(ServerListPingEvent event, String method, Object value) {
         try {
             event.getClass().getMethod(method, value instanceof String ? String.class : int.class)
                     .invoke(event, value);
-        } catch (ReflectiveOperationException absent) {
-            // The platform does not expose it; the rest of the entry still applies.
+            return true;
+        } catch (ReflectiveOperationException | RuntimeException absent) {
+            return false;
         }
     }
 

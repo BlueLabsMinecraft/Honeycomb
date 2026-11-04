@@ -33,6 +33,8 @@ public final class CommandHider implements Listener {
     private final Set<String> hidden = new HashSet<>();
     private String reply = "<red>You can't see that!";
     private boolean hideFromTab = true;
+    private boolean hidePluginList;
+    private final Set<String> hiddenPlugins = new HashSet<>();
 
     public CommandHider(HoneycombPlugin plugin) {
         this.plugin = plugin;
@@ -50,6 +52,11 @@ public final class CommandHider implements Listener {
             hidden.add(normalise(extra));
         }
         hideFromTab = yaml.getBoolean("commands.hide-from-tab", true);
+        hidePluginList = yaml.getBoolean("commands.hide-plugins", false);
+        hiddenPlugins.clear();
+        for (String name : yaml.getStringList("commands.hide-plugin-names")) {
+            hiddenPlugins.add(name.toLowerCase(Locale.ROOT));
+        }
         String message = yaml.getString("commands.hidden-message");
         if (message != null && !message.isBlank()) {
             reply = message;
@@ -74,7 +81,40 @@ public final class CommandHider implements Listener {
             return;
         }
         event.setCancelled(true);
+        if (hidePluginList && isPluginList(label)) {
+            player.sendMessage(pluginList());
+            return;
+        }
         player.sendMessage(MiniMessage.miniMessage().deserialize(reply));
+    }
+
+    /**
+     * @param label normalised command label
+     * @return true for the commands that print the plugin list
+     */
+    private static boolean isPluginList(String label) {
+        return label.equals("plugins") || label.equals("pl");
+    }
+
+    /**
+     * Builds a plugin list with the configured names left out.
+     *
+     * <p>Other servers and tools read this list to work out what a server runs. When
+     * {@code commands.hide-plugins} is on, the hidden names are simply not part of the
+     * answer, so the reply still looks like an ordinary plugin list.</p>
+     *
+     * @return the reply to send
+     */
+    private Component pluginList() {
+        List<String> shown = new ArrayList<>();
+        for (org.bukkit.plugin.Plugin loaded : org.bukkit.Bukkit.getPluginManager().getPlugins()) {
+            if (!hiddenPlugins.contains(loaded.getName().toLowerCase(Locale.ROOT))) {
+                shown.add((loaded.isEnabled() ? "<green>" : "<red>") + loaded.getName());
+            }
+        }
+        shown.sort(String::compareToIgnoreCase);
+        String list = shown.isEmpty() ? "<gray>none" : String.join("<gray>, ", shown);
+        return MiniMessage.miniMessage().deserialize("<gold>Plugins (" + shown.size() + "): <reset>" + list);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
