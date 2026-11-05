@@ -234,7 +234,6 @@ public final class ConfigPanel {
                 new Case("setup", this::setup),
                 new Case("maintenance", this::maintenance),
                 new Case("motd", this::motd),
-                new Case("maintenance", this::maintenance),
                 new Case("welcome", () -> ProfilesPanel.list(plugin, "welcome")));
         for (Case test : cases) {
             try {
@@ -275,7 +274,7 @@ public final class ConfigPanel {
                 DialogKit.styled("<shadow:#000000:1><white>Displays <dark_gray>- the five things players see on screen."),
                 DialogKit.styled("<shadow:#000000:1><white>Server <dark_gray>- F3 brand, messages, proxy network, staff view."),
                 DialogKit.styled("<shadow:#000000:1><white>Setup <dark_gray>- presets, TAB import, animations."),
-                DialogKit.styled("<shadow:#000000:1><white>Maintenance <dark_gray>- reload, update log, self check."),
+                DialogKit.styled("<shadow:#000000:1><white>Maintenance <dark_gray>- lock the server and set the kick message."),
                 DialogKit.shade("Right now: F3 brand " + (brand ? "on" : "off") + ", /pl version hiding "
                         + (hider ? "on" : "off") + "."));
         List<ActionButton> buttons = new ArrayList<>();
@@ -329,7 +328,6 @@ public final class ConfigPanel {
         buttons.add(button("Messages", "messages"));
         buttons.add(button("Network", "network"));
         buttons.add(button("Welcome & leave", "welcome"));
-        buttons.add(button("Maintenance", "maintenance"));
         buttons.add(button("MOTD", "motd"));
         buttons.add(button("Staff layouts", "staff"));
         buttons.add(DialogKit.run("Back", "honeycomb panel"));
@@ -389,7 +387,7 @@ public final class ConfigPanel {
                 DialogKit.shade(on ? "Currently on." : "Currently off."));
         return DialogKit.form("Maintenance", body, inputs,
                 List.of(DialogKit.save("Save", (who, response) -> saveMaintenance(who, response)),
-                        DialogKit.run("Back", "honeycomb panel server"),
+                        DialogKit.run("Back", "honeycomb panel"),
                         DialogKit.close()));
     }
 

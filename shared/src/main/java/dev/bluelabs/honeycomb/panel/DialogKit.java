@@ -295,6 +295,13 @@ final class DialogKit {
     }
 
     static void show(Player player, org.bukkit.plugin.Plugin plugin, Dialog dialog) {
+        // Closing first is what makes a Back button reliable: the client refuses a new
+        // dialog while an old one is still open, which is why it used to do nothing.
+        try {
+            player.closeDialog();
+        } catch (RuntimeException ignored) {
+            // Nothing is open, which is the normal case.
+        }
         // Two ticks: the click callback that asked for this screen has to finish first,
         // or the client closes the new dialog along with the old one.
         dev.bluelabs.honeycomb.scheduler.Scheduling.forPlayerLater(plugin, player, 2L, () -> {
