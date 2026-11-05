@@ -21,17 +21,23 @@ public enum ConfigType {
     INTEGRATIONS("integrations.yml", "Optional plugin integrations", "integrations"),
     NETWORK("network.yml", "Proxy and network synchronisation", "network"),
     WELCOME("welcome.yml", "Welcome and leave messages", "welcome"),
-    MAINTENANCE("maintenance.yml", "Maintenance mode, MOTD and server list", null),
+    MAINTENANCE("maintenance.yml", "Maintenance mode, MOTD and server list", null, "server"),
     MESSAGES("messages.yml", "Command and console messages", "messages");
 
     private final String fileName;
     private final String description;
     private final String rootKey;
+    private final String overrideNamespace;
 
     ConfigType(String fileName, String description, String rootKey) {
+        this(fileName, description, rootKey, rootKey != null ? rootKey : fileName.replace(".yml", ""));
+    }
+
+    ConfigType(String fileName, String description, String rootKey, String overrideNamespace) {
         this.fileName = fileName;
         this.description = description;
         this.rootKey = rootKey;
+        this.overrideNamespace = overrideNamespace;
     }
 
     /**
@@ -49,7 +55,7 @@ public enum ConfigType {
      *         {@code messages:}
      */
     public String overrideRoot() {
-        return rootKey != null ? rootKey : fileName.replace(".yml", "");
+        return overrideNamespace;
     }
 
     /**

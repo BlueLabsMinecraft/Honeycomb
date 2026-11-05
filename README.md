@@ -10,7 +10,7 @@ Purpur and Pufferfish.
 
 <img src="docs/banner.png" alt="Honeycomb, the TAB alternative for Minecraft 1.21.9 to 26.3" width="100%" />
 
-[![Release](https://img.shields.io/badge/release-1.1.1-FFB01F?style=flat-square)](https://github.com/BlueLabsMinecraft/Honeycomb/releases)
+[![Release](https://img.shields.io/badge/release-1.0.0-FFB01F?style=flat-square)](https://github.com/BlueLabsMinecraft/Honeycomb/releases)
 [![License](https://img.shields.io/badge/license-MIT-4ade80?style=flat-square)](LICENSE)
 [![Java](https://img.shields.io/badge/java-21%20%7C%2025-2563EB?style=flat-square)](https://adoptium.net)
 [![Paper](https://img.shields.io/badge/paper-1.21.9%20%E2%80%93%2026.3-38BDF8?style=flat-square)](https://papermc.io)
@@ -108,8 +108,8 @@ Two optional companion jars carry the proxy side, so Honeycomb is a real Velocit
 
 | File | Goes in |
 |---|---|
-| `HoneycombProxy-1.1.1-velocity.jar` | `plugins/` on the Velocity proxy |
-| `HoneycombProxy-1.1.1-bungeecord.jar` | `plugins/` on the BungeeCord or Waterfall proxy |
+| `HoneycombProxy-1.0.0-velocity.jar` | `plugins/` on the Velocity proxy |
+| `HoneycombProxy-1.0.0-bungeecord.jar` | `plugins/` on the BungeeCord or Waterfall proxy |
 
 The game server keeps the normal Honeycomb jar. The bridge answers with the proxy's own numbers over `honeycomb:network`, so counts stay correct even when the proxy's legacy bungee channel is off.
 
@@ -120,8 +120,8 @@ not share a Java runtime:
 
 | Jar | Server | Versions | Java |
 |---|---|---|---|
-| `Honeycomb-1.1.1-mc1.21.9-1.21.11.jar` | Paper, Spigot, Bukkit, Folia, Purpur, Pufferfish | 1.21.9 to 1.21.11 | 21 |
-| `Honeycomb-1.1.1-mc26.1-26.3.jar` | Paper, Spigot, Bukkit, Folia, Purpur, Pufferfish | 26.1 to 26.3 | 25 |
+| `Honeycomb-1.0.0-mc1.21.9-1.21.11.jar` | Paper, Spigot, Bukkit, Folia, Purpur, Pufferfish | 1.21.9 to 1.21.11 | 21 |
+| `Honeycomb-1.0.0-mc26.1-26.3.jar` | Paper, Spigot, Bukkit, Folia, Purpur, Pufferfish | 26.1 to 26.3 | 25 |
 
 The same jar handles Folia: each display is scheduled on the thread that owns the
 player, which is what the region scheduler requires. On Spigot and Bukkit every

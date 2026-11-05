@@ -8,6 +8,7 @@ import java.io.File;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -128,5 +129,25 @@ class PanelOverrideRoundTripTest {
         reloaded.apply(ConfigType.NAMETAGS, live);
         assertEquals("<red>[OWNER] ", live.getString("nametags.groups.owner.prefix"));
         assertTrue(live.getBoolean("nametags.enabled"));
+    }
+
+    @Test
+    void panelFileStaysReadableWithoutDoubledRoots() {
+        PanelOverrides overrides = new PanelOverrides(panelFile(), null);
+        overrides.set(ConfigType.MAINTENANCE, "maintenance.enabled", true);
+        overrides.set(ConfigType.TABLIST, "profiles.nether.header", "<red>hot");
+        overrides.set(ConfigType.SCOREBOARDS, "pvp.title", "PVP");
+        save(overrides);
+
+        String written;
+        try {
+            written = java.nio.file.Files.readString(panelFile().toPath());
+        } catch (java.io.IOException broken) {
+            throw new IllegalStateException(broken);
+        }
+        assertTrue(written.contains("server:"), "maintenance belongs under its own namespace: " + written);
+        assertFalse(written.contains("maintenance:\n  maintenance:"), "root stored twice: " + written);
+        assertFalse(written.contains("tablist:\n  tablist:"), "root stored twice: " + written);
+        assertFalse(written.contains("scoreboards:\n  scoreboards:"), "root stored twice: " + written);
     }
 }

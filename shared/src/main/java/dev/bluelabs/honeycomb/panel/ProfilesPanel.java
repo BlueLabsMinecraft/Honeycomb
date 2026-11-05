@@ -13,6 +13,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.List;
 import java.util.Locale;
 
@@ -183,114 +184,267 @@ public final class ProfilesPanel {
      * @param id     entry id
      */
     static void open(Player player, HoneycombPlugin plugin, String kind, String id) {
+        design(player, plugin, kind, id, Draft.empty());
+    }
+
+    /**
+     * The content screen: only the text players will see.
+     *
+     * <p>Conditions used to sit on top of the text, which made a simple layout look like a
+     * database form. They have their own screen now, so this one answers one question:
+     * what does the player see?</p>
+     *
+     * @param player player
+     * @param plugin plugin
+     * @param kind   entry kind
+     * @param id     entry id
+     * @param draft  typed values to keep after a failed save
+     */
+    private static void design(Player player, HoneycombPlugin plugin, String kind, String id, Draft draft) {
+        DialogKit.show(player, plugin, designDialog(player, plugin, kind, id, draft));
+    }
+
+    /**
+     * Builds the content screen.
+     *
+     * @param player player, may be {@code null} when only checking that it builds
+     * @param plugin plugin
+     * @param kind   entry kind
+     * @param id     entry id
+     * @param draft  typed values to keep
+     * @return the dialog
+     */
+    static io.papermc.paper.dialog.Dialog designDialog(Player player, HoneycombPlugin plugin,
+                                                       String kind, String id, Draft draft) {
         YamlConfiguration yaml = plugin.configManager().yaml(type(kind));
         String base = base(kind, id);
         List<DialogInput> inputs = new ArrayList<>();
-        inputs.add(DialogKit.toggle("enabled", "Enabled", yaml.getBoolean(base + ".enabled", true)));
-
-        // Conditions first: they decide who sees the entry, so they belong at the top.
-        inputs.add(DialogKit.text("worlds", "Conditions: worlds, comma separated (* and ! work)",
-                join(yaml.getStringList(base + ".conditions.worlds"))));
-        inputs.add(DialogKit.text("permissions", "Conditions: permissions, comma separated",
-                join(yaml.getStringList(base + ".conditions.permissions"))));
-        inputs.add(DialogKit.lines("placeholders", "Conditions: placeholder rules, one per row",
-                join(yaml.getStringList(base + ".conditions.placeholders")), 5));
-        inputs.add(DialogKit.text("priority", "Priority, higher wins",
-                String.valueOf(yaml.getInt(base + ".priority", 0))));
 
         switch (kind) {
             case "tablist" -> {
-                inputs.add(DialogKit.lines("header", "Header, one row per line",
-                        withIcon(player, "header", join(yaml.getStringList(base + ".header"))), 12));
-                inputs.add(DialogKit.lines("footer", "Footer, one row per line",
-                        withIcon(player, "footer", join(yaml.getStringList(base + ".footer"))), 8));
-                inputs.add(DialogKit.text("list_name", "Player list name",
-                        yaml.getString(base + ".player-list-name", "<white>%player_name%")));
+                inputs.add(DialogKit.lines("header", "Header - the lines above the player list",
+                        draft.text("header", withIcon(player, "header",
+                                join(yaml.getStringList(base + ".header")))), 10));
+                inputs.add(DialogKit.lines("footer", "Footer - the lines under the player list",
+                        draft.text("footer", withIcon(player, "footer",
+                                join(yaml.getStringList(base + ".footer")))), 6));
+                inputs.add(DialogKit.text("list_name", "Name shown next to each player",
+                        draft.text("list_name",
+                                yaml.getString(base + ".player-list-name", "<white>%player_name%"))));
             }
             case "scoreboards" -> {
-                inputs.add(DialogKit.text("title", "Title", yaml.getString(base + ".title", "")));
-                inputs.add(DialogKit.lines("lines", "Lines, one per row",
-                        withIcon(player, "lines", join(yaml.getStringList(base + ".lines"))), 18));
-                inputs.add(DialogKit.text("interval", "Update interval in ticks",
-                        String.valueOf(yaml.getInt(base + ".update-interval", 20))));
-                inputs.add(DialogKit.toggle("hide_numbers", "Hide numbers",
-                        yaml.getBoolean(base + ".hide-numbers", true)));
+                inputs.add(DialogKit.text("title", "Title - the word at the top of the sidebar",
+                        draft.text("title", yaml.getString(base + ".title", ""))));
+                inputs.add(DialogKit.lines("lines", "Sidebar lines - one row each, top row first",
+                        draft.text("lines", withIcon(player, "lines",
+                                join(yaml.getStringList(base + ".lines")))), 16));
+                inputs.add(DialogKit.toggle("hide_numbers", "Hide the red score numbers on the right",
+                        draft.toggle("hide_numbers", yaml.getBoolean(base + ".hide-numbers", true))));
+                inputs.add(DialogKit.text("interval", "Refresh every N ticks (20 ticks = 1 second)",
+                        draft.text("interval",
+                                String.valueOf(yaml.getInt(base + ".update-interval", 20)))));
             }
             case "bossbars" -> {
-                inputs.add(DialogKit.text("title", "Title",
-                        withIcon(player, "title", yaml.getString(base + ".title", ""))));
-                inputs.add(DialogKit.text("color", "Colour", yaml.getString(base + ".color", "YELLOW")));
-                inputs.add(DialogKit.text("style", "Style", yaml.getString(base + ".style", "SOLID")));
-                inputs.add(DialogKit.text("progress", "Progress 0 to 1",
-                        String.valueOf(yaml.getDouble(base + ".progress", 1.0D))));
+                inputs.add(DialogKit.text("title", "Text on the bar",
+                        draft.text("title", withIcon(player, "title", yaml.getString(base + ".title", "")))));
+                inputs.add(DialogKit.text("color", "Bar colour: PINK, BLUE, RED, GREEN, YELLOW, PURPLE or WHITE",
+                        draft.text("color", yaml.getString(base + ".color", "YELLOW"))));
+                inputs.add(DialogKit.text("style", "Bar style: SOLID, SEGMENTED_6, SEGMENTED_10,"
+                        + " SEGMENTED_12 or SEGMENTED_20",
+                        draft.text("style", yaml.getString(base + ".style", "SOLID"))));
+                inputs.add(DialogKit.text("progress", "How full the bar is: 0.0 empty to 1.0 full",
+                        draft.text("progress", String.valueOf(yaml.getDouble(base + ".progress", 1.0D)))));
             }
             case "actionbar" -> inputs.add(DialogKit.text("template", "Text above the hotbar",
-                    withIcon(player, "template", yaml.getString(base + ".template", ""))));
+                    draft.text("template", withIcon(player, "template",
+                            yaml.getString(base + ".template", "")))));
             case "welcome" -> {
-                inputs.add(DialogKit.text("scope", "Who sees it: private or broadcast",
-                        yaml.getString(base + ".scope", "private")));
-                inputs.add(DialogKit.text("trigger", "When: join or leave",
-                        yaml.getString(base + ".trigger", "join")));
-                inputs.add(DialogKit.lines("lines", "Message, one row per line",
-                        withIcon(player, "lines", join(yaml.getStringList(base + ".lines"))), 12));
+                inputs.add(DialogKit.text("trigger", "Send it when a player: JOIN or LEAVE",
+                        draft.text("trigger", yaml.getString(base + ".trigger", "join"))));
+                inputs.add(DialogKit.text("scope", "Who reads it: PRIVATE to that player, BROADCAST to everyone",
+                        draft.text("scope", yaml.getString(base + ".scope", "private"))));
+                inputs.add(DialogKit.lines("lines", "Message - one row per line",
+                        draft.text("lines", withIcon(player, "lines",
+                                join(yaml.getStringList(base + ".lines")))), 10));
             }
             default -> {
-                inputs.add(DialogKit.text("prefix", "Prefix", yaml.getString(base + ".prefix", "")));
-                inputs.add(DialogKit.text("suffix", "Suffix", yaml.getString(base + ".suffix", "")));
+                inputs.add(DialogKit.text("prefix", "Text in front of the name, e.g. [VIP] ",
+                        draft.text("prefix", yaml.getString(base + ".prefix", ""))));
+                inputs.add(DialogKit.text("suffix", "Text after the name, e.g. \u00ABstar\u00BB",
+                        draft.text("suffix", yaml.getString(base + ".suffix", ""))));
             }
         }
 
         boolean fresh = yaml.getConfigurationSection(base) == null;
-        String who = conditionSummary(yaml, base);
-        List<Component> body = List.of(
-                DialogKit.heading(title(kind).toUpperCase(java.util.Locale.ROOT) + " \u00B7 "
-                        + id.toUpperCase(java.util.Locale.ROOT)),
-                DialogKit.styled("<shadow:#000000:1><gray>Who sees it: "
-                        + (who.startsWith("none") ? "<green>everyone" : "<gold>" + who)),
-                DialogKit.shade("Text takes MiniMessage colours. One row per line."),
-                DialogKit.shade("Leave a field empty to keep that rule out."));
+        List<Component> body = new ArrayList<>();
+        body.add(DialogKit.heading(title(kind).toUpperCase(java.util.Locale.ROOT) + " \u00B7 "
+                + id.toUpperCase(java.util.Locale.ROOT)));
+        if (draft.hasError()) {
+            body.add(DialogKit.error(draft.error()));
+        }
+        body.add(DialogKit.note("Fill in what players should read. Colours work with MiniMessage,"
+                + " for example <gold><bold>Hello."));
+        body.add(DialogKit.note("Who gets this design is set on the next screen."));
+
         List<ActionButton> actions = new ArrayList<>();
-        actions.add(DialogKit.save(fresh ? "Create layout" : "Save changes",
-                (saved, response) -> save(saved, plugin, kind, id, response)));
-        String iconField = iconField(kind);
-        actions.add(DialogKit.act(
-                DialogKit.styled("<shadow:#000000:1><white>Insert icon"),
-                audience -> {
-                    if (audience instanceof Player clicker) {
-                        IconPicker.open(clicker, plugin, iconField(kind),
-                                "honeycomb panel " + screenOf(kind));
-                    }
-                }));
-        actions.add(DialogKit.run("Back", "honeycomb panel " + section(kind)));
+        actions.add(DialogKit.save(fresh ? "Create" : "Save", (saved, response) ->
+                saveContent(saved, plugin, kind, id, response)));
+        actions.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Who sees this \u2192"),
+                "honeycomb panel " + screenOf(kind) + "/" + id + "/audience"));
+        actions.add(DialogKit.act(DialogKit.styled("<shadow:#000000:1><white>Insert icon"), audience -> {
+            if (audience instanceof Player clicker) {
+                IconPicker.open(clicker, plugin, iconField(kind), "honeycomb panel " + screenOf(kind));
+            }
+        }));
+        actions.add(DialogKit.run("Back", "honeycomb panel " + screenOf(kind)));
         actions.add(DialogKit.close());
-        var dialog = DialogKit.form(title(kind) + " - " + id, body, inputs, actions);
-        DialogKit.show(player, plugin, dialog);
+        return DialogKit.form(title(kind) + " - " + id, body, inputs, actions);
     }
 
     /**
-     * Writes the dialog values into panel.yml and reloads the plugin.
+     * The audience screen: who the design applies to, in plain words.
+     *
+     * @param player player
+     * @param plugin plugin
+     * @param kind   entry kind
+     * @param id     entry id
+     * @param draft  typed values to keep after a failed save
+     */
+    static void audience(Player player, HoneycombPlugin plugin, String kind, String id, Draft draft) {
+        DialogKit.show(player, plugin, audienceDialog(player, plugin, kind, id, draft));
+    }
+
+    /**
+     * Builds the audience screen.
+     *
+     * @param player player, may be {@code null} when only checking that it builds
+     * @param plugin plugin
+     * @param kind   entry kind
+     * @param id     entry id
+     * @param draft  typed values to keep
+     * @return the dialog
+     */
+    static io.papermc.paper.dialog.Dialog audienceDialog(Player player, HoneycombPlugin plugin,
+                                                         String kind, String id, Draft draft) {
+        YamlConfiguration yaml = plugin.configManager().yaml(type(kind));
+        String base = base(kind, id);
+        List<DialogInput> inputs = new ArrayList<>();
+        inputs.add(DialogKit.toggle("enabled", "Turn this design on",
+                draft.toggle("enabled", yaml.getBoolean(base + ".enabled", true))));
+        inputs.add(DialogKit.text("worlds", "Worlds - where it is used. Empty means every world",
+                draft.text("worlds", join(yaml.getStringList(base + ".conditions.worlds")))));
+        inputs.add(DialogKit.text("ranks", "Only for these ranks - permission or LuckPerms group,"
+                + " comma separated. Empty means everyone",
+                draft.text("ranks", join(yaml.getStringList(base + ".conditions.permissions")))));
+        inputs.add(DialogKit.text("priority", "Priority - higher number wins when two designs fit"
+                + " the same player. Empty means 0",
+                draft.text("priority", String.valueOf(yaml.getInt(base + ".priority", 0)))));
+        inputs.add(DialogKit.lines("placeholders", "Advanced: show only when a placeholder matches."
+                + " One rule per row, written as  %placeholder% == value",
+                draft.text("placeholders", join(yaml.getStringList(base + ".conditions.placeholders"))), 5));
+
+        List<Component> body = new ArrayList<>();
+        body.add(DialogKit.heading("WHO SEES THIS"));
+        if (draft.hasError()) {
+            body.add(DialogKit.error(draft.error()));
+        }
+        body.add(DialogKit.note("Right now: " + conditionSummary(yaml, base)));
+        body.add(DialogKit.note("Leave both boxes empty and every player gets this design,"
+                + " which is what most servers want."));
+        body.add(DialogKit.note("Worlds: \"*\" means all worlds, \"!nether\" means all except the nether."));
+
+        List<ActionButton> actions = new ArrayList<>();
+        actions.add(DialogKit.save("Save", (saved, response) -> saveAudience(saved, plugin, kind, id, response)));
+        actions.add(DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Back to the text"),
+                "honeycomb panel " + screenOf(kind) + "/" + id));
+        actions.add(DialogKit.close());
+        return DialogKit.form(title(kind) + " - " + id + " - who sees it", body, inputs, actions);
+    }
+
+    /**
+     * Values typed into a screen, kept so a rejected save can reopen the same screen full.
+     *
+     * @param texts   text field values
+     * @param toggles checkbox values
+     * @param error   message to show at the top, {@code null} when nothing failed
+     */
+    record Draft(Map<String, String> texts, Map<String, Boolean> toggles, String error) {
+
+        static Draft empty() {
+            return new Draft(Map.of(), Map.of(), null);
+        }
+
+        boolean hasError() {
+            return error != null && !error.isBlank();
+        }
+
+        String text(String key, String fallback) {
+            return texts.getOrDefault(key, fallback);
+        }
+
+        boolean toggle(String key, boolean fallback) {
+            return toggles.getOrDefault(key, fallback);
+        }
+
+        /**
+         * Reads every listed field back out of a submitted dialog.
+         *
+         * @param response submitted values
+         * @param keys     text fields to keep
+         * @param toggles  checkboxes to keep
+         * @return the draft
+         */
+        static Draft capture(DialogResponseView response, List<String> keys, List<String> toggles) {
+            Map<String, String> texts = new java.util.HashMap<>();
+            Map<String, Boolean> flags = new java.util.HashMap<>();
+            for (String key : keys) {
+                try {
+                    String value = response.getText(key);
+                    if (value != null) {
+                        texts.put(key, value);
+                    }
+                } catch (RuntimeException absent) {
+                    texts.remove(key);
+                }
+            }
+            for (String key : toggles) {
+                try {
+                    flags.put(key, response.getBoolean(key));
+                } catch (RuntimeException absent) {
+                    flags.remove(key);
+                }
+            }
+            return new Draft(texts, flags, null);
+        }
+
+        /**
+         * @param message what to show at the top of the reopened screen
+         * @return a copy carrying the error
+         */
+        Draft withError(String message) {
+            return new Draft(texts, toggles, message);
+        }
+    }
+
+    /**
+     * Writes the content fields and reopens the screen when something does not parse.
      *
      * @param player   player saving
      * @param plugin   plugin
      * @param kind     entry kind
      * @param id       entry id
-     * @param response dialog values, empty for a new entry
+     * @param response submitted values
      */
-    private static void save(Player player, HoneycombPlugin plugin, String kind, String id,
-                             DialogResponseView response) {
+    private static void saveContent(Player player, HoneycombPlugin plugin, String kind, String id,
+                                    DialogResponseView response) {
         var overrides = plugin.panelOverrides();
         ConfigType type = type(kind);
         String base = base(kind, id);
+        List<String> keys = new ArrayList<>(List.of("header", "footer", "list_name", "title", "lines",
+                "interval", "color", "style", "progress", "template", "trigger", "scope",
+                "prefix", "suffix"));
+        Draft draft = Draft.capture(response, keys, List.of("hide_numbers"));
 
-        overrides.set(type, base + ".enabled", response.getBoolean("enabled"));
-        String priority = response.getText("priority");
-        if (priority != null && !priority.isBlank()) {
-            try {
-                overrides.set(type, base + ".priority", Integer.parseInt(priority.trim()));
-            } catch (NumberFormatException ignored) {
-                player.sendMessage(Component.text("Priority must be a number, kept the old one.", NamedTextColor.YELLOW));
-            }
-        }
         switch (kind) {
             case "tablist" -> {
                 setLines(overrides, type, base + ".header", response.getText("header"));
@@ -310,9 +464,17 @@ public final class ProfilesPanel {
                 String interval = response.getText("interval");
                 if (interval != null && !interval.isBlank()) {
                     try {
-                        overrides.set(type, base + ".update-interval", Integer.parseInt(interval.trim()));
-                    } catch (NumberFormatException ignored) {
-                        player.sendMessage(Component.text("Interval must be a number.", NamedTextColor.YELLOW));
+                        int ticks = Integer.parseInt(interval.trim());
+                        if (ticks < 1 || ticks > 200) {
+                            design(player, plugin, kind, id, draft.withError(
+                                    "Refreshing must be between 1 and 200 ticks, so 20 for one second."));
+                            return;
+                        }
+                        overrides.set(type, base + ".update-interval", ticks);
+                    } catch (NumberFormatException notANumber) {
+                        design(player, plugin, kind, id, draft.withError(
+                                "Refreshing has to be a whole number of ticks, for example 20."));
+                        return;
                     }
                 }
             }
@@ -320,30 +482,48 @@ public final class ProfilesPanel {
                 for (String field : List.of("title", "color", "style")) {
                     String value = response.getText(field);
                     if (value != null && !value.isBlank()) {
-                        overrides.set(type, base + "." + field, value);
+                        // Colour and style are enum names, so they are stored upper case.
+                        overrides.set(type, base + "." + field,
+                                field.equals("title") ? value : value.trim().toUpperCase(java.util.Locale.ROOT));
                     }
                 }
                 String progress = response.getText("progress");
                 if (progress != null && !progress.isBlank()) {
                     try {
-                        overrides.set(type, base + ".progress", Double.parseDouble(progress.trim()));
-                    } catch (NumberFormatException ignored) {
-                        player.sendMessage(Component.text("Progress must be a number between 0 and 1.",
-                                NamedTextColor.YELLOW));
+                        double value = Double.parseDouble(progress.trim());
+                        if (value < 0.0D || value > 1.0D) {
+                            design(player, plugin, kind, id, draft.withError(
+                                    "The bar can only be filled between 0.0 and 1.0, for example 0.5."));
+                            return;
+                        }
+                        overrides.set(type, base + ".progress", value);
+                    } catch (NumberFormatException notANumber) {
+                        design(player, plugin, kind, id, draft.withError(
+                                "How full the bar is has to be a number from 0.0 to 1.0."));
+                        return;
                     }
                 }
             }
             case "welcome" -> {
-                String scope = response.getText("scope");
-                if (scope != null && !scope.isBlank()) {
-                    String clean = scope.trim().toLowerCase(java.util.Locale.ROOT);
-                    overrides.set(type, base + ".scope",
-                            clean.startsWith("b") ? "broadcast" : "private");
-                }
                 String trigger = response.getText("trigger");
                 if (trigger != null && !trigger.isBlank()) {
                     String clean = trigger.trim().toLowerCase(java.util.Locale.ROOT);
+                    if (!clean.startsWith("j") && !clean.startsWith("l")) {
+                        design(player, plugin, kind, id, draft.withError(
+                                "Write JOIN or LEAVE, so Honeycomb knows when to send it."));
+                        return;
+                    }
                     overrides.set(type, base + ".trigger", clean.startsWith("l") ? "leave" : "join");
+                }
+                String scope = response.getText("scope");
+                if (scope != null && !scope.isBlank()) {
+                    String clean = scope.trim().toLowerCase(java.util.Locale.ROOT);
+                    if (!clean.startsWith("p") && !clean.startsWith("b")) {
+                        design(player, plugin, kind, id, draft.withError(
+                                "Write PRIVATE or BROADCAST to choose who reads it."));
+                        return;
+                    }
+                    overrides.set(type, base + ".scope", clean.startsWith("b") ? "broadcast" : "private");
                 }
                 setLines(overrides, type, base + ".lines", response.getText("lines"));
             }
@@ -356,30 +536,84 @@ public final class ProfilesPanel {
             default -> {
                 for (String field : List.of("prefix", "suffix")) {
                     String value = response.getText(field);
-                    if (value != null && !value.isBlank()) {
+                    if (value != null) {
                         overrides.set(type, base + "." + field, value);
                     }
                 }
             }
         }
 
-        applyList(overrides, type, base + ".conditions.worlds", response.getText("worlds"));
-        applyList(overrides, type, base + ".conditions.permissions", response.getText("permissions"));
-        applyList(overrides, type, base + ".conditions.placeholders", response.getText("placeholders"));
-
-        try {
-            overrides.save();
-        } catch (java.io.IOException error) {
-            player.sendMessage(plugin.messages().prefixed("panel.save-failed",
-                    java.util.Map.of("reason", String.valueOf(error.getMessage()))));
+        if (!commit(player, plugin, kind, id)) {
+            design(player, plugin, kind, id, draft.withError("panel.yml could not be written,"
+                    + " so nothing changed. Check the console."));
             return;
         }
-        reloadQuietly(plugin);
         player.sendMessage(plugin.messages().prefixed("panel.saved",
                 java.util.Map.of("name", id, "kind", noun(kind))));
-        // Reopen the editor so the saved values are visible instead of dumping the player
-        // back into the world wondering whether it worked.
-        open(player, plugin, kind, id);
+        design(player, plugin, kind, id, Draft.empty());
+    }
+
+    /**
+     * Writes the audience fields.
+     *
+     * @param player   player saving
+     * @param plugin   plugin
+     * @param kind     entry kind
+     * @param id       entry id
+     * @param response submitted values
+     */
+    private static void saveAudience(Player player, HoneycombPlugin plugin, String kind, String id,
+                                     DialogResponseView response) {
+        var overrides = plugin.panelOverrides();
+        ConfigType type = type(kind);
+        String base = base(kind, id);
+        Draft draft = Draft.capture(response, List.of("worlds", "ranks", "priority", "placeholders"),
+                List.of("enabled"));
+
+        overrides.set(type, base + ".enabled", response.getBoolean("enabled"));
+        applyList(overrides, type, base + ".conditions.worlds", response.getText("worlds"));
+        applyList(overrides, type, base + ".conditions.permissions", response.getText("ranks"));
+        applyList(overrides, type, base + ".conditions.placeholders", response.getText("placeholders"));
+
+        String priority = response.getText("priority");
+        if (priority != null && !priority.isBlank()) {
+            try {
+                overrides.set(type, base + ".priority", Integer.parseInt(priority.trim()));
+            } catch (NumberFormatException notANumber) {
+                audience(player, plugin, kind, id, draft.withError(
+                        "Priority has to be a whole number, for example 10. Leave it empty for 0."));
+                return;
+            }
+        }
+
+        if (!commit(player, plugin, kind, id)) {
+            audience(player, plugin, kind, id, draft.withError("panel.yml could not be written,"
+                    + " so nothing changed. Check the console."));
+            return;
+        }
+        player.sendMessage(plugin.messages().prefixed("panel.saved",
+                java.util.Map.of("name", id, "kind", noun(kind))));
+        audience(player, plugin, kind, id, Draft.empty());
+    }
+
+    /**
+     * Saves the override file and reloads, reporting instead of throwing.
+     *
+     * @param player player to tell
+     * @param plugin plugin
+     * @param kind   entry kind
+     * @param id     entry id
+     * @return true when the write and reload worked
+     */
+    private static boolean commit(Player player, HoneycombPlugin plugin, String kind, String id) {
+        try {
+            plugin.panelOverrides().save();
+        } catch (java.io.IOException error) {
+            plugin.getLogger().warning("Could not write panel.yml: " + error.getMessage());
+            return false;
+        }
+        reloadQuietly(plugin);
+        return true;
     }
 
     /**
@@ -411,6 +645,9 @@ public final class ProfilesPanel {
 
     /** Appends an icon the picker handed back to this field. */
     private static String withIcon(Player player, String field, String current) {
+        if (player == null) {
+            return current == null ? "" : current;
+        }
         String tag = IconPicker.take(player, field);
         if (tag == null) {
             return current;

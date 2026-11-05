@@ -88,7 +88,12 @@ public final class PanelOverrides {
      * @param value new value, {@code null} removes the override
      */
     public void set(ConfigType type, String path, Object value) {
-        String full = type.overrideRoot() + "." + path;
+        // The panel passes full paths such as "scoreboards.pvp.enabled" or "tablist.header".
+        // Prefixing the file's own root again would store "scoreboards.scoreboards.pvp" in
+        // panel.yml: it still applied, but it read like a mistake and made the file hard to
+        // check by hand.
+        String root = type.overrideRoot();
+        String full = path.equals(root) || path.startsWith(root + ".") ? path : root + "." + path;
         set(full, value);
     }
 

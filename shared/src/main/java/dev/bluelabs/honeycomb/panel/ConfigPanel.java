@@ -73,9 +73,14 @@ public final class ConfigPanel {
         // the editor is opened by a command, not by a click callback that has to show a
         // dialog while the client is still closing the list.
         if (section != null && section.indexOf('/') > 0) {
-            String kind = section.substring(0, section.indexOf('/'));
-            String id = section.substring(section.indexOf('/') + 1);
-            ProfilesPanel.open(player, plugin, normalise(kind), id);
+            String[] parts = section.split("/", 3);
+            String kind = normalise(parts[0]);
+            String id = parts.length > 1 ? parts[1] : "";
+            if (parts.length > 2 && parts[2].equalsIgnoreCase("audience")) {
+                ProfilesPanel.audience(player, plugin, kind, id, ProfilesPanel.Draft.empty());
+            } else {
+                ProfilesPanel.open(player, plugin, kind, id);
+            }
             return;
         }
         String key = section == null ? "main" : section.toLowerCase();
@@ -144,6 +149,12 @@ public final class ConfigPanel {
                 new Case("tablist", () -> ProfilesPanel.list(plugin, "tablist")),
                 new Case("scoreboard", () -> ProfilesPanel.list(plugin, "scoreboards")),
                 new Case("nametags", () -> ProfilesPanel.list(plugin, "nametags")),
+                new Case("design", () -> ProfilesPanel.designDialog(null, plugin, "tablist", "default",
+                        ProfilesPanel.Draft.empty())),
+                new Case("design-error", () -> ProfilesPanel.designDialog(null, plugin, "tablist", "default",
+                        ProfilesPanel.Draft.empty().withError("A sample error line."))),
+                new Case("audience", () -> ProfilesPanel.audienceDialog(null, plugin, "tablist", "default",
+                        ProfilesPanel.Draft.empty())),
                 new Case("bossbars", () -> ProfilesPanel.list(plugin, "bossbars")),
                 new Case("actionbar", () -> ProfilesPanel.list(plugin, "actionbar")),
                 new Case("brand", this::brand),

@@ -114,6 +114,29 @@ final class DialogKit {
         }
     }
 
+
+    /**
+     * A red line that explains what went wrong inside the screen the player is on, instead
+     * of closing it and sending a chat message.
+     *
+     * @param text what to fix
+     * @return the component
+     */
+    static Component error(String text) {
+        return styled("<shadow:#000000:1><red><bold>! <reset><red>" + MiniMessage.miniMessage()
+                .escapeTags(text));
+    }
+
+    /**
+     * A plain explanation line, dimmer than the heading and never styled as markup.
+     *
+     * @param text the sentence
+     * @return the component
+     */
+    static Component note(String text) {
+        return styled("<shadow:#000000:1><dark_gray>" + MiniMessage.miniMessage().escapeTags(text));
+    }
+
     /** A one line text field. */
     static TextDialogInput text(String key, String label, String initial) {
         return DialogInput.text(key, Component.text(label))
@@ -220,7 +243,7 @@ final class DialogKit {
 
     /** A close button. */
     static ActionButton close() {
-        return ActionButton.builder(styled("<red><bold>\u2715"))
+        return ActionButton.builder(styled("<b><color:#FF0000><shadow:#000000:1>\u00D7</shadow></color></b>"))
                 .width(34)
                 .action(DialogAction.customClick((response, audience) -> audience.closeDialog(),
                         ClickCallback.Options.builder().uses(64).build()))
