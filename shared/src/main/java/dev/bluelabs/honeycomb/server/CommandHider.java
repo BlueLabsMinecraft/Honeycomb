@@ -34,6 +34,7 @@ public final class CommandHider implements Listener {
     private String reply = "<red>You can't see that!";
     private boolean hideFromTab = true;
     private boolean hidePluginList;
+    private boolean hideAllPlugins = true;
     private final Set<String> hiddenPlugins = new HashSet<>();
 
     public CommandHider(HoneycombPlugin plugin) {
@@ -53,9 +54,17 @@ public final class CommandHider implements Listener {
         }
         hideFromTab = yaml.getBoolean("commands.hide-from-tab", true);
         hidePluginList = yaml.getBoolean("commands.hide-plugins", false);
+        // Hiding only the names in a list left every other plugin on show, which tells a
+        // curious player exactly which software the server runs. Default is now everything.
+        hideAllPlugins = yaml.getBoolean("commands.hide-all-plugins", true);
         hiddenPlugins.clear();
         for (String name : yaml.getStringList("commands.hide-plugin-names")) {
-            hiddenPlugins.add(name.toLowerCase(Locale.ROOT));
+            String clean = name.toLowerCase(Locale.ROOT);
+            if (clean.equals("*")) {
+                hideAllPlugins = true;
+            } else if (!clean.isBlank()) {
+                hiddenPlugins.add(clean);
+            }
         }
         String message = yaml.getString("commands.hidden-message");
         if (message != null && !message.isBlank()) {
@@ -101,13 +110,18 @@ public final class CommandHider implements Listener {
      *
      * <p>Other servers and tools read this list to work out what a server runs. When
      * {@code commands.hide-plugins} is on, the hidden names are simply not part of the
-     * answer, so the reply still looks like an ordinary plugin list.</p>
+     * answer, so the reply still looks like an ordinary plugin list. With
+     * {@code commands.hide-all-plugins} every plugin is left out, which is what the option
+     * did for Honeycomb alone before.</p>
      *
      * @return the reply to send
      */
     private Component pluginList() {
         List<String> shown = new ArrayList<>();
         for (org.bukkit.plugin.Plugin loaded : org.bukkit.Bukkit.getPluginManager().getPlugins()) {
+            if (hideAllPlugins) {
+                continue;
+            }
             if (!hiddenPlugins.contains(loaded.getName().toLowerCase(Locale.ROOT))) {
                 shown.add((loaded.isEnabled() ? "<green>" : "<red>") + loaded.getName());
             }

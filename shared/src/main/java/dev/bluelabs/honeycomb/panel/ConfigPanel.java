@@ -617,6 +617,8 @@ public final class ConfigPanel {
         List<DialogInput> inputs = List.of(
                 DialogKit.toggle("hide", "Hide /pl, /plugins and /version from non-staff",
                         yaml.getBoolean("commands.hide-pl-version", true)),
+                DialogKit.toggle("hideall", "Hide every plugin from that list, not just Honeycomb",
+                        yaml.getBoolean("commands.hide-all-plugins", true)),
                 DialogKit.text("extra", "Extra hidden commands, comma separated",
                         String.join(", ", yaml.getStringList("commands.extra-hidden"))));
 
@@ -625,7 +627,9 @@ public final class ConfigPanel {
                 DialogKit.run("Back", BACK),
                 DialogKit.close());
         return DialogKit.form("Commands", List.of(
-                        DialogKit.hint("Players without honeycomb.commands.view see a plain unknown-command reply.")),
+                        DialogKit.hint("Players without honeycomb.commands.view see a plain unknown-command reply."),
+                        DialogKit.shade("The list answers with no plugins at all, so it does not reveal that"
+                                + " Honeycomb or anything else is installed.")),
                 inputs, buttons);
     }
 
@@ -1202,6 +1206,7 @@ public final class ConfigPanel {
 
     private void saveCommands(Player player, DialogResponseView response) {
         plugin.panelOverrides().set(ConfigType.CONFIG, "commands.hide-pl-version", response.getBoolean("hide"));
+        plugin.panelOverrides().set(ConfigType.CONFIG, "commands.hide-all-plugins", response.getBoolean("hideall"));
         String extra = response.getText("extra");
         if (extra != null) {
             plugin.panelOverrides().set(ConfigType.CONFIG, "commands.extra-hidden",

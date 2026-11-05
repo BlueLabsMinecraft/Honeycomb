@@ -91,9 +91,12 @@ commands:
   hide-pl-version: true
   # Also removes hidden commands from tab completion for those players.
   hide-from-tab: true
-  # Leave Honeycomb, or any name below, out of /plugins and its tab completion
-  # so other tools and curious players cannot read the server setup.
+  # Leave plugins out of /plugins and its tab completion so other tools and
+  # curious players cannot read the server setup.
   hide-plugins: true
+  # Every loaded plugin, not only the names below. Set false to hide just the list.
+  hide-all-plugins: true
+  # Names to leave out when hide-all-plugins is false. "*" means all of them.
   hide-plugin-names:
     - Honeycomb
   # Any other command to hide, for example "help" or "bukkit:help".
