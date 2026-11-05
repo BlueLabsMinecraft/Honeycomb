@@ -135,6 +135,35 @@ public final class ConfigPanel {
     }
 
 
+
+    /**
+     * Ticks or unticks one design without touching the others.
+     *
+     * @param kind entry kind
+     * @param id   entry id
+     * @return a message for the sender
+     */
+    public String toggleEntry(String kind, String id) {
+        String realKind = ProfilesPanel.kindKey(kind);
+        String clean = ProfilesPanel.sanitiseId(id);
+        java.util.List<String> entries = ProfilesPanel.ids(plugin, realKind);
+        if (!entries.contains(clean)) {
+            return "There is no " + kind + " called '" + clean + "'. Known: " + String.join(", ", entries);
+        }
+        var overrides = plugin.panelOverrides();
+        var type = ProfilesPanel.typeKey(realKind);
+        String path = ProfilesPanel.baseKey(realKind, clean) + ".enabled";
+        boolean now = !plugin.configManager().yaml(type).getBoolean(path, true);
+        overrides.set(type, path, now);
+        try {
+            overrides.save();
+        } catch (java.io.IOException error) {
+            return "Could not write panel.yml: " + error.getMessage();
+        }
+        plugin.reload();
+        return (now ? "Turned on " : "Turned off ") + realKind + " '" + clean + "'.";
+    }
+
     /**
      * Switches a kind over to one design, ticking it and clearing the others.
      *

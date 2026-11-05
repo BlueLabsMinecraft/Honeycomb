@@ -89,19 +89,6 @@ public final class ProfilesPanel {
     }
 
     /**
-     * Kinds where exactly one design may be on at a time.
-     *
-     * @param kind entry kind
-     * @return true when picking one should switch the others off
-     */
-    private static boolean exclusive(String kind) {
-        return switch (kind) {
-            case "tablist", "scoreboards", "actionbar", "welcome" -> true;
-            default -> false;
-        };
-    }
-
-    /**
      * @param player player
      * @param kind   entry kind
      * @param id     entry id
@@ -150,8 +137,8 @@ public final class ProfilesPanel {
         body.add(DialogKit.styled("<shadow:#000000:1><gold>" + entries.size() + " "
                 + (entries.size() == 1 ? "layout" : "layouts")));
         body.add(DialogKit.shade("Pick a name to edit it, or type a new name below and press Create."));
-        body.add(DialogKit.note("\u2714 marks the one in use. Only one design of this kind runs at a time,"));
-        body.add(DialogKit.note("so turning another on turns the ticked one off."));
+        body.add(DialogKit.note("\u2714 marks the designs that are on. Several can be on at once:"));
+        body.add(DialogKit.note("each one applies where its world and rank rules match."));
 
         int shown = 0;
         for (String id : entries) {
@@ -454,9 +441,7 @@ public final class ProfilesPanel {
         YamlConfiguration yaml = plugin.configManager().yaml(type(kind));
         String base = base(kind, id);
         List<DialogInput> inputs = new ArrayList<>();
-        inputs.add(DialogKit.toggle("enabled", exclusive(kind)
-                        ? "Use this one - turning it on turns the others off"
-                        : "Turn this design on",
+        inputs.add(DialogKit.toggle("enabled", "Turn this design on",
                 draft.toggle("enabled", yaml.getBoolean(base + ".enabled", true))));
         inputs.add(DialogKit.text("worlds", "Worlds - where it is used. Empty means every world",
                 draft.text("worlds", join(yaml.getStringList(base + ".conditions.worlds")))));
@@ -731,17 +716,9 @@ public final class ProfilesPanel {
         ConfigType type = type(kind);
         String base = base(kind, id);
 
-        boolean wanted = response.getBoolean("enabled");
-        overrides.set(type, base + ".enabled", wanted);
-        if (wanted && exclusive(kind)) {
-            // One design of this kind runs at a time, so picking this one removes the tick
-            // from the previous one instead of leaving two designs fighting over the player.
-            for (String other : ids(plugin, kind)) {
-                if (!other.equals(id)) {
-                    overrides.set(type, base(kind, other) + ".enabled", false);
-                }
-            }
-        }
+        // More than one design of a kind can be on; conditions, world and rank rules decide
+        // which one a player gets. The switch only touches this entry.
+        overrides.set(type, base + ".enabled", response.getBoolean("enabled"));
         applyList(overrides, type, base + ".conditions.worlds", response.getText("worlds"));
         applyList(overrides, type, base + ".conditions.permissions", response.getText("ranks"));
         applyList(overrides, type, base + ".conditions.placeholders", response.getText("placeholders"));

@@ -66,6 +66,11 @@ public final class PanelSubcommand implements Subcommand {
                     NamedTextColor.WHITE));
             return;
         }
+        if (requested.equals("toggle") && args.length >= 3) {
+            sender.sendMessage(Component.text(plugin.panel().toggleEntry(args[1], args[2]),
+                    NamedTextColor.WHITE));
+            return;
+        }
         if (requested.equals("use") && args.length >= 3) {
             sender.sendMessage(Component.text(plugin.panel().selectEntry(args[1], args[2]),
                     NamedTextColor.WHITE));
