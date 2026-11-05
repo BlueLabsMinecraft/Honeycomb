@@ -87,7 +87,8 @@ public final class ConfigPanel {
         Dialog dialog = switch (key) {
             case "tablist" -> ProfilesPanel.list(plugin, "tablist");
             case "scoreboard", "scoreboards" -> ProfilesPanel.list(plugin, "scoreboards");
-            case "nametags" -> ProfilesPanel.list(plugin, "nametags");
+            case "nametags" -> nametags();
+            case "nametags/hologram", "hologram", "holograms" -> hologramSettings();
             case "bossbars" -> ProfilesPanel.list(plugin, "bossbars");
             case "brand" -> brand();
             case "commands" -> commands();
@@ -109,7 +110,7 @@ public final class ConfigPanel {
             case "layouts", "tablists" -> ProfilesPanel.list(plugin, "tablist");
             case "boards" -> ProfilesPanel.list(plugin, "scoreboards");
             case "bars" -> ProfilesPanel.list(plugin, "bossbars");
-            case "groups" -> ProfilesPanel.list(plugin, "nametags");
+            case "groups" -> nametags();
             default -> main();
         };
         show(player, dialog);
@@ -209,7 +210,8 @@ public final class ConfigPanel {
                 new Case("main", this::main),
                 new Case("tablist", () -> ProfilesPanel.list(plugin, "tablist")),
                 new Case("scoreboard", () -> ProfilesPanel.list(plugin, "scoreboards")),
-                new Case("nametags", () -> ProfilesPanel.list(plugin, "nametags")),
+                new Case("nametags", this::nametags),
+                new Case("nametags-hologram", this::hologramSettings),
                 new Case("design", () -> ProfilesPanel.designDialog(null, plugin, "tablist", "default",
                         ProfilesPanel.Draft.empty())),
                 new Case("design-error", () -> ProfilesPanel.designDialog(null, plugin, "tablist", "default",
@@ -631,6 +633,161 @@ public final class ConfigPanel {
                         DialogKit.shade("The list answers with no plugins at all, so it does not reveal that"
                                 + " Honeycomb or anything else is installed.")),
                 inputs, buttons);
+    }
+
+
+    /**
+     * Nametags: one switch, plus the hologram above the head.
+     *
+     * <p>The old screen listed permission groups and their prefixes, which is a lot of
+     * reading for what most servers want: names on or off, with a styled line above them.</p>
+     *
+     * @return the dialog
+     */
+    private Dialog nametags() {
+        YamlConfiguration nametags = plugin.configManager().yaml(ConfigType.NAMETAGS);
+        YamlConfiguration holograms = plugin.configManager().yaml(ConfigType.HOLOGRAMS);
+        boolean on = nametags.getBoolean("nametags.enabled", true);
+        boolean holo = holograms.getBoolean("holograms.enabled", false);
+
+        List<DialogInput> inputs = List.of(
+                DialogKit.toggle("nametags", "Show nametags above players", on));
+
+        List<Component> body = List.of(
+                DialogKit.hint("Turn this off and players see no nametag at all, in every world."),
+                DialogKit.shade("The hologram above the head is a separate switch, on the next screen."),
+                holo
+                        ? DialogKit.good("Hologram is on: " + holograms.getString("holograms.template", ""))
+                        : DialogKit.shade("Hologram is off."));
+
+        List<ActionButton> buttons = List.of(
+                DialogKit.save("Save", (player, response) -> {
+                    plugin.panelOverrides().set(ConfigType.NAMETAGS, "nametags.enabled",
+                            response.getBoolean("nametags"));
+                    commit(player, "Nametags", "nametags");
+                }),
+                DialogKit.run(DialogKit.styled("<shadow:#000000:1><white>Hologram settings \u2192"),
+                        "honeycomb panel nametags/hologram"),
+                DialogKit.run("Back", BACK),
+                DialogKit.close());
+        return DialogKit.form("Nametags", body, inputs, buttons);
+    }
+
+    /**
+     * The text display above every player, with the settings that matter.
+     *
+     * @return the dialog
+     */
+    private Dialog hologramSettings() {
+        YamlConfiguration yaml = plugin.configManager().yaml(ConfigType.HOLOGRAMS);
+        List<DialogInput> inputs = List.of(
+                DialogKit.toggle("enabled", "Show the hologram",
+                        yaml.getBoolean("holograms.enabled", false)),
+                DialogKit.lines("template", "Text - one row per line, placeholders and MiniMessage work",
+                        yaml.getString("holograms.template", "<white>%player_name%"), 4),
+                DialogKit.text("offset", "Height above the head, in blocks",
+                        String.valueOf(yaml.getDouble("holograms.offset", 0.35D))),
+                DialogKit.text("scale", "Size: 1.0 normal, 0.8 smaller, 1.4 bigger",
+                        String.valueOf(yaml.getDouble("holograms.scale", 1.0D))),
+                DialogKit.text("background", "Box behind the text: transparent, or #00000080",
+                        yaml.getString("holograms.background", "transparent")),
+                DialogKit.text("billboard", "Facing: CENTER, HORIZONTAL, VERTICAL or FIXED",
+                        yaml.getString("holograms.billboard", "CENTER")),
+                DialogKit.toggle("shadow", "Drop shadow under the letters",
+                        yaml.getBoolean("holograms.shadow", true)),
+                DialogKit.toggle("seethrough", "Show it through walls",
+                        yaml.getBoolean("holograms.see-through", false)));
+
+        List<Component> body = List.of(
+                DialogKit.hint("A text display floats above each player, so the vanilla nametag stays clean."),
+                DialogKit.shade("Fancy shadows come from MiniMessage, for example:"),
+                DialogKit.shade("<shadow:#000000:1><gradient:#FFE3A8:#FFB01F><bold>%player_name%"),
+                DialogKit.shade("Colours, gradients and item sprites all work here."));
+
+        List<ActionButton> buttons = List.of(
+                DialogKit.save("Save", this::saveHologram),
+                DialogKit.run("Back", "honeycomb panel nametags"),
+                DialogKit.close());
+        return DialogKit.form("Nametags - hologram", body, inputs, buttons);
+    }
+
+    /**
+     * Writes the hologram settings, reporting a bad number on the same screen.
+     *
+     * @param player   player saving
+     * @param response submitted values
+     */
+    private void saveHologram(Player player, DialogResponseView response) {
+        double offset;
+        double scale;
+        try {
+            offset = Double.parseDouble(String.valueOf(response.getText("offset")).trim());
+            scale = Double.parseDouble(String.valueOf(response.getText("scale")).trim());
+        } catch (NumberFormatException notANumber) {
+            hologramWithError(player, "Height and size have to be numbers, for example 0.35 and 1.0.");
+            return;
+        }
+        if (scale < 0.25D || scale > 4.0D) {
+            hologramWithError(player, "Size has to be between 0.25 and 4.0. Leave it at 1.0 for normal.");
+            return;
+        }
+        String billboard = response.getText("billboard");
+        String clean = billboard == null ? "CENTER"
+                : billboard.trim().toUpperCase(java.util.Locale.ROOT);
+        if (!List.of("CENTER", "HORIZONTAL", "VERTICAL", "FIXED").contains(clean)) {
+            hologramWithError(player, "Facing must be CENTER, HORIZONTAL, VERTICAL or FIXED.");
+            return;
+        }
+        String template = response.getText("template");
+        if (template == null || template.isBlank()) {
+            hologramWithError(player, "Give the hologram some text first, for example %player_name%.");
+            return;
+        }
+
+        var overrides = plugin.panelOverrides();
+        overrides.set(ConfigType.HOLOGRAMS, "holograms.enabled", response.getBoolean("enabled"));
+        overrides.set(ConfigType.HOLOGRAMS, "holograms.template", template);
+        overrides.set(ConfigType.HOLOGRAMS, "holograms.offset", offset);
+        overrides.set(ConfigType.HOLOGRAMS, "holograms.scale", scale);
+        overrides.set(ConfigType.HOLOGRAMS, "holograms.background",
+                response.getText("background") == null ? "transparent" : response.getText("background"));
+        overrides.set(ConfigType.HOLOGRAMS, "holograms.billboard", clean);
+        overrides.set(ConfigType.HOLOGRAMS, "holograms.shadow", response.getBoolean("shadow"));
+        overrides.set(ConfigType.HOLOGRAMS, "holograms.see-through", response.getBoolean("seethrough"));
+        commit(player, "Hologram", "nametags/hologram");
+    }
+
+    /**
+     * Reopens the hologram screen with the reason at the top, so nothing typed is lost.
+     *
+     * @param player  player
+     * @param message what to fix
+     */
+    private void hologramWithError(Player player, String message) {
+        YamlConfiguration yaml = plugin.configManager().yaml(ConfigType.HOLOGRAMS);
+        List<DialogInput> inputs = List.of(
+                DialogKit.toggle("enabled", "Show the hologram",
+                        yaml.getBoolean("holograms.enabled", false)),
+                DialogKit.lines("template", "Text - one row per line, placeholders and MiniMessage work",
+                        yaml.getString("holograms.template", "<white>%player_name%"), 4),
+                DialogKit.text("offset", "Height above the head, in blocks",
+                        String.valueOf(yaml.getDouble("holograms.offset", 0.35D))),
+                DialogKit.text("scale", "Size: 1.0 normal, 0.8 smaller, 1.4 bigger",
+                        String.valueOf(yaml.getDouble("holograms.scale", 1.0D))),
+                DialogKit.text("background", "Box behind the text: transparent, or #00000080",
+                        yaml.getString("holograms.background", "transparent")),
+                DialogKit.text("billboard", "Facing: CENTER, HORIZONTAL, VERTICAL or FIXED",
+                        yaml.getString("holograms.billboard", "CENTER")),
+                DialogKit.toggle("shadow", "Drop shadow under the letters",
+                        yaml.getBoolean("holograms.shadow", true)),
+                DialogKit.toggle("seethrough", "Show it through walls",
+                        yaml.getBoolean("holograms.see-through", false)));
+        List<Component> body = List.of(DialogKit.error(message));
+        List<ActionButton> buttons = List.of(
+                DialogKit.save("Save", this::saveHologram),
+                DialogKit.run("Back", "honeycomb panel nametags"),
+                DialogKit.close());
+        show(player, DialogKit.form("Nametags - hologram", body, inputs, buttons));
     }
 
     private Dialog messages() {

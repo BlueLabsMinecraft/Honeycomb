@@ -25,8 +25,21 @@ holograms:
   # 1.0 is the normal entity view distance, lower values hide it sooner.
   view-range: 1.0
 
-  # Drop shadow under the glyphs.
+  # Drop shadow under the glyphs. MiniMessage also has <shadow:#000000:1> inside the
+  # text for a coloured or offset shadow, which works together with this.
   shadow: true
+
+  # How the text faces the viewer: CENTER, HORIZONTAL, VERTICAL or FIXED.
+  billboard: CENTER
+
+  # Size of the text. 1.0 is normal, 0.7 makes it smaller, 1.5 bigger.
+  scale: 1.0
+
+  # How wide a line may get before it wraps, in pixels.
+  line-width: 220
+
+  # Fixed light level, -1 follows the world like a normal entity.
+  brightness: -1
 
   # Draw through blocks. Off by default so it behaves like a nametag.
   see-through: false

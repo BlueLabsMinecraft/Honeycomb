@@ -76,6 +76,15 @@ public final class PanelSubcommand implements Subcommand {
                     NamedTextColor.WHITE));
             return;
         }
+        if (requested.equals("systems")) {
+            // Reports each display engine and whether it thinks it is on. The panel itself
+            // says nothing when a display silently does nothing.
+            for (var system : plugin.coordinator().systems()) {
+                sender.sendMessage(Component.text(system.name() + ": enabled=" + system.isEnabled()
+                        + " (" + system.describe() + ")", NamedTextColor.WHITE));
+            }
+            return;
+        }
         if (requested.equals("debug")) {
             // Works from the console: proves every dialog builds before a player sees it.
             sender.sendMessage(Component.text("Building panel dialogs...", NamedTextColor.GRAY));

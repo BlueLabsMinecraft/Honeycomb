@@ -13,6 +13,9 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
+import org.bukkit.util.Transformation;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -49,6 +52,10 @@ public final class NameHologramService implements DisplaySystem {
     private boolean shadowed = true;
     private boolean seeThrough;
     private String background = "transparent";
+    private Display.Billboard billboard = Display.Billboard.CENTER;
+    private float scale = 1.0F;
+    private int lineWidth = 220;
+    private int brightness = -1;
 
     /**
      * @param configManager configuration manager
@@ -133,6 +140,10 @@ public final class NameHologramService implements DisplaySystem {
         shadowed = yaml.getBoolean("holograms.shadow", true);
         seeThrough = yaml.getBoolean("holograms.see-through", false);
         background = yaml.getString("holograms.background", "transparent");
+        billboard = billboard(yaml.getString("holograms.billboard", "CENTER"));
+        scale = (float) Math.max(0.25D, Math.min(4.0D, yaml.getDouble("holograms.scale", 1.0D)));
+        lineWidth = Math.max(20, yaml.getInt("holograms.line-width", 220));
+        brightness = Math.max(-1, Math.min(15, yaml.getInt("holograms.brightness", -1)));
 
         profiles.clear();
         ConfigurationSection section = yaml.getConfigurationSection("holograms.profiles");
@@ -194,6 +205,21 @@ public final class NameHologramService implements DisplaySystem {
         }
     }
 
+
+    /**
+     * @param name billboard setting as written in holograms.yml
+     * @return the matching billboard, CENTER when the name is unknown
+     */
+    private static Display.Billboard billboard(String name) {
+        String clean = name == null ? "" : name.trim().toUpperCase(Locale.ROOT);
+        for (Display.Billboard candidate : Display.Billboard.values()) {
+            if (candidate.name().equals(clean)) {
+                return candidate;
+            }
+        }
+        return Display.Billboard.CENTER;
+    }
+
     /**
      * Creates the display entity for a player.
      *
@@ -211,12 +237,20 @@ public final class NameHologramService implements DisplaySystem {
             entity.setInvulnerable(true);
             entity.setGravity(false);
             entity.setSilent(true);
-            entity.setBillboard(Display.Billboard.CENTER);
+            entity.setBillboard(billboard);
             entity.setTeleportDuration(3);
             entity.setViewRange(viewRange);
             entity.setShadowed(shadowed);
             entity.setSeeThrough(seeThrough);
-            entity.setLineWidth(220);
+            entity.setLineWidth(lineWidth);
+            if (scale != 1.0F) {
+                entity.setTransformation(new Transformation(
+                        new Vector3f(), new Quaternionf(), new Vector3f(scale, scale, scale),
+                        new Quaternionf()));
+            }
+            if (brightness >= 0) {
+                entity.setBrightness(new Display.Brightness(brightness, brightness));
+            }
             entity.setAlignment(TextDisplay.TextAlignment.CENTER);
             if (colour == null) {
                 entity.setDefaultBackground(false);
