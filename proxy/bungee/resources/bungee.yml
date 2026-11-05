@@ -1,5 +1,5 @@
 name: HoneycombProxy
 main: dev.bluelabs.honeycomb.proxy.bungee.HoneycombBungee
-version: 1.1.0
+version: 1.1.2
 description: Answers Honeycomb network questions with real proxy numbers.
 author: Blue Labs

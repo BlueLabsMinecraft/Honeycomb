@@ -1,7 +1,7 @@
 {
   "id": "honeycombproxy",
   "name": "HoneycombProxy",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "description": "Answers Honeycomb network questions with real proxy numbers.",
   "authors": ["Blue Labs"],
   "dependencies": [],

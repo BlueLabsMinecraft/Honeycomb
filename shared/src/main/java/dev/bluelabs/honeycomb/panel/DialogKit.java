@@ -168,8 +168,22 @@ final class DialogKit {
     static ActionButton act(Component label, Consumer<Audience> handler) {
         return ActionButton.builder(label)
                 .width(150)
-                .action(DialogAction.staticAction(ClickEvent.callback(handler::accept)))
+                .action(DialogAction.staticAction(ClickEvent.callback(audience -> call(audience, handler))))
                 .build();
+    }
+
+    /**
+     * Runs a click handler with reporting, whoever clicked.
+     *
+     * @param audience who clicked
+     * @param handler  the work
+     */
+    private static void call(Audience audience, Consumer<Audience> handler) {
+        if (audience instanceof Player player) {
+            guard(player, () -> handler.accept(audience));
+            return;
+        }
+        handler.accept(audience);
     }
 
     /** A button with a custom label that receives the typed values. */
@@ -188,7 +202,7 @@ final class DialogKit {
     static ActionButton act(String label, Consumer<Audience> handler) {
         return ActionButton.builder(Component.text(label, NamedTextColor.AQUA))
                 .width(150)
-                .action(DialogAction.staticAction(ClickEvent.callback((Audience audience) -> handler.accept(audience))))
+                .action(DialogAction.staticAction(ClickEvent.callback((Audience audience) -> call(audience, handler))))
                 .build();
     }
 

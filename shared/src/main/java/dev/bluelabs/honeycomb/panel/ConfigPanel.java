@@ -40,7 +40,44 @@ public final class ConfigPanel {
     }
 
     /** Opens a section, defaulting to the main menu. */
+
+    /**
+     * Creates a layout from a command, without a dialog.
+     *
+     * <p>Same store and the same rules as the panel's Create button, so a client that
+     * cannot render dialogs still has a way to add layouts, and the panel path can be
+     * checked from the console.</p>
+     *
+     * @param kind tablist, scoreboards, bossbars, actionbar, welcome or nametags
+     * @param name requested name
+     * @return a message for the sender
+     */
+    public String createEntry(String kind, String name) {
+        String id = ProfilesPanel.sanitiseId(name);
+        if (id.isEmpty()) {
+            return "Give it a name, for example /honeycomb panel new " + kind + " nether";
+        }
+        if (ProfilesPanel.ids(plugin, kind).contains(id)) {
+            return id + " already exists. Edit it with /honeycomb panel " + kind + "/" + id;
+        }
+        String created = ProfilesPanel.create(plugin, kind, id);
+        if (created == null) {
+            return "Could not create " + id + ". Check the console for the reason.";
+        }
+        return "Created " + kind + " '" + created + "'. Open it with /honeycomb panel " + kind + "/" + created
+                + " or /honeycomb panel " + kind + ".";
+    }
+
     public void open(Player player, String section) {
+        // "tablist/nether" opens one entry straight away. Entry buttons use this route so
+        // the editor is opened by a command, not by a click callback that has to show a
+        // dialog while the client is still closing the list.
+        if (section != null && section.indexOf('/') > 0) {
+            String kind = section.substring(0, section.indexOf('/'));
+            String id = section.substring(section.indexOf('/') + 1);
+            ProfilesPanel.open(player, plugin, normalise(kind), id);
+            return;
+        }
         String key = section == null ? "main" : section.toLowerCase();
         Dialog dialog = switch (key) {
             case "tablist" -> ProfilesPanel.list(plugin, "tablist");
@@ -71,6 +108,25 @@ public final class ConfigPanel {
             default -> main();
         };
         show(player, dialog);
+    }
+
+
+    /**
+     * Maps a command word onto the entry kind the profiles panel expects.
+     *
+     * @param word command word, e.g. {@code scoreboard}
+     * @return entry kind, e.g. {@code scoreboards}
+     */
+    private static String normalise(String word) {
+        return switch (word.toLowerCase(java.util.Locale.ROOT)) {
+            case "scoreboard", "scoreboards", "boards" -> "scoreboards";
+            case "tablist", "layouts", "tablists" -> "tablist";
+            case "actionbar", "action-bar", "actionbar-entries" -> "actionbar";
+            case "nametags", "groups" -> "nametags";
+            case "bossbars", "bars" -> "bossbars";
+            case "welcome" -> "welcome";
+            default -> word.toLowerCase(java.util.Locale.ROOT);
+        };
     }
 
     /**

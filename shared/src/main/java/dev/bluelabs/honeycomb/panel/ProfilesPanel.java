@@ -39,76 +39,69 @@ public final class ProfilesPanel {
         body.add(DialogKit.heading(title(kind).toUpperCase(java.util.Locale.ROOT)));
         body.add(DialogKit.styled("<shadow:#000000:1><gold>" + entries.size() + " "
                 + (entries.size() == 1 ? "layout" : "layouts")));
-        body.add(DialogKit.shade("Pick a name to edit it. The green button adds a new one."));
+        body.add(DialogKit.shade("Pick a name to edit it, or type a new name below and press Create."));
 
         int shown = 0;
-        for (String id : ids(plugin, kind)) {
+        for (String id : entries) {
             if (shown++ >= 8) {
                 break;
             }
             Component label = DialogKit.styled("<shadow:#000000:1><white>\u25B8 " + id);
-            buttons.add(DialogKit.act(label, audience -> {
-                if (audience instanceof Player player) {
-                    open(player, plugin, kind, id);
-                }
-            }));
+            // A command, not a callback: this is the same route the Back button uses and
+            // it always lands, whatever the client does with the closing dialog.
+            buttons.add(DialogKit.run(label, "honeycomb panel " + screenOf(kind) + "/" + id));
         }
         if (shown == 0) {
-            body.add(DialogKit.warn("Nothing here yet. Use the green button below."));
+            body.add(DialogKit.warn("Nothing here yet. Name one below and press Create."));
         }
 
-        buttons.add(DialogKit.act(DialogKit.styled("<shadow:#000000:1><bold><green>+ Create new " + noun(kind)),
-                audience -> {
-            if (audience instanceof Player player) {
-                create(player, plugin, kind);
-            }
-        }));
+        // The name box lives on this screen on purpose. Asking for the name in a second
+        // dialog opened from this one meant the click callback had to show a fresh dialog
+        // while the client was still closing this one, which left the player looking at an
+        // empty world. One screen, one submit, nothing to nest.
+        buttons.add(DialogKit.save(DialogKit.styled("<shadow:#000000:1><bold><green>Create"),
+                (player, response) -> createHere(player, plugin, kind, response)));
         buttons.add(DialogKit.run("Back", "honeycomb panel " + screenOf(kind)));
         buttons.add(DialogKit.close());
-        return DialogKit.menu(title(kind), body, buttons);
+        return DialogKit.form(title(kind), body,
+                List.of(DialogKit.text("new_id", "New name, lower case, no spaces (nether, staff, pvp)", "")),
+                buttons);
     }
 
     /**
-     * Asks for an id, then opens the editor for the new entry.
+     * Creates the entry named in the list screen's text box.
      *
-     * @param player player
-     * @param plugin plugin
-     * @param kind   entry kind
+     * <p>Runs inside a guarded save handler, so a failure is reported in chat instead of
+     * closing the screen silently.</p>
+     *
+     * @param player   player who pressed Create
+     * @param plugin   plugin
+     * @param kind     entry kind
+     * @param response submitted values
      */
-    static void create(Player player, HoneycombPlugin plugin, String kind) {
-        var dialog = DialogKit.form("New " + noun(kind), List.of(
-                        DialogKit.heading("Name the new " + noun(kind)),
-                        DialogKit.shade("Lower case, no spaces. Example: nether, staff, pvp.")),
-                List.of(DialogKit.text("id", "Name", "")),
-                List.of(DialogKit.save("Create", (who, response) -> {
-                    String raw = firstText(response, "id", "name");
-                    try {
-                        String id = create(plugin, kind, raw);
-                        if (id == null) {
-                            who.sendMessage(plugin.messages().prefixed("panel.name-required",
-                                    java.util.Map.of()));
-                            return;
-                        }
-                        if (id.startsWith("=")) {
-                            String taken = id.substring(1);
-                            who.sendMessage(plugin.messages().prefixed("panel.name-taken",
-                                    java.util.Map.of("name", taken)));
-                            open(who, plugin, kind, taken);
-                            return;
-                        }
-                        who.sendMessage(plugin.messages().prefixed("panel.created",
-                                java.util.Map.of("kind", noun(kind), "name", id)));
-                        open(who, plugin, kind, id);
-                    } catch (RuntimeException failure) {
-                        plugin.getLogger().warning("Creating a " + kind + " from the panel failed: " + failure);
-                        who.sendMessage(plugin.messages().prefixed("panel.save-failed",
-                                java.util.Map.of("reason", String.valueOf(failure.getMessage()))));
-                    }
-                }), DialogKit.close()));
-        DialogKit.show(player, plugin, dialog);
+    private static void createHere(Player player, HoneycombPlugin plugin, String kind,
+                                   io.papermc.paper.dialog.DialogResponseView response) {
+        String raw = firstText(response, "new_id");
+        String id = sanitiseId(raw);
+        if (id.isEmpty()) {
+            player.sendMessage(plugin.messages().prefixed("panel.name-required", java.util.Map.of()));
+            return;
+        }
+        if (ids(plugin, kind).contains(id)) {
+            player.sendMessage(plugin.messages().prefixed("panel.name-taken",
+                    java.util.Map.of("name", id)));
+            open(player, plugin, kind, id);
+            return;
+        }
+        String created = create(plugin, kind, id);
+        if (created == null) {
+            player.sendMessage(plugin.messages().prefixed("panel.name-required", java.util.Map.of()));
+            return;
+        }
+        player.sendMessage(plugin.messages().prefixed("panel.created",
+                java.util.Map.of("kind", noun(kind), "name", id)));
+        open(player, plugin, kind, created);
     }
-
-
 
     /**
      * Turns whatever was typed into a usable id.
@@ -454,7 +447,7 @@ public final class ProfilesPanel {
         return values;
     }
 
-    private static List<String> ids(HoneycombPlugin plugin, String kind) {
+    static List<String> ids(HoneycombPlugin plugin, String kind) {
         YamlConfiguration yaml = plugin.configManager().yaml(type(kind));
         ConfigurationSection section = switch (kind) {
             case "tablist" -> yaml.getConfigurationSection("tablist.profiles");

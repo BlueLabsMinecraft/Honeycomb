@@ -57,6 +57,15 @@ public final class PanelSubcommand implements Subcommand {
     @Override
     public void execute(CommandSender sender, String[] args) {
         String requested = args.length > 0 ? args[0].toLowerCase(Locale.ROOT) : "main";
+        if (requested.equals("new") && args.length >= 3) {
+            // Layouts can be added without a dialog, which also makes the panel's Create
+            // button testable from the console.
+            String kind = args[1].toLowerCase(Locale.ROOT);
+            String name = String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length));
+            sender.sendMessage(Component.text(plugin.panel().createEntry(kind, name),
+                    NamedTextColor.WHITE));
+            return;
+        }
         if (requested.equals("debug")) {
             // Works from the console: proves every dialog builds before a player sees it.
             sender.sendMessage(Component.text("Building panel dialogs...", NamedTextColor.GRAY));
