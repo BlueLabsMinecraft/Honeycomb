@@ -45,6 +45,62 @@ public final class ProfilesPanel {
     private ProfilesPanel() {
     }
 
+
+
+    /**
+     * @param word command word such as {@code actionbar}
+     * @return the entry kind the panel stores it under
+     */
+    static String kindKey(String word) {
+        return switch (word.toLowerCase(java.util.Locale.ROOT)) {
+            case "scoreboard", "boards" -> "scoreboards";
+            case "layouts", "tablists" -> "tablist";
+            case "action-bar", "actionbar-entries" -> "actionbar";
+            case "groups" -> "nametags";
+            case "bars" -> "bossbars";
+            default -> word.toLowerCase(java.util.Locale.ROOT);
+        };
+    }
+
+    /**
+     * @param kind entry kind
+     * @return the configuration file type holding it
+     */
+    static dev.bluelabs.honeycomb.config.ConfigType typeKey(String kind) {
+        return type(kind);
+    }
+
+    /**
+     * @param kind entry kind
+     * @param id   entry id
+     * @return the dotted path of that entry
+     */
+    static String baseKey(String kind, String id) {
+        return base(kind, id);
+    }
+
+    /**
+     * @param plugin plugin
+     * @param kind   entry kind
+     * @return the configuration file that holds this kind
+     */
+    private static YamlConfiguration yamlOf(HoneycombPlugin plugin, String kind) {
+        return plugin.configManager().yaml(type(kind));
+    }
+
+    /**
+     * Kinds where exactly one design may be on at a time.
+     *
+     * @param kind entry kind
+     * @return true when picking one should switch the others off
+     */
+    private static boolean exclusive(String kind) {
+        return switch (kind) {
+            case "tablist", "scoreboards", "actionbar", "welcome" -> true;
+            default -> false;
+        };
+    }
+
     /**
      * @param player player
      * @param kind   entry kind
@@ -94,13 +150,18 @@ public final class ProfilesPanel {
         body.add(DialogKit.styled("<shadow:#000000:1><gold>" + entries.size() + " "
                 + (entries.size() == 1 ? "layout" : "layouts")));
         body.add(DialogKit.shade("Pick a name to edit it, or type a new name below and press Create."));
+        body.add(DialogKit.note("\u2714 marks the one in use. Only one design of this kind runs at a time,"));
+        body.add(DialogKit.note("so turning another on turns the ticked one off."));
 
         int shown = 0;
         for (String id : entries) {
             if (shown++ >= 8) {
                 break;
             }
-            Component label = DialogKit.styled("<shadow:#000000:1><white>\u25B8 " + id);
+            boolean active = yamlOf(plugin, kind).getBoolean(base(kind, id) + ".enabled", true);
+            Component label = DialogKit.styled(active
+                    ? "<shadow:#000000:1><green>\u2714 <white>" + id
+                    : "<shadow:#000000:1><dark_gray>\u25CB <gray>" + id);
             // A command, not a callback: this is the same route the Back button uses and
             // it always lands, whatever the client does with the closing dialog.
             buttons.add(DialogKit.run(label, "honeycomb panel " + screenOf(kind) + "/" + id));
@@ -353,7 +414,8 @@ public final class ProfilesPanel {
                     // Icons need the picker, and the picker needs somewhere to come back to.
                     // Autosave first, then reopen this exact entry afterwards, not the list.
                     autosave(who, plugin, kind, id, "design", response);
-                    IconPicker.open(who, plugin, iconField(kind), designRoute);
+                    IconPicker.open(who, plugin, iconField(kind), designRoute,
+                            (picker, tag) -> writeIcon(picker, plugin, kind, id, iconField(kind), tag));
                 }));
         actions.add(DialogKit.save("Back", (who, response) -> {
             keepAndGo(who, plugin, kind, id, "design", response, listRoute);
@@ -392,7 +454,9 @@ public final class ProfilesPanel {
         YamlConfiguration yaml = plugin.configManager().yaml(type(kind));
         String base = base(kind, id);
         List<DialogInput> inputs = new ArrayList<>();
-        inputs.add(DialogKit.toggle("enabled", "Turn this design on",
+        inputs.add(DialogKit.toggle("enabled", exclusive(kind)
+                        ? "Use this one - turning it on turns the others off"
+                        : "Turn this design on",
                 draft.toggle("enabled", yaml.getBoolean(base + ".enabled", true))));
         inputs.add(DialogKit.text("worlds", "Worlds - where it is used. Empty means every world",
                 draft.text("worlds", join(yaml.getStringList(base + ".conditions.worlds")))));
@@ -667,7 +731,17 @@ public final class ProfilesPanel {
         ConfigType type = type(kind);
         String base = base(kind, id);
 
-        overrides.set(type, base + ".enabled", response.getBoolean("enabled"));
+        boolean wanted = response.getBoolean("enabled");
+        overrides.set(type, base + ".enabled", wanted);
+        if (wanted && exclusive(kind)) {
+            // One design of this kind runs at a time, so picking this one removes the tick
+            // from the previous one instead of leaving two designs fighting over the player.
+            for (String other : ids(plugin, kind)) {
+                if (!other.equals(id)) {
+                    overrides.set(type, base(kind, other) + ".enabled", false);
+                }
+            }
+        }
         applyList(overrides, type, base + ".conditions.worlds", response.getText("worlds"));
         applyList(overrides, type, base + ".conditions.permissions", response.getText("ranks"));
         applyList(overrides, type, base + ".conditions.placeholders", response.getText("placeholders"));
@@ -681,6 +755,54 @@ public final class ProfilesPanel {
             }
         }
         return null;
+    }
+
+
+    /**
+     * Adds a picked icon to a field and saves it immediately.
+     *
+     * <p>The dialog cannot be updated after it closes, so waiting for the player to press
+     * Save meant a picked icon was simply lost. It is written here instead.</p>
+     *
+     * @param player player who picked it
+     * @param plugin plugin
+     * @param kind   entry kind
+     * @param id     entry id
+     * @param field  field the icon belongs to
+     * @param tag    sprite tag
+     */
+    static void writeIcon(Player player, HoneycombPlugin plugin, String kind, String id,
+                          String field, String tag) {
+        Draft draft = parked(player, kind, id);
+        String current = draft.text(field, null);
+        if (current == null) {
+            YamlConfiguration yaml = plugin.configManager().yaml(type(kind));
+            current = join(yaml.getStringList(base(kind, id) + "." + field));
+        }
+        String updated = current.isBlank() ? tag
+                : current + (current.endsWith("\n") || current.endsWith(" ") ? "" : " ") + tag;
+        var overrides = plugin.panelOverrides();
+        ConfigType type = type(kind);
+        String path = base(kind, id) + "." + field;
+        if (field.equals("template") || field.equals("prefix") || field.equals("suffix")
+                || field.equals("title") || field.equals("list_name")) {
+            overrides.set(type, path, updated);
+        } else {
+            setLines(overrides, type, path, updated);
+        }
+        try {
+            overrides.save();
+        } catch (java.io.IOException error) {
+            plugin.getLogger().warning("Could not save a picked icon: " + error.getMessage());
+            player.sendMessage(plugin.messages().prefixed("panel.save-failed",
+                    java.util.Map.of("reason", String.valueOf(error.getMessage()))));
+            return;
+        }
+        // Keep the parked values in step, so the reopened screen shows the icon too.
+        java.util.Map<String, String> texts = new java.util.HashMap<>(draft.texts());
+        texts.put(field, updated);
+        park(player, kind, id, new Draft(texts, draft.toggles(), draft.error()));
+        reloadQuietly(plugin);
     }
 
     /**

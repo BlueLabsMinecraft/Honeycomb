@@ -66,6 +66,11 @@ public final class PanelSubcommand implements Subcommand {
                     NamedTextColor.WHITE));
             return;
         }
+        if (requested.equals("use") && args.length >= 3) {
+            sender.sendMessage(Component.text(plugin.panel().selectEntry(args[1], args[2]),
+                    NamedTextColor.WHITE));
+            return;
+        }
         if (requested.equals("debug")) {
             // Works from the console: proves every dialog builds before a player sees it.
             sender.sendMessage(Component.text("Building panel dialogs...", NamedTextColor.GRAY));

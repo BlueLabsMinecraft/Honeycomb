@@ -134,6 +134,38 @@ public final class ConfigPanel {
         };
     }
 
+
+    /**
+     * Switches a kind over to one design, ticking it and clearing the others.
+     *
+     * <p>Same rule the audience screen applies, available as a command so a design can be
+     * chosen from the console or a script.</p>
+     *
+     * @param kind entry kind
+     * @param id   entry id
+     * @return a message for the sender
+     */
+    public String selectEntry(String kind, String id) {
+        String clean = ProfilesPanel.sanitiseId(id);
+        java.util.List<String> entries = ProfilesPanel.ids(plugin, ProfilesPanel.kindKey(kind));
+        if (!entries.contains(clean)) {
+            return "There is no " + kind + " called '" + clean + "'. Known: " + String.join(", ", entries);
+        }
+        String realKind = ProfilesPanel.kindKey(kind);
+        var overrides = plugin.panelOverrides();
+        var type = ProfilesPanel.typeKey(realKind);
+        for (String entry : entries) {
+            overrides.set(type, ProfilesPanel.baseKey(realKind, entry) + ".enabled", entry.equals(clean));
+        }
+        try {
+            overrides.save();
+        } catch (java.io.IOException error) {
+            return "Could not write panel.yml: " + error.getMessage();
+        }
+        plugin.reload();
+        return "Now using " + realKind + " '" + clean + "'. The others of that kind are off.";
+    }
+
     /**
      * Builds every dialog once and reports what happened.
      *

@@ -65,6 +65,20 @@ final class IconPicker {
      * @param reopen command that reopens the editor
      */
     static void open(Player player, HoneycombPlugin plugin, String field, String reopen) {
+        open(player, plugin, field, reopen, null);
+    }
+
+    /**
+     * Opens the picker for one field and tells the caller what was picked.
+     *
+     * @param player player
+     * @param plugin plugin
+     * @param field  field the icon goes back into
+     * @param reopen command that reopens the editor
+     * @param onPick receives the sprite tag, may be {@code null}
+     */
+    static void open(Player player, HoneycombPlugin plugin, String field, String reopen,
+                     java.util.function.BiConsumer<Player, String> onPick) {
         List<DialogInput> inputs = List.of(
                 DialogKit.text("item", "Any item name, for example diamond or oak_log", ""));
         List<ActionButton> buttons = new ArrayList<>();
@@ -73,7 +87,11 @@ final class IconPicker {
                     DialogKit.styled(Icons.sprite(item) + " <gray>" + item.replace('_', ' ')),
                     audience -> {
                         if (audience instanceof Player who) {
-                            remember(who, field, Icons.sprite(item));
+                            String tag = Icons.sprite(item);
+                            remember(who, field, tag);
+                            if (onPick != null) {
+                                onPick.accept(who, tag);
+                            }
                             who.closeDialog();
                             // Come straight back to the screen the icon belongs to.
                             who.performCommand(reopen);
@@ -86,7 +104,11 @@ final class IconPicker {
                 who.sendMessage(plugin.messages().prefixed("panel.icon-invalid", Map.of()));
                 return;
             }
-            remember(who, field, Icons.sprite(typed));
+            String tag = Icons.sprite(typed);
+            remember(who, field, tag);
+            if (onPick != null) {
+                onPick.accept(who, tag);
+            }
             who.closeDialog();
             who.performCommand(reopen);
         }));
