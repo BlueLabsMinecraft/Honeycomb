@@ -76,6 +76,13 @@ public final class PanelSubcommand implements Subcommand {
                     NamedTextColor.WHITE));
             return;
         }
+        if (requested.equals("reset")) {
+            // The panel writes to panel.yml, and those values win over the YAML files.
+            // This is the way back to the files without hand editing panel.yml.
+            sender.sendMessage(Component.text(plugin.panel().resetOverrides(
+                    args.length > 1 ? args[1] : null), NamedTextColor.WHITE));
+            return;
+        }
         if (requested.equals("systems")) {
             // Reports each display engine and whether it thinks it is on. The panel itself
             // says nothing when a display silently does nothing.

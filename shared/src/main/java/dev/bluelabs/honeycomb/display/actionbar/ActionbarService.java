@@ -5,8 +5,13 @@ import dev.bluelabs.honeycomb.config.ConfigType;
 import dev.bluelabs.honeycomb.display.DisplaySystem;
 import dev.bluelabs.honeycomb.placeholder.PlaceholderContext;
 import dev.bluelabs.honeycomb.text.RenderPipeline;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Sends the line above the hotbar.
@@ -22,6 +27,8 @@ public final class ActionbarService implements DisplaySystem {
     private final RenderPipeline pipeline;
 
     private boolean enabled;
+    private int ticks;
+    private final Map<UUID, String> lastSent = new java.util.HashMap<>();
     private int interval = 40;
     private String template = "";
     private final java.util.List<Variant> variants = new java.util.ArrayList<>();
@@ -59,6 +66,8 @@ public final class ActionbarService implements DisplaySystem {
     @Override
     public void reload() {
         read();
+        ticks = 0;
+        lastSent.clear();
     }
 
     @Override
@@ -76,11 +85,23 @@ public final class ActionbarService implements DisplaySystem {
         if (!enabled) {
             return;
         }
+        // The interval was read but never checked, so the bar was rewritten every tick:
+        // 20 packets a second where the config asked for one every two seconds.
+        if (++ticks % Math.max(1, interval) != 0) {
+            return;
+        }
         String text = variantFor(player);
         if (text.isBlank()) {
             return;
         }
-        player.sendActionBar(pipeline.render(text, PlaceholderContext.of(player)));
+        Component rendered = pipeline.render(text, PlaceholderContext.of(player));
+        String plain = PlainTextComponentSerializer.plainText().serialize(rendered);
+        // A static line only has to be sent once; clients keep showing what they were given.
+        if (plain.equals(lastSent.get(player.getUniqueId()))) {
+            return;
+        }
+        lastSent.put(player.getUniqueId(), plain);
+        player.sendActionBar(rendered);
     }
 
     /**

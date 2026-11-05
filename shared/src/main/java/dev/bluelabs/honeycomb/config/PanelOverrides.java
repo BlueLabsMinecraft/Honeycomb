@@ -5,6 +5,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -116,6 +118,38 @@ public final class PanelOverrides {
      */
     public boolean has(String path) {
         return yaml.isSet(path);
+    }
+
+    /**
+     * @return every stored override path, for logging and the reset command
+     */
+    public List<String> paths() {
+        List<String> found = new ArrayList<>();
+        for (String key : yaml.getKeys(true)) {
+            if (!yaml.isConfigurationSection(key)) {
+                found.add(key);
+            }
+        }
+        return found;
+    }
+
+    /**
+     * Drops every override for one file, so its values come from the YAML again.
+     *
+     * @param type file to reset
+     * @return how many overrides were removed
+     * @throws IOException when the file cannot be written
+     */
+    public int clear(ConfigType type) throws IOException {
+        ConfigurationSection section = yaml.getConfigurationSection(type.overrideRoot());
+        if (section == null) {
+            return 0;
+        }
+        int removed = paths().stream().filter(path -> path.startsWith(type.overrideRoot() + "."))
+                .toList().size();
+        yaml.set(type.overrideRoot(), null);
+        save();
+        return removed;
     }
 
     /**

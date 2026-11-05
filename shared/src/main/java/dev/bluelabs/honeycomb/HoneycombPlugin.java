@@ -320,6 +320,16 @@ public final class HoneycombPlugin extends JavaPlugin {
         welcome.reload();
         tasks.repeating("placeholder-cache", 200L, settings.cacheSweepInterval(), placeholderService::sweepCache);
 
+        // A panel save beats the YAML file, so a hand edit that appears ignored is really
+        // an override doing its job. Saying so saves the guessing.
+        java.util.List<String> overrides = panelOverrides.paths();
+        if (!overrides.isEmpty()) {
+            getLogger().info(overrides.size()
+                    + " setting(s) in panel.yml override the config files: "
+                    + String.join(", ", overrides.subList(0, Math.min(8, overrides.size())))
+                    + (overrides.size() > 8 ? " and " + (overrides.size() - 8) + " more" : ""));
+        }
+
         long millis = (System.nanoTime() - started) / 1_000_000L;
         for (ValidationReport.Issue issue : reloadReport.issues()) {
             if (issue.severity() == ValidationReport.Severity.ERROR) {

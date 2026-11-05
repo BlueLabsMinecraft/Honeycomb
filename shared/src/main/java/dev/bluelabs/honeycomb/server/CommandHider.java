@@ -90,8 +90,14 @@ public final class CommandHider implements Listener {
             return;
         }
         event.setCancelled(true);
-        if (hidePluginList && isPluginList(label)) {
+        if (isPluginList(label) && hidePluginList) {
             player.sendMessage(pluginList());
+            return;
+        }
+        if (isVersion(label)) {
+            // A refusal reads like a locked door; the version on its own gives nothing away.
+            player.sendMessage(MiniMessage.miniMessage().deserialize(
+                    "<gray>This server is running Minecraft <white>" + minecraft()));
             return;
         }
         player.sendMessage(MiniMessage.miniMessage().deserialize(reply));
@@ -103,6 +109,26 @@ public final class CommandHider implements Listener {
      */
     private static boolean isPluginList(String label) {
         return label.equals("plugins") || label.equals("pl");
+    }
+
+    /**
+     * @param label normalised command label
+     * @return true for the commands that print version information
+     */
+    private static boolean isVersion(String label) {
+        return label.equals("version") || label.equals("ver") || label.equals("about")
+                || label.equals("icanhasbukkit");
+    }
+
+    /**
+     * @return the plain Minecraft version, never the server brand or plugin list
+     */
+    private static String minecraft() {
+        try {
+            return org.bukkit.Bukkit.getMinecraftVersion();
+        } catch (RuntimeException unavailable) {
+            return "an unknown version";
+        }
     }
 
     /**

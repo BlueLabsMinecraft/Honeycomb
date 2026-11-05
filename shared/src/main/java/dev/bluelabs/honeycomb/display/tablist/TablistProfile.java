@@ -14,6 +14,9 @@ import java.util.List;
  */
 public final class TablistProfile extends DisplayProfile {
 
+    /** Profiles already reported this session, so a reload stays quiet. */
+    private static final java.util.Set<String> ALREADY_WARNED = new java.util.HashSet<>();
+
     private final List<String> headerLines;
     private final List<String> footerLines;
     private final String playerListNameTemplate;
@@ -43,7 +46,11 @@ public final class TablistProfile extends DisplayProfile {
         List<String> header = ConfigValues.lines(section, "header");
         List<String> footer = ConfigValues.lines(section, "footer");
         if (header.isEmpty() && footer.isEmpty() && !section.isSet("player-list-name")) {
-            report.warning("tablist.yml", "Tablist profile '" + name + "' defines no header, footer or list name");
+            // Reloading said this again every time, which buried the real errors.
+            if (ALREADY_WARNED.add(name)) {
+                report.warning("tablist.yml", "Tablist profile '" + name
+                        + "' defines no header, footer or list name");
+            }
         }
         String listName = section.getString("player-list-name");
         int interval = ConfigValues.interval(section, "update-interval", defaultInterval, "tablist.yml", report);

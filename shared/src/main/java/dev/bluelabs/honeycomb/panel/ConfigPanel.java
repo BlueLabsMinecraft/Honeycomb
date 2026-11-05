@@ -248,6 +248,42 @@ public final class ConfigPanel {
         return results;
     }
 
+    /**
+     * Drops saved panel values for one file so the YAML takes over again.
+     *
+     * @param fileName file to reset, or {@code null} to list what is stored
+     * @return what happened, for the chat reply
+     */
+    public String resetOverrides(String fileName) {
+        var overrides = plugin.panelOverrides();
+        if (fileName == null || fileName.isBlank()) {
+            java.util.List<String> stored = overrides.paths();
+            if (stored.isEmpty()) {
+                return "Nothing is overridden: every setting comes from the YAML files.";
+            }
+            return stored.size() + " override(s) in panel.yml. Reset one with "
+                    + "/honeycomb panel reset <file>, e.g. config, tablist, holograms, maintenance.";
+        }
+        String wanted = fileName.toLowerCase(java.util.Locale.ROOT).replace(".yml", "");
+        for (ConfigType type : ConfigType.values()) {
+            String name = type.name().toLowerCase(java.util.Locale.ROOT);
+            if (name.equals(wanted) || type.fileName().equalsIgnoreCase(wanted + ".yml")) {
+                try {
+                    int removed = overrides.clear(type);
+                    plugin.reload();
+                    return removed == 0
+                            ? "Nothing was overridden in " + type.fileName() + "."
+                            : "Removed " + removed + " override(s) from " + type.fileName()
+                                    + ". Reloaded: the file values are live again.";
+                } catch (java.io.IOException failure) {
+                    return "Could not write panel.yml: " + failure.getMessage();
+                }
+            }
+        }
+        return "Unknown file '" + fileName + "'. Try config, tablist, scoreboards, nametags, "
+                + "bossbars, belowname, holograms, sorting, network, welcome, maintenance, messages.";
+    }
+
     private interface DialogSupplier {
         Dialog get();
     }
