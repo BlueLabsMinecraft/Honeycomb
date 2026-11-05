@@ -75,6 +75,8 @@ final class IconPicker {
                         if (audience instanceof Player who) {
                             remember(who, field, Icons.sprite(item));
                             who.closeDialog();
+                            // Come straight back to the screen the icon belongs to.
+                            who.performCommand(reopen);
                         }
                     }));
         }
@@ -86,6 +88,7 @@ final class IconPicker {
             }
             remember(who, field, Icons.sprite(typed));
             who.closeDialog();
+            who.performCommand(reopen);
         }));
         buttons.add(DialogKit.run("Back", reopen));
         buttons.add(DialogKit.close());
