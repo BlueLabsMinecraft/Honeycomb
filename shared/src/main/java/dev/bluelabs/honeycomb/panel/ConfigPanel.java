@@ -687,6 +687,8 @@ public final class ConfigPanel {
                         yaml.getString("holograms.template", "<white>%player_name%"), 4),
                 DialogKit.text("offset", "Height above the head, in blocks",
                         String.valueOf(yaml.getDouble("holograms.offset", 0.35D))),
+                DialogKit.text("distance", "Hide it past this many blocks (16 to 48 is usual)",
+                        String.valueOf(yaml.getInt("holograms.distance", 32))),
                 DialogKit.text("scale", "Size: 1.0 normal, 0.8 smaller, 1.4 bigger",
                         String.valueOf(yaml.getDouble("holograms.scale", 1.0D))),
                 DialogKit.text("background", "Box behind the text: transparent, or #00000080",
@@ -727,6 +729,17 @@ public final class ConfigPanel {
             hologramWithError(player, "Height and size have to be numbers, for example 0.35 and 1.0.");
             return;
         }
+        int distance;
+        try {
+            distance = Integer.parseInt(String.valueOf(response.getText("distance")).trim());
+        } catch (NumberFormatException notANumber) {
+            hologramWithError(player, "Distance has to be a whole number of blocks, for example 32.");
+            return;
+        }
+        if (distance < 4 || distance > 128) {
+            hologramWithError(player, "Distance has to be between 4 and 128 blocks. 32 is a good start.");
+            return;
+        }
         if (scale < 0.25D || scale > 4.0D) {
             hologramWithError(player, "Size has to be between 0.25 and 4.0. Leave it at 1.0 for normal.");
             return;
@@ -748,6 +761,7 @@ public final class ConfigPanel {
         overrides.set(ConfigType.HOLOGRAMS, "holograms.enabled", response.getBoolean("enabled"));
         overrides.set(ConfigType.HOLOGRAMS, "holograms.template", template);
         overrides.set(ConfigType.HOLOGRAMS, "holograms.offset", offset);
+        overrides.set(ConfigType.HOLOGRAMS, "holograms.distance", distance);
         overrides.set(ConfigType.HOLOGRAMS, "holograms.scale", scale);
         overrides.set(ConfigType.HOLOGRAMS, "holograms.background",
                 response.getText("background") == null ? "transparent" : response.getText("background"));
@@ -772,6 +786,8 @@ public final class ConfigPanel {
                         yaml.getString("holograms.template", "<white>%player_name%"), 4),
                 DialogKit.text("offset", "Height above the head, in blocks",
                         String.valueOf(yaml.getDouble("holograms.offset", 0.35D))),
+                DialogKit.text("distance", "Hide it past this many blocks (16 to 48 is usual)",
+                        String.valueOf(yaml.getInt("holograms.distance", 32))),
                 DialogKit.text("scale", "Size: 1.0 normal, 0.8 smaller, 1.4 bigger",
                         String.valueOf(yaml.getDouble("holograms.scale", 1.0D))),
                 DialogKit.text("background", "Box behind the text: transparent, or #00000080",

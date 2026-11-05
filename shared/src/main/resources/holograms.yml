@@ -22,7 +22,12 @@ holograms:
   # What the hologram says. Legacy & codes work as well as MiniMessage.
   template: "<white>%player_name%"
 
-  # 1.0 is the normal entity view distance, lower values hide it sooner.
+  # How far the hologram can be seen, in blocks. Past this distance it is hidden from
+  # that player and no longer updated, which is what keeps it cheap with many players.
+  # 16 to 48 suits most servers.
+  distance: 32
+
+  # Upper limit for the entity view range, 1.0 is the client's normal distance.
   view-range: 1.0
 
   # Drop shadow under the glyphs. MiniMessage also has <shadow:#000000:1> inside the

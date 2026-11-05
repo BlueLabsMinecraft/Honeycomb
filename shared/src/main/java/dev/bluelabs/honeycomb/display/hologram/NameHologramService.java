@@ -56,6 +56,8 @@ public final class NameHologramService implements DisplaySystem {
     private float scale = 1.0F;
     private int lineWidth = 220;
     private int brightness = -1;
+    private double distance = 32.0D;
+    private final Map<UUID, java.util.Set<UUID>> shownTo = new HashMap<>();
 
     /**
      * @param configManager configuration manager
@@ -144,6 +146,7 @@ public final class NameHologramService implements DisplaySystem {
         scale = (float) Math.max(0.25D, Math.min(4.0D, yaml.getDouble("holograms.scale", 1.0D)));
         lineWidth = Math.max(20, yaml.getInt("holograms.line-width", 220));
         brightness = Math.max(-1, Math.min(15, yaml.getInt("holograms.brightness", -1)));
+        distance = Math.max(4.0D, Math.min(128.0D, yaml.getDouble("holograms.distance", 32.0D)));
 
         profiles.clear();
         ConfigurationSection section = yaml.getConfigurationSection("holograms.profiles");
@@ -184,6 +187,15 @@ public final class NameHologramService implements DisplaySystem {
         UUID id = player.getUniqueId();
         TextDisplay display = displays.get(id);
 
+        if (!anyoneNear(target)) {
+            // Nobody can see it, so there is nothing to draw: no entity, no text render,
+            // no teleport. It comes back as soon as someone walks into range.
+            if (display != null) {
+                remove(id);
+            }
+            return;
+        }
+
         if (display == null || !display.isValid() || display.isDead()
                 || !display.getWorld().equals(player.getWorld())) {
             if (display != null) {
@@ -198,6 +210,7 @@ public final class NameHologramService implements DisplaySystem {
         if (display.getLocation().distanceSquared(target) > 0.0004D) {
             display.teleport(target);
         }
+        showToNearby(display, target);
         String ready = pipeline.prepare(textTemplate, context);
         if (!ready.equals(renderedText.get(id))) {
             display.text(pipeline.render(textTemplate, context));
@@ -239,7 +252,8 @@ public final class NameHologramService implements DisplaySystem {
             entity.setSilent(true);
             entity.setBillboard(billboard);
             entity.setTeleportDuration(3);
-            entity.setViewRange(viewRange);
+            // Stop the client tracking the display once it is past the visibility distance.
+            entity.setViewRange((float) Math.max(0.05D, Math.min(viewRange, distance / 160.0D)));
             entity.setShadowed(shadowed);
             entity.setSeeThrough(seeThrough);
             entity.setLineWidth(lineWidth);
@@ -262,6 +276,55 @@ public final class NameHologramService implements DisplaySystem {
         });
     }
 
+
+    /**
+     * @param target where the hologram sits
+     * @return true when at least one player is close enough to see it
+     */
+    private boolean anyoneNear(Location target) {
+        for (Player viewer : target.getWorld().getPlayers()) {
+            if (viewer.getLocation().distanceSquared(target) <= distance * distance) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Shows the display to players inside the distance and hides it from the rest.
+     *
+     * <p>Clients stop tracking an entity they cannot see, so this is what keeps a busy
+     * server from sending a display update to people who are nowhere near it.</p>
+     *
+     * @param display entity to show
+     * @param target  where it sits
+     */
+    private void showToNearby(TextDisplay display, Location target) {
+        double limit = distance * distance;
+        java.util.Set<UUID> shown = shownTo.computeIfAbsent(display.getUniqueId(),
+                key -> new java.util.HashSet<>());
+        java.util.Set<UUID> nowShown = new java.util.HashSet<>();
+        for (Player viewer : target.getWorld().getPlayers()) {
+            boolean near = viewer.getLocation().distanceSquared(target) <= limit;
+            if (near) {
+                if (shown.add(viewer.getUniqueId())) {
+                    viewer.showEntity(owner(), display);
+                }
+                nowShown.add(viewer.getUniqueId());
+            } else if (shown.remove(viewer.getUniqueId())) {
+                viewer.hideEntity(owner(), display);
+            }
+        }
+        shown.retainAll(nowShown);
+    }
+
+    /**
+     * @return the plugin, needed for the per player entity visibility calls
+     */
+    private org.bukkit.plugin.Plugin owner() {
+        return org.bukkit.Bukkit.getPluginManager().getPlugin("Honeycomb");
+    }
+
     /**
      * @param player  player being drawn above
      * @param context placeholder context
@@ -279,8 +342,11 @@ public final class NameHologramService implements DisplaySystem {
     private void remove(UUID id) {
         renderedText.remove(id);
         TextDisplay display = displays.remove(id);
-        if (display != null && display.isValid()) {
-            display.remove();
+        if (display != null) {
+            shownTo.remove(display.getUniqueId());
+            if (display.isValid()) {
+                display.remove();
+            }
         }
     }
 
@@ -292,6 +358,7 @@ public final class NameHologramService implements DisplaySystem {
         }
         displays.clear();
         renderedText.clear();
+        shownTo.clear();
     }
 
     private static double clamp(double value) {
